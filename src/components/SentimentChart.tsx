@@ -72,9 +72,9 @@ export function SentimentChart({ data, showMentions = false }: SentimentChartPro
                 borderRadius: '8px',
                 padding: '12px',
               }}
-              formatter={(value: number, name: string) => {
-                if (name === 'sentiment') return [formatSentiment(value), 'Sentiment'];
-                return [value, 'Mentions'];
+              formatter={(value, name) => {
+                if (name === 'sentiment') return [formatSentiment(value as number), 'Sentiment'];
+                return [value as number, 'Mentions'];
               }}
               labelFormatter={formatDate}
             />
