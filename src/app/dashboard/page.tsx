@@ -11,7 +11,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { KPICard } from '@/components/KPICard';
-import { SentimentChart, SentimentDistribution } from '@/components/SentimentChart';
+import { SentimentChart, SentimentDistribution, TopicBubbleChart } from '@/components/SentimentChart';
 import { SentimentBadge } from '@/components/DataTable';
 
 interface DashboardData {
@@ -31,6 +31,12 @@ interface DashboardData {
     date: string;
     sentiment: number;
     mentions: number;
+  }>;
+  topicBubbleData: Array<{
+    name: string;
+    sentiment: number;
+    mentions: number;
+    engagement: number;
   }>;
   recentMentions: Array<{
     id: number;
@@ -165,6 +171,17 @@ export default function DashboardPage() {
             negative={data.kpis.negativeCount}
           />
         </div>
+      </div>
+
+      {/* Topic Bubble Chart */}
+      <div className="bg-white rounded-xl border border-border p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-2">
+          Topic Analysis
+        </h2>
+        <p className="text-sm text-muted mb-4">
+          Bubble size = engagement, X-axis = sentiment, Y-axis = mention count
+        </p>
+        <TopicBubbleChart data={data.topicBubbleData} />
       </div>
 
       {/* Recent Mentions */}

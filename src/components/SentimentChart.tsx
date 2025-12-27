@@ -136,7 +136,118 @@ export function SentimentChart({ data, showMentions = false }: SentimentChartPro
 }
 
 // Pie chart for sentiment distribution
-import { PieChart, Pie, Cell } from 'recharts';
+import { PieChart, Pie, Cell, ScatterChart, Scatter, ZAxis } from 'recharts';
+
+// Bubble Chart for Topic Analysis
+interface BubbleData {
+  name: string;
+  sentiment: number; // x-axis: -1 to 1
+  mentions: number; // y-axis: count
+  engagement: number; // bubble size
+}
+
+interface TopicBubbleChartProps {
+  data: BubbleData[];
+}
+
+export function TopicBubbleChart({ data }: TopicBubbleChartProps) {
+  const formatSentiment = (value: number) => {
+    if (value > 0) return `+${value.toFixed(2)}`;
+    return value.toFixed(2);
+  };
+
+  // Color based on sentiment
+  const getBubbleColor = (sentiment: number) => {
+    if (sentiment > 0.2) return '#22c55e'; // green
+    if (sentiment < -0.2) return '#ef4444'; // red
+    return '#6b7280'; // gray
+  };
+
+  return (
+    <div className="w-full h-[350px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 20 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <XAxis
+            type="number"
+            dataKey="sentiment"
+            domain={[-1, 1]}
+            name="Sentiment"
+            tickFormatter={formatSentiment}
+            tick={{ fontSize: 12, fill: '#6b7280' }}
+            axisLine={{ stroke: '#e5e7eb' }}
+            label={{ value: 'Sentiment', position: 'bottom', offset: 0, fill: '#6b7280', fontSize: 12 }}
+          />
+          <YAxis
+            type="number"
+            dataKey="mentions"
+            name="Mentions"
+            tick={{ fontSize: 12, fill: '#6b7280' }}
+            axisLine={{ stroke: '#e5e7eb' }}
+            label={{ value: 'Mentions', angle: -90, position: 'insideLeft', fill: '#6b7280', fontSize: 12 }}
+          />
+          <ZAxis
+            type="number"
+            dataKey="engagement"
+            range={[100, 1000]}
+            name="Engagement"
+          />
+          <Tooltip
+            cursor={{ strokeDasharray: '3 3' }}
+            contentStyle={{
+              backgroundColor: '#fff',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              padding: '12px',
+            }}
+            formatter={(value, name) => {
+              if (name === 'Sentiment') return [formatSentiment(value as number), name];
+              return [value, name];
+            }}
+            labelFormatter={(_, payload) => {
+              if (payload && payload[0]) {
+                return payload[0].payload.name;
+              }
+              return '';
+            }}
+          />
+          <Scatter
+            data={data}
+            shape={(props: unknown) => {
+              const { cx, cy, payload } = props as { cx: number; cy: number; payload: BubbleData };
+              const size = Math.sqrt(payload.engagement) * 2;
+              return (
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r={Math.max(8, Math.min(size, 40))}
+                  fill={getBubbleColor(payload.sentiment)}
+                  fillOpacity={0.7}
+                  stroke={getBubbleColor(payload.sentiment)}
+                  strokeWidth={2}
+                />
+              );
+            }}
+          />
+        </ScatterChart>
+      </ResponsiveContainer>
+      <div className="flex justify-center gap-6 mt-2">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-[#22c55e]" />
+          <span className="text-xs text-muted">Positive</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-[#6b7280]" />
+          <span className="text-xs text-muted">Neutral</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-[#ef4444]" />
+          <span className="text-xs text-muted">Negative</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface SentimentDistributionProps {
   positive: number;

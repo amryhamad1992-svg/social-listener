@@ -215,6 +215,20 @@ export function generateMockDashboardData(days: number = 7) {
     });
   }
 
+  // Generate bubble chart data for topics
+  const topicBubbleData = [
+    { name: 'Super Lustrous Lipstick', sentiment: 0.72, mentions: 45, engagement: 320 },
+    { name: 'ColorStay Foundation', sentiment: 0.35, mentions: 38, engagement: 250 },
+    { name: 'Oxidizing Issues', sentiment: -0.65, mentions: 22, engagement: 180 },
+    { name: 'Drugstore Value', sentiment: 0.58, mentions: 31, engagement: 200 },
+    { name: 'Shade Range', sentiment: 0.15, mentions: 28, engagement: 150 },
+    { name: 'Dry Lips Concern', sentiment: -0.42, mentions: 18, engagement: 120 },
+    { name: 'Long Lasting', sentiment: 0.81, mentions: 35, engagement: 280 },
+    { name: 'Cruelty Free', sentiment: -0.25, mentions: 15, engagement: 90 },
+    { name: 'Packaging Quality', sentiment: -0.38, mentions: 12, engagement: 75 },
+    { name: 'Color Payoff', sentiment: 0.68, mentions: 42, engagement: 310 },
+  ];
+
   return {
     brand: { id: 1, name: 'Revlon' },
     kpis: {
@@ -229,6 +243,7 @@ export function generateMockDashboardData(days: number = 7) {
       negativeCount,
     },
     sentimentTrend,
+    topicBubbleData,
     recentMentions: posts.slice(0, 10).map(p => ({
       id: p.id,
       title: p.title,
