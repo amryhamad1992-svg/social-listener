@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -29,12 +30,14 @@ export function Sidebar({ brandName = 'Revlon', onLogout }: SidebarProps) {
     <div className="flex flex-col h-full w-56 bg-[#0F172A] text-white">
       {/* Logo */}
       <div className="flex items-center h-14 px-4 border-b border-white/10">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded bg-[#0EA5E9] flex items-center justify-center">
-            <span className="text-white font-semibold text-xs">SL</span>
-          </div>
-          <span className="font-medium text-sm">Social Listener</span>
-        </div>
+        <Image
+          src="/logo.svg"
+          alt="Stackline"
+          width={120}
+          height={21}
+          className="brightness-0 invert"
+          priority
+        />
       </div>
 
       {/* Brand Selector */}

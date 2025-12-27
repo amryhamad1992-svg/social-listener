@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -51,14 +52,17 @@ export default function LoginPage() {
       <div className="max-w-sm w-full">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded bg-[#0F172A] flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">SL</span>
-            </div>
+          <div className="flex justify-center mb-4">
+            <Image
+              src="/logo.svg"
+              alt="Stackline"
+              width={180}
+              height={32}
+              priority
+            />
           </div>
-          <h1 className="text-xl font-medium text-[#1E293B]">Social Listener</h1>
           <p className="text-[13px] text-[#64748B] mt-1">
-            Monitor brand mentions across social media
+            Social Listening Platform
           </p>
         </div>
 
@@ -182,7 +186,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-[11px] text-[#94A3B8] mt-5">
-          Powered by YouTube API & OpenAI
+          A Stackline Product
         </p>
       </div>
     </div>
