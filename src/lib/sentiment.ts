@@ -1,9 +1,17 @@
 // Sentiment Analysis using OpenAI GPT-4o-mini
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy-load OpenAI client to avoid build-time errors
+let openaiClient: OpenAI | null = null;
+
+function getOpenAI(): OpenAI {
+  if (!openaiClient) {
+    openaiClient = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openaiClient;
+}
 
 interface SentimentResult {
   score: number; // -1 to 1
@@ -18,6 +26,7 @@ interface BatchSentimentResult {
 
 export async function analyzeSentiment(text: string, brand: string): Promise<SentimentResult> {
   try {
+    const openai = getOpenAI();
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
