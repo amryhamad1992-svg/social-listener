@@ -8,6 +8,7 @@ import { SentimentChart, SentimentDistribution, TopicBubbleChart } from '@/compo
 import { SentimentBadge } from '@/components/DataTable';
 import { SourceSelector } from '@/components/SourceSelector';
 import { NewsSection } from '@/components/NewsSection';
+import { YouTubeSection } from '@/components/YouTubeSection';
 
 interface DashboardData {
   brand: { name: string };
@@ -177,13 +178,17 @@ export default function DashboardPage() {
         <TopicBubbleChart data={data.topicBubbleData} />
       </div>
 
-      {/* News & Mentions Row */}
+      {/* YouTube & News Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* YouTube Mentions */}
+        <YouTubeSection />
+
         {/* News Coverage */}
         <NewsSection />
+      </div>
 
-        {/* Recent Mentions */}
-        <div className="bg-white rounded-lg p-5 shadow-sm">
+      {/* Recent Mentions */}
+      <div className="bg-white rounded-lg p-5 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-medium text-[#1E293B]">
             Recent Mentions
@@ -238,7 +243,6 @@ export default function DashboardPage() {
               </div>
             ))
           )}
-        </div>
         </div>
       </div>
     </div>
