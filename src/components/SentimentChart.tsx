@@ -117,7 +117,7 @@ export function SentimentChart({ data, showMentions = false }: SentimentChartPro
                 borderRadius: '8px',
                 padding: '12px',
               }}
-              formatter={(value: number) => [formatSentiment(value), 'Sentiment']}
+              formatter={(value) => [formatSentiment(value as number), 'Sentiment']}
               labelFormatter={formatDate}
             />
             <Line
