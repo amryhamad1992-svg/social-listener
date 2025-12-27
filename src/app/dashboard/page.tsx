@@ -9,6 +9,9 @@ import { SentimentBadge } from '@/components/DataTable';
 import { SourceSelector } from '@/components/SourceSelector';
 import { NewsSection } from '@/components/NewsSection';
 import { YouTubeSection } from '@/components/YouTubeSection';
+import { DataSourcesStatus } from '@/components/DataSourcesStatus';
+import { GoogleTrendsIframe } from '@/components/GoogleTrendsWidget';
+import { CompetitorComparison } from '@/components/CompetitorComparison';
 
 interface DashboardData {
   brand: { name: string };
@@ -100,24 +103,27 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-start justify-between gap-6">
+        <div className="flex-1">
           <h1 className="text-xl font-medium text-[#1E293B]">Dashboard</h1>
           <p className="text-[13px] text-[#64748B] mt-0.5">
-            Monitoring {data.brand.name} mentions across social media
+            Monitoring {data.brand.name} vs e.l.f. across social media
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <SourceSelector />
-          <select
-            value={days}
-            onChange={(e) => setDays(parseInt(e.target.value, 10))}
-            className="px-3 py-1.5 text-[13px] border border-[#E2E8F0] rounded bg-white focus:outline-none focus:border-[#0EA5E9]"
-          >
-            <option value={7}>Last 7 days</option>
-            <option value={14}>Last 14 days</option>
-            <option value={30}>Last 30 days</option>
-          </select>
+        <div className="flex items-start gap-4">
+          <DataSourcesStatus />
+          <div className="flex flex-col gap-2">
+            <SourceSelector />
+            <select
+              value={days}
+              onChange={(e) => setDays(parseInt(e.target.value, 10))}
+              className="px-3 py-1.5 text-[13px] border border-[#E2E8F0] rounded bg-white focus:outline-none focus:border-[#0EA5E9]"
+            >
+              <option value={7}>Last 7 days</option>
+              <option value={14}>Last 14 days</option>
+              <option value={30}>Last 30 days</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -185,6 +191,15 @@ export default function DashboardPage() {
 
         {/* News Coverage */}
         <NewsSection />
+      </div>
+
+      {/* Google Trends & Competitor Comparison Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Google Trends */}
+        <GoogleTrendsIframe keywords={['Revlon', 'e.l.f. Cosmetics']} />
+
+        {/* Competitor Comparison */}
+        <CompetitorComparison />
       </div>
 
       {/* Recent Mentions */}
