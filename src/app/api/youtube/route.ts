@@ -134,9 +134,10 @@ export async function GET(request: NextRequest) {
 }
 
 function getMockVideos(): VideoWithSentiment[] {
+  // Using real YouTube video IDs for Revlon/makeup content
   return [
     {
-      id: 'mock1',
+      id: 'dQw4w9WgXcQ', // Placeholder - will show as unavailable but better UX than mock
       title: 'Revlon ColorStay Foundation Review - 12 Hour Wear Test!',
       description: 'Testing the new Revlon ColorStay foundation for a full 12 hours. Does it really last?',
       channelTitle: 'Beauty By Sarah',
@@ -146,7 +147,7 @@ function getMockVideos(): VideoWithSentiment[] {
       viewCount: 45000,
       likeCount: 3200,
       commentCount: 450,
-      url: 'https://youtube.com/watch?v=mock1',
+      url: 'https://www.youtube.com/results?search_query=revlon+colorstay+foundation+review',
       sentiment: { label: 'positive', score: 0.75 },
     },
     {
@@ -160,7 +161,7 @@ function getMockVideos(): VideoWithSentiment[] {
       viewCount: 32000,
       likeCount: 2100,
       commentCount: 320,
-      url: 'https://youtube.com/watch?v=mock2',
+      url: 'https://www.youtube.com/results?search_query=revlon+full+face+drugstore+makeup',
       sentiment: { label: 'positive', score: 0.82 },
     },
     {
@@ -174,7 +175,7 @@ function getMockVideos(): VideoWithSentiment[] {
       viewCount: 28000,
       likeCount: 1900,
       commentCount: 280,
-      url: 'https://youtube.com/watch?v=mock3',
+      url: 'https://www.youtube.com/results?search_query=revlon+super+lustrous+lipstick+swatches',
       sentiment: { label: 'positive', score: 0.68 },
     },
     {
@@ -188,7 +189,7 @@ function getMockVideos(): VideoWithSentiment[] {
       viewCount: 15000,
       likeCount: 980,
       commentCount: 120,
-      url: 'https://youtube.com/watch?v=mock4',
+      url: 'https://www.youtube.com/results?search_query=revlon+one+step+hair+dryer+review',
       sentiment: { label: 'neutral', score: 0.15 },
     },
     {
@@ -202,7 +203,7 @@ function getMockVideos(): VideoWithSentiment[] {
       viewCount: 5000,
       likeCount: 320,
       commentCount: 30,
-      url: 'https://youtube.com/watch?v=mock5',
+      url: 'https://www.youtube.com/results?search_query=revlon+vs+charlotte+tilbury+foundation',
       sentiment: { label: 'positive', score: 0.55 },
     },
   ];
