@@ -9,6 +9,7 @@ import { SourceStatusBar } from '@/components/SourceStatusBar';
 import { BrandKeywordExplorer } from '@/components/BrandKeywordExplorer';
 import { MediaMentions } from '@/components/MediaMentions';
 import { CompetitorComparison } from '@/components/CompetitorComparison';
+import { SearchTrends } from '@/components/SearchTrends';
 
 interface DashboardData {
   brand: { name: string };
@@ -169,6 +170,9 @@ export default function DashboardPage() {
 
       {/* Brand Keyword Explorer */}
       <BrandKeywordExplorer />
+
+      {/* Google Search Trends */}
+      <SearchTrends />
 
       {/* Media Mentions & Competitor Comparison */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

@@ -5,13 +5,116 @@ import { useRouter } from 'next/navigation';
 import { Loader2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { DataTable, SentimentBadge, ChangeIndicator } from '@/components/DataTable';
+import { SearchTrends } from '@/components/SearchTrends';
 
 interface TrendingItem {
   term: string;
   mentions: number;
   sentiment: number;
   change: number;
+  source?: string;
 }
+
+// Mock trending data by brand
+const BRAND_TRENDING: { [key: string]: { [days: number]: TrendingItem[] } } = {
+  'All Brands': {
+    7: [
+      { term: 'drugstore makeup', mentions: 1250, sentiment: 0.45, change: 18, source: 'YouTube' },
+      { term: 'clean girl aesthetic', mentions: 980, sentiment: 0.72, change: 35, source: 'News' },
+      { term: 'lip combo', mentions: 820, sentiment: 0.65, change: 42, source: 'YouTube' },
+      { term: 'foundation review', mentions: 750, sentiment: 0.38, change: 12, source: 'YouTube' },
+      { term: 'mascara comparison', mentions: 680, sentiment: 0.55, change: 8, source: 'YouTube' },
+      { term: 'affordable dupes', mentions: 620, sentiment: 0.68, change: 25, source: 'News' },
+    ],
+    14: [
+      { term: 'drugstore makeup', mentions: 2450, sentiment: 0.48, change: 22, source: 'YouTube' },
+      { term: 'clean girl aesthetic', mentions: 1850, sentiment: 0.75, change: 40, source: 'News' },
+      { term: 'lip combo', mentions: 1620, sentiment: 0.62, change: 38, source: 'YouTube' },
+      { term: 'foundation review', mentions: 1480, sentiment: 0.42, change: 15, source: 'YouTube' },
+      { term: 'mascara comparison', mentions: 1350, sentiment: 0.58, change: 12, source: 'YouTube' },
+      { term: 'affordable dupes', mentions: 1220, sentiment: 0.72, change: 28, source: 'News' },
+    ],
+    30: [
+      { term: 'drugstore makeup', mentions: 5200, sentiment: 0.52, change: 28, source: 'YouTube' },
+      { term: 'clean girl aesthetic', mentions: 3950, sentiment: 0.78, change: 45, source: 'News' },
+      { term: 'lip combo', mentions: 3420, sentiment: 0.65, change: 42, source: 'YouTube' },
+      { term: 'foundation review', mentions: 3150, sentiment: 0.45, change: 18, source: 'YouTube' },
+      { term: 'mascara comparison', mentions: 2880, sentiment: 0.62, change: 15, source: 'YouTube' },
+      { term: 'affordable dupes', mentions: 2580, sentiment: 0.75, change: 32, source: 'News' },
+    ],
+  },
+  Revlon: {
+    7: [
+      { term: 'colorstay foundation', mentions: 450, sentiment: 0.52, change: 15, source: 'YouTube' },
+      { term: 'super lustrous lipstick', mentions: 380, sentiment: 0.68, change: 8, source: 'YouTube' },
+      { term: 'one step hair dryer', mentions: 520, sentiment: 0.75, change: 32, source: 'YouTube' },
+      { term: 'revlon review', mentions: 290, sentiment: 0.42, change: -5, source: 'News' },
+      { term: 'drugstore vs high end', mentions: 180, sentiment: 0.55, change: 12, source: 'YouTube' },
+    ],
+    14: [
+      { term: 'colorstay foundation', mentions: 920, sentiment: 0.55, change: 18, source: 'YouTube' },
+      { term: 'super lustrous lipstick', mentions: 780, sentiment: 0.72, change: 12, source: 'YouTube' },
+      { term: 'one step hair dryer', mentions: 1050, sentiment: 0.78, change: 38, source: 'YouTube' },
+      { term: 'revlon review', mentions: 580, sentiment: 0.45, change: -2, source: 'News' },
+      { term: 'drugstore vs high end', mentions: 380, sentiment: 0.58, change: 15, source: 'YouTube' },
+    ],
+    30: [
+      { term: 'colorstay foundation', mentions: 1850, sentiment: 0.58, change: 22, source: 'YouTube' },
+      { term: 'super lustrous lipstick', mentions: 1580, sentiment: 0.75, change: 15, source: 'YouTube' },
+      { term: 'one step hair dryer', mentions: 2150, sentiment: 0.82, change: 45, source: 'YouTube' },
+      { term: 'revlon review', mentions: 1180, sentiment: 0.48, change: 5, source: 'News' },
+      { term: 'drugstore vs high end', mentions: 780, sentiment: 0.62, change: 18, source: 'YouTube' },
+    ],
+  },
+  'e.l.f.': {
+    7: [
+      { term: 'power grip primer', mentions: 680, sentiment: 0.85, change: 28, source: 'YouTube' },
+      { term: 'camo concealer', mentions: 520, sentiment: 0.78, change: 15, source: 'YouTube' },
+      { term: 'halo glow', mentions: 450, sentiment: 0.82, change: 42, source: 'YouTube' },
+      { term: 'elf dupe', mentions: 380, sentiment: 0.65, change: 35, source: 'YouTube' },
+      { term: 'bronzing drops', mentions: 320, sentiment: 0.72, change: 55, source: 'News' },
+    ],
+    14: [
+      { term: 'power grip primer', mentions: 1380, sentiment: 0.88, change: 32, source: 'YouTube' },
+      { term: 'camo concealer', mentions: 1050, sentiment: 0.82, change: 18, source: 'YouTube' },
+      { term: 'halo glow', mentions: 920, sentiment: 0.85, change: 48, source: 'YouTube' },
+      { term: 'elf dupe', mentions: 780, sentiment: 0.68, change: 38, source: 'YouTube' },
+      { term: 'bronzing drops', mentions: 650, sentiment: 0.75, change: 62, source: 'News' },
+    ],
+    30: [
+      { term: 'power grip primer', mentions: 2850, sentiment: 0.90, change: 38, source: 'YouTube' },
+      { term: 'camo concealer', mentions: 2180, sentiment: 0.85, change: 22, source: 'YouTube' },
+      { term: 'halo glow', mentions: 1920, sentiment: 0.88, change: 52, source: 'YouTube' },
+      { term: 'elf dupe', mentions: 1620, sentiment: 0.72, change: 42, source: 'YouTube' },
+      { term: 'bronzing drops', mentions: 1350, sentiment: 0.78, change: 68, source: 'News' },
+    ],
+  },
+  Maybelline: {
+    7: [
+      { term: 'sky high mascara', mentions: 580, sentiment: 0.72, change: 18, source: 'YouTube' },
+      { term: 'fit me foundation', mentions: 420, sentiment: 0.62, change: 8, source: 'YouTube' },
+      { term: 'superstay lipstick', mentions: 350, sentiment: 0.58, change: 12, source: 'YouTube' },
+      { term: 'vinyl ink', mentions: 280, sentiment: 0.75, change: 25, source: 'YouTube' },
+      { term: 'lash sensational', mentions: 220, sentiment: 0.65, change: 5, source: 'News' },
+    ],
+    14: [
+      { term: 'sky high mascara', mentions: 1180, sentiment: 0.75, change: 22, source: 'YouTube' },
+      { term: 'fit me foundation', mentions: 850, sentiment: 0.65, change: 12, source: 'YouTube' },
+      { term: 'superstay lipstick', mentions: 720, sentiment: 0.62, change: 15, source: 'YouTube' },
+      { term: 'vinyl ink', mentions: 580, sentiment: 0.78, change: 28, source: 'YouTube' },
+      { term: 'lash sensational', mentions: 450, sentiment: 0.68, change: 8, source: 'News' },
+    ],
+    30: [
+      { term: 'sky high mascara', mentions: 2450, sentiment: 0.78, change: 28, source: 'YouTube' },
+      { term: 'fit me foundation', mentions: 1780, sentiment: 0.68, change: 15, source: 'YouTube' },
+      { term: 'superstay lipstick', mentions: 1520, sentiment: 0.65, change: 18, source: 'YouTube' },
+      { term: 'vinyl ink', mentions: 1220, sentiment: 0.82, change: 32, source: 'YouTube' },
+      { term: 'lash sensational', mentions: 950, sentiment: 0.72, change: 12, source: 'News' },
+    ],
+  },
+};
+
+const BRANDS = ['All Brands', 'Revlon', 'e.l.f.', 'Maybelline'];
 
 export default function TrendingPage() {
   const router = useRouter();
@@ -19,26 +122,19 @@ export default function TrendingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [days, setDays] = useState(7);
+  const [selectedBrand, setSelectedBrand] = useState('Revlon');
 
   useEffect(() => {
     fetchTrending();
-  }, [days]);
+  }, [days, selectedBrand]);
 
   const fetchTrending = async () => {
+    setLoading(true);
     try {
-      const response = await fetch(`/api/trending?days=${days}`);
-      const result = await response.json();
-
-      if (!result.success) {
-        if (response.status === 401) {
-          router.push('/login');
-          return;
-        }
-        setError(result.error);
-        return;
-      }
-
-      setData(result.data.trending);
+      // Use mock data for now
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const brandData = BRAND_TRENDING[selectedBrand]?.[days] || [];
+      setData(brandData);
     } catch {
       setError('Failed to load trending data');
     } finally {
@@ -119,11 +215,20 @@ export default function TrendingPage() {
                 Most discussed terms and topics related to your brand
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <select
+                value={selectedBrand}
+                onChange={(e) => setSelectedBrand(e.target.value)}
+                className="px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              >
+                {BRANDS.map((brand) => (
+                  <option key={brand} value={brand}>{brand}</option>
+                ))}
+              </select>
               <select
                 value={days}
                 onChange={(e) => setDays(parseInt(e.target.value, 10))}
-                className="px-4 py-2 border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                className="px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent"
               >
                 <option value={7}>Last 7 days</option>
                 <option value={14}>Last 14 days</option>
@@ -132,29 +237,36 @@ export default function TrendingPage() {
             </div>
           </div>
 
-          {/* Content */}
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="w-8 h-8 animate-spin text-accent" />
-            </div>
-          ) : error ? (
-            <div className="bg-danger/10 text-danger p-4 rounded-lg">
-              {error}
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl border border-border">
-              <DataTable
-                columns={columns}
-                data={data.map((item, index) => ({ ...item, id: index }))}
-              />
-              {data.length === 0 && (
-                <div className="text-center py-12 text-muted">
-                  No trending topics found. Run the data fetcher to populate
-                  data.
-                </div>
-              )}
-            </div>
-          )}
+          {/* Google Search Trends */}
+          <SearchTrends />
+
+          {/* Trending Topics Table */}
+          <div>
+            <h2 className="text-lg font-semibold text-foreground mb-3">
+              {selectedBrand === 'All Brands' ? 'Industry' : selectedBrand} Trending Topics
+            </h2>
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-8 h-8 animate-spin text-accent" />
+              </div>
+            ) : error ? (
+              <div className="bg-danger/10 text-danger p-4 rounded-lg">
+                {error}
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl border border-border">
+                <DataTable
+                  columns={columns}
+                  data={data.map((item, index) => ({ ...item, id: index }))}
+                />
+                {data.length === 0 && (
+                  <div className="text-center py-12 text-muted">
+                    No trending topics found for {selectedBrand}.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>
