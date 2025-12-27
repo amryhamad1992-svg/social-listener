@@ -1,23 +1,21 @@
 'use client';
 
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
-
 interface KPICardProps {
   title: string;
   value: string | number;
   change?: number;
-  changeLabel?: string;
   icon?: React.ReactNode;
   format?: 'number' | 'percent' | 'sentiment';
+  subtitle?: string;
 }
 
 export function KPICard({
   title,
   value,
   change,
-  changeLabel = 'vs last period',
   icon,
   format = 'number',
+  subtitle,
 }: KPICardProps) {
   const formatValue = () => {
     if (format === 'percent') {
@@ -29,9 +27,22 @@ export function KPICard({
       return num.toFixed(2);
     }
     if (typeof value === 'number') {
+      // Format large numbers with K/M suffix
+      if (value >= 1000000) {
+        return `${(value / 1000000).toFixed(2)}M`;
+      }
+      if (value >= 1000) {
+        return `${(value / 1000).toFixed(2)}K`;
+      }
       return value.toLocaleString();
     }
     return value;
+  };
+
+  const formatChange = () => {
+    if (change === undefined) return null;
+    const prefix = change >= 0 ? '+' : '';
+    return `${prefix}${change.toFixed(1)}%`;
   };
 
   const getChangeColor = () => {
@@ -39,42 +50,34 @@ export function KPICard({
     return change > 0 ? 'text-success' : 'text-danger';
   };
 
-  const getChangeIcon = () => {
-    if (change === undefined || change === 0) {
-      return <Minus className="w-4 h-4" />;
-    }
-    return change > 0 ? (
-      <TrendingUp className="w-4 h-4" />
-    ) : (
-      <TrendingDown className="w-4 h-4" />
-    );
-  };
-
   return (
-    <div className="kpi-card">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-muted uppercase tracking-wide">
-            {title}
-          </p>
-          <p className="mt-2 text-3xl font-semibold text-foreground">
-            {formatValue()}
-          </p>
-          {change !== undefined && (
-            <div className={`flex items-center gap-1 mt-2 ${getChangeColor()}`}>
-              {getChangeIcon()}
-              <span className="text-sm font-medium">
-                {change > 0 ? '+' : ''}
-                {change.toFixed(1)}%
-              </span>
-              <span className="text-xs text-muted ml-1">{changeLabel}</span>
-            </div>
-          )}
-        </div>
+    <div className="bg-white rounded-lg p-5 shadow-sm">
+      {/* Label */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[11px] font-medium text-muted uppercase tracking-wider">
+          {title}
+        </span>
         {icon && (
-          <div className="p-2 bg-accent/10 rounded-lg text-accent">{icon}</div>
+          <span className="text-muted">{icon}</span>
         )}
       </div>
+
+      {/* Value and Change */}
+      <div className="flex items-baseline gap-2">
+        <span className="text-[28px] font-medium text-foreground leading-none">
+          {formatValue()}
+        </span>
+        {change !== undefined && (
+          <span className={`text-xs font-medium ${getChangeColor()}`}>
+            {formatChange()}
+          </span>
+        )}
+      </div>
+
+      {/* Subtitle */}
+      {subtitle && (
+        <p className="text-xs text-muted mt-1">{subtitle}</p>
+      )}
     </div>
   );
 }

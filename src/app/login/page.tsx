@@ -47,31 +47,31 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
-      <div className="max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] py-12 px-4">
+      <div className="max-w-sm w-full">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-              <span className="text-white font-bold text-xl">SL</span>
+            <div className="w-10 h-10 rounded bg-[#0F172A] flex items-center justify-center">
+              <span className="text-white font-semibold text-sm">SL</span>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Social Listener</h1>
-          <p className="text-muted mt-2">
+          <h1 className="text-xl font-medium text-[#1E293B]">Social Listener</h1>
+          <p className="text-[13px] text-[#64748B] mt-1">
             Monitor brand mentions across social media
           </p>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-lg border border-border p-8">
-          <h2 className="text-xl font-semibold text-foreground mb-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-[15px] font-medium text-[#1E293B] mb-5">
             {isLogin ? 'Sign in to your account' : 'Create your account'}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
+                <label className="block text-[12px] font-medium text-[#64748B] uppercase tracking-wider mb-1.5">
                   Name
                 </label>
                 <input
@@ -80,14 +80,14 @@ export default function LoginPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  className="w-full px-3 py-2 text-[13px] border border-[#E2E8F0] rounded focus:outline-none focus:border-[#0EA5E9]"
                   placeholder="Your name"
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label className="block text-[12px] font-medium text-[#64748B] uppercase tracking-wider mb-1.5">
                 Email
               </label>
               <input
@@ -97,13 +97,13 @@ export default function LoginPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                className="w-full px-3 py-2 text-[13px] border border-[#E2E8F0] rounded focus:outline-none focus:border-[#0EA5E9]"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label className="block text-[12px] font-medium text-[#64748B] uppercase tracking-wider mb-1.5">
                 Password
               </label>
               <div className="relative">
@@ -114,25 +114,25 @@ export default function LoginPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })
                   }
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent pr-10"
+                  className="w-full px-3 py-2 text-[13px] border border-[#E2E8F0] rounded focus:outline-none focus:border-[#0EA5E9] pr-10"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#64748B]"
                 >
                   {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
+                    <EyeOff className="w-4 h-4" />
                   ) : (
-                    <Eye className="w-5 h-5" />
+                    <Eye className="w-4 h-4" />
                   )}
                 </button>
               </div>
             </div>
 
             {error && (
-              <div className="bg-danger/10 text-danger text-sm p-3 rounded-lg">
+              <div className="bg-red-50 text-red-600 text-[12px] p-3 rounded">
                 {error}
               </div>
             )}
@@ -140,20 +140,20 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary text-white py-2 px-4 rounded-lg font-medium hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-[#0F172A] text-white py-2 px-4 rounded text-[13px] font-medium hover:bg-[#1E293B] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {isLogin ? 'Sign In' : 'Create Account'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-5 text-center">
             <button
               onClick={() => {
                 setIsLogin(!isLogin);
                 setError('');
               }}
-              className="text-sm text-accent hover:underline"
+              className="text-[12px] text-[#0EA5E9] hover:underline"
             >
               {isLogin
                 ? "Don't have an account? Sign up"
@@ -162,26 +162,26 @@ export default function LoginPage() {
           </div>
 
           {/* Demo Mode Divider */}
-          <div className="mt-6 relative">
+          <div className="mt-5 relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border"></div>
+              <div className="w-full border-t border-[#E2E8F0]"></div>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-muted">or</span>
+            <div className="relative flex justify-center text-[11px]">
+              <span className="px-2 bg-white text-[#94A3B8]">or</span>
             </div>
           </div>
 
           {/* Demo Mode Button */}
           <button
             onClick={() => router.push('/dashboard')}
-            className="mt-4 w-full py-2 px-4 border border-accent text-accent rounded-lg font-medium hover:bg-accent/5 transition-colors"
+            className="mt-4 w-full py-2 px-4 border border-[#E2E8F0] text-[#1E293B] rounded text-[13px] font-medium hover:bg-[#F8FAFC] transition-colors"
           >
             View Demo (Mock Data)
           </button>
         </div>
 
         {/* Footer */}
-        <p className="text-center text-sm text-muted mt-6">
+        <p className="text-center text-[11px] text-[#94A3B8] mt-5">
           Powered by YouTube API & OpenAI
         </p>
       </div>
