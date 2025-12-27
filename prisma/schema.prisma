@@ -1,0 +1,116 @@
+// Social Listener - Database Schema
+// PostgreSQL database hosted on Railway
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Users table - authentication and preferences
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  name          String?
+  selectedBrandId Int?   @map("selected_brand_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  selectedBrand Brand? @relation(fields: [selectedBrandId], references: [id])
+
+  @@map("users")
+}
+
+// Brands table - brands being monitored
+model Brand {
+  id          Int      @id @default(autoincrement())
+  name        String
+  keywords    String[] // Array of keywords to search for
+  subreddits  String[] // Array of subreddit names to monitor
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  users         User[]
+  mentions      BrandMention[]
+  trendingTerms TrendingTerm[]
+
+  @@map("brands")
+}
+
+// Reddit Posts table - raw posts from Reddit
+model RedditPost {
+  id           Int      @id @default(autoincrement())
+  redditId     String   @unique @map("reddit_id")
+  subreddit    String
+  title        String
+  body         String?  @db.Text
+  author       String?
+  score        Int      @default(0)
+  numComments  Int      @default(0) @map("num_comments")
+  url          String?
+  permalink    String?
+  createdUtc   DateTime @map("created_utc")
+  fetchedAt    DateTime @default(now()) @map("fetched_at")
+
+  mentions BrandMention[]
+
+  @@index([subreddit])
+  @@index([createdUtc])
+  @@map("reddit_posts")
+}
+
+// Brand Mentions table - detected mentions with sentiment
+model BrandMention {
+  id             Int      @id @default(autoincrement())
+  brandId        Int      @map("brand_id")
+  postId         Int      @map("post_id")
+  mentionType    String   @map("mention_type") // 'title', 'body', 'comment'
+  matchedKeyword String   @map("matched_keyword")
+  sentimentScore Float?   @map("sentiment_score") // -1 to 1
+  sentimentLabel String?  @map("sentiment_label") // 'positive', 'neutral', 'negative'
+  snippet        String?  @db.Text // Context around the mention
+  analyzedAt     DateTime? @map("analyzed_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  brand Brand      @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  post  RedditPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([brandId])
+  @@index([createdAt])
+  @@index([sentimentLabel])
+  @@map("brand_mentions")
+}
+
+// Trending Terms table - aggregated daily trending data
+model TrendingTerm {
+  id           Int      @id @default(autoincrement())
+  brandId      Int      @map("brand_id")
+  term         String
+  mentionCount Int      @map("mention_count")
+  avgSentiment Float?   @map("avg_sentiment")
+  date         DateTime @db.Date
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@unique([brandId, term, date])
+  @@index([date])
+  @@map("trending_terms")
+}
+
+// Fetch Log table - track API fetches for rate limiting
+model FetchLog {
+  id          Int      @id @default(autoincrement())
+  subreddit   String
+  postsFetched Int     @map("posts_fetched")
+  fetchedAt   DateTime @default(now()) @map("fetched_at")
+  success     Boolean  @default(true)
+  errorMessage String? @map("error_message")
+
+  @@index([fetchedAt])
+  @@map("fetch_logs")
+}
