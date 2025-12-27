@@ -2,15 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ExternalLink } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { KPICard } from '@/components/KPICard';
-import { SentimentChart, SentimentDistribution, TopicBubbleChart } from '@/components/SentimentChart';
-import { SentimentBadge } from '@/components/DataTable';
-import { SourceSelector } from '@/components/SourceSelector';
-import { NewsSection } from '@/components/NewsSection';
-import { YouTubeSection } from '@/components/YouTubeSection';
-import { DataSourcesStatus } from '@/components/DataSourcesStatus';
-import { GoogleTrendsIframe } from '@/components/GoogleTrendsWidget';
+import { SentimentChart, SentimentDistribution } from '@/components/SentimentChart';
+import { SourceStatusBar } from '@/components/SourceStatusBar';
+import { BrandKeywordExplorer } from '@/components/BrandKeywordExplorer';
+import { MediaMentions } from '@/components/MediaMentions';
 import { CompetitorComparison } from '@/components/CompetitorComparison';
 
 interface DashboardData {
@@ -103,27 +100,24 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-6">
-        <div className="flex-1">
+      <div className="flex items-center justify-between">
+        <div>
           <h1 className="text-xl font-medium text-[#1E293B]">Dashboard</h1>
           <p className="text-[13px] text-[#64748B] mt-0.5">
-            Monitoring {data.brand.name} vs e.l.f. across social media
+            Brand monitoring and competitive intelligence
           </p>
         </div>
-        <div className="flex items-start gap-4">
-          <DataSourcesStatus />
-          <div className="flex flex-col gap-2">
-            <SourceSelector />
-            <select
-              value={days}
-              onChange={(e) => setDays(parseInt(e.target.value, 10))}
-              className="px-3 py-1.5 text-[13px] border border-[#E2E8F0] rounded bg-white focus:outline-none focus:border-[#0EA5E9]"
-            >
-              <option value={7}>Last 7 days</option>
-              <option value={14}>Last 14 days</option>
-              <option value={30}>Last 30 days</option>
-            </select>
-          </div>
+        <div className="flex items-center gap-4">
+          <SourceStatusBar />
+          <select
+            value={days}
+            onChange={(e) => setDays(parseInt(e.target.value, 10))}
+            className="px-3 py-1.5 text-[12px] border border-[#E2E8F0] rounded bg-white focus:outline-none focus:border-[#0EA5E9]"
+          >
+            <option value={7}>Last 7 days</option>
+            <option value={14}>Last 14 days</option>
+            <option value={30}>Last 30 days</option>
+          </select>
         </div>
       </div>
 
@@ -173,92 +167,13 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Topic Bubble Chart */}
-      <div className="bg-white rounded-lg p-5 shadow-sm">
-        <h2 className="text-sm font-medium text-[#1E293B] mb-1">
-          Topic Analysis
-        </h2>
-        <p className="text-[11px] text-[#64748B] mb-4">
-          Bubble size = engagement, X-axis = sentiment, Y-axis = mention count
-        </p>
-        <TopicBubbleChart data={data.topicBubbleData} />
-      </div>
+      {/* Brand Keyword Explorer */}
+      <BrandKeywordExplorer />
 
-      {/* YouTube & News Row */}
+      {/* Media Mentions & Competitor Comparison */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* YouTube Mentions */}
-        <YouTubeSection />
-
-        {/* News Coverage */}
-        <NewsSection />
-      </div>
-
-      {/* Google Trends & Competitor Comparison Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Google Trends */}
-        <GoogleTrendsIframe keywords={['Revlon', 'e.l.f. Cosmetics']} />
-
-        {/* Competitor Comparison */}
+        <MediaMentions />
         <CompetitorComparison />
-      </div>
-
-      {/* Recent Mentions */}
-      <div className="bg-white rounded-lg p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-medium text-[#1E293B]">
-            Recent Mentions
-          </h2>
-          <button
-            onClick={() => router.push('/mentions')}
-            className="text-[12px] text-[#0EA5E9] hover:underline"
-          >
-            View all
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          {data.recentMentions.length === 0 ? (
-            <p className="text-[#64748B] text-center py-8 text-sm">
-              No mentions found. Connect a data source to start monitoring.
-            </p>
-          ) : (
-            data.recentMentions.map((mention) => (
-              <div
-                key={mention.id}
-                className="flex items-start gap-3 p-3 bg-[#F8FAFC] rounded hover:bg-[#F1F5F9] transition-colors"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm">{mention.sourceIcon}</span>
-                    <span className="text-[11px] font-medium text-[#0EA5E9]">
-                      {mention.source}
-                    </span>
-                    <SentimentBadge label={mention.sentiment} />
-                  </div>
-                  <p className="text-[13px] font-medium text-[#1E293B] truncate">
-                    {mention.title}
-                  </p>
-                  <div className="flex items-center gap-3 mt-1 text-[11px] text-[#64748B]">
-                    <span>{mention.score.toLocaleString()} views</span>
-                    <span>
-                      {new Date(mention.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-                {mention.url && (
-                  <a
-                    href={mention.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#94A3B8] hover:text-[#0EA5E9]"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                )}
-              </div>
-            ))
-          )}
-        </div>
       </div>
     </div>
   );
