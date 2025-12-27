@@ -270,18 +270,21 @@ export function SentimentDistribution({
   ];
 
   return (
-    <div className="flex items-center gap-8">
-      <div className="w-[150px] h-[150px]">
+    <div className="flex flex-col items-center">
+      {/* Pie Chart */}
+      <div className="w-[200px] h-[200px] relative">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={40}
-              outerRadius={60}
-              paddingAngle={2}
+              innerRadius={50}
+              outerRadius={85}
+              paddingAngle={3}
               dataKey="value"
+              stroke="#fff"
+              strokeWidth={2}
             >
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index]} />
@@ -289,17 +292,29 @@ export function SentimentDistribution({
             </Pie>
           </PieChart>
         </ResponsiveContainer>
+        {/* Center total */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-2xl font-semibold text-[#1E293B]">{total}</div>
+            <div className="text-[10px] text-[#64748B] uppercase">Total</div>
+          </div>
+        </div>
       </div>
-      <div className="space-y-3">
+
+      {/* Legend */}
+      <div className="flex justify-center gap-6 mt-4">
         {data.map((item, index) => (
-          <div key={item.name} className="flex items-center gap-3">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: COLORS[index] }}
-            />
-            <span className="text-sm text-muted w-16">{item.name}</span>
-            <span className="font-semibold">{item.value}</span>
-            <span className="text-sm text-muted">({item.percent.toFixed(1)}%)</span>
+          <div key={item.name} className="flex flex-col items-center">
+            <div className="flex items-center gap-2 mb-1">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: COLORS[index] }}
+              />
+              <span className="text-[12px] text-[#64748B]">{item.name}</span>
+            </div>
+            <div className="text-[15px] font-semibold text-[#1E293B]">
+              {item.percent.toFixed(0)}%
+            </div>
           </div>
         ))}
       </div>
