@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
 
         try {
           if (process.env.OPENAI_API_KEY) {
-            sentiment = await analyzeSentiment(text);
+            sentiment = await analyzeSentiment(text, 'Revlon');
           }
         } catch {
           // Default to neutral on error

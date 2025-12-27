@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
         try {
           if (process.env.OPENAI_API_KEY) {
-            sentiment = await analyzeSentiment(text);
+            sentiment = await analyzeSentiment(text, 'Revlon');
           }
         } catch {
           // Default to neutral on error
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
                 let commentSentiment = { label: 'neutral', score: 0 };
                 try {
                   if (process.env.OPENAI_API_KEY) {
-                    commentSentiment = await analyzeSentiment(comment.text);
+                    commentSentiment = await analyzeSentiment(comment.text, 'Revlon');
                   }
                 } catch {
                   // Default to neutral
