@@ -255,7 +255,8 @@ interface SentimentDistributionProps {
   negative: number;
 }
 
-const COLORS = ['#22c55e', '#6b7280', '#ef4444'];
+// Pastel Stackline colors
+const COLORS = ['#86EFAC', '#CBD5E1', '#FCA5A5'];
 
 export function SentimentDistribution({
   positive,
