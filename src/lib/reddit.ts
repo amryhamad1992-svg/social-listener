@@ -57,11 +57,11 @@ class RedditClient {
     }
 
     const data = await response.json();
-    this.accessToken = data.access_token;
+    this.accessToken = data.access_token as string;
     // Token expires in 1 hour, refresh at 55 minutes
     this.tokenExpiry = Date.now() + (55 * 60 * 1000);
 
-    return this.accessToken;
+    return this.accessToken!;
   }
 
   async fetchSubredditPosts(
