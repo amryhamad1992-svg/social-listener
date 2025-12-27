@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 
+// Note: In mock data mode, Prisma won't be used but this import is still needed for type safety
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
