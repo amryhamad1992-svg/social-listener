@@ -1,25 +1,25 @@
 // Mock data for development and demos
-// This simulates Reddit data until API approval is received
+// This simulates social media data until all APIs are connected
 
-const SUBREDDITS = ['MakeupAddiction', 'drugstoreMUA', 'Sephora', 'BeautyGuruChatter', 'SkincareAddiction'];
+const YOUTUBE_CHANNELS = ['Beauty Guru', 'Makeup Tutorial', 'Skincare Expert', 'Drugstore Beauty', 'Glam Reviews'];
 
 const REVLON_KEYWORDS = ['revlon', 'super lustrous', 'colorstay', 'revlon lipstick'];
 
-const POST_TITLES = [
+const VIDEO_TITLES = [
   "Finally found my perfect everyday lipstick - Revlon Super Lustrous in Rose Velvet!",
   "Drugstore foundation comparison: Revlon ColorStay vs L'Oreal vs Maybelline",
-  "Has anyone tried the new Revlon lip products? Looking for reviews",
+  "Has anyone tried the new Revlon lip products? Full review!",
   "My holy grail drugstore makeup routine featuring Revlon",
   "Revlon ColorStay foundation oxidizing on me - help!",
-  "Best drugstore lipsticks for dry lips? Considering Revlon Super Lustrous",
+  "Best drugstore lipsticks for dry lips? Testing Revlon Super Lustrous",
   "Unpopular opinion: Revlon is still one of the best drugstore brands",
   "Revlon vs high-end: are expensive foundations worth it?",
-  "Looking for a Revlon Super Lustrous dupe - any suggestions?",
+  "Looking for a Revlon Super Lustrous dupe - swatches comparison",
   "My mom's been using Revlon for 30 years and her skin looks amazing",
-  "PSA: Revlon ColorStay is 40% off at Target this week!",
+  "PSA: Revlon ColorStay is 40% off this week!",
   "Swatches of all my Revlon lipsticks - 15 shades compared",
-  "Does Revlon test on animals? Trying to switch to cruelty-free",
-  "Revlon foundation broke me out - anyone else experience this?",
+  "Is Revlon cruelty-free? Everything you need to know",
+  "Revlon foundation broke me out - honest review",
   "The staying power of Revlon ColorStay is unmatched for the price",
 ];
 
@@ -48,9 +48,9 @@ const NEUTRAL_BODIES = [
 ];
 
 const AUTHORS = [
-  'makeup_lover_2025', 'beautyjunkie', 'skincare_obsessed', 'drugstore_diva',
-  'lipstick_addict', 'foundation_finder', 'beauty_on_budget', 'glam_girl_99',
-  'cosmetics_queen', 'everyday_beauty', 'natural_look_fan', 'bold_lips_only',
+  'BeautyByMia', 'GlamourGuru', 'MakeupMaven', 'SkincareSally',
+  'LipstickLover', 'FoundationFixer', 'BudgetBeauty', 'GlamGal99',
+  'CosmeticsQueen', 'EverydayGlam', 'NaturalLookFan', 'BoldLipsOnly',
 ];
 
 function randomElement<T>(arr: T[]): T {
@@ -61,34 +61,34 @@ function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function generateRedditId(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+function generateVideoId(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
   let result = '';
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 11; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
 }
 
-export interface MockRedditPost {
+export interface MockPost {
   id: string;
-  redditId: string;
-  subreddit: string;
+  videoId: string;
+  source: string;
+  sourceIcon: string;
   title: string;
   body: string;
   author: string;
   score: number;
   numComments: number;
   url: string;
-  permalink: string;
   createdUtc: Date;
   sentiment: 'positive' | 'neutral' | 'negative';
   sentimentScore: number;
   matchedKeyword: string;
 }
 
-export function generateMockPosts(count: number = 50, daysBack: number = 30): MockRedditPost[] {
-  const posts: MockRedditPost[] = [];
+export function generateMockPosts(count: number = 50, daysBack: number = 30): MockPost[] {
+  const posts: MockPost[] = [];
   const now = new Date();
 
   for (let i = 0; i < count; i++) {
@@ -112,22 +112,22 @@ export function generateMockPosts(count: number = 50, daysBack: number = 30): Mo
       sentimentScore = -1.0 + Math.random() * 0.7; // -1.0 to -0.3
     }
 
-    const redditId = generateRedditId();
-    const subreddit = randomElement(SUBREDDITS);
+    const videoId = generateVideoId();
+    const channel = randomElement(YOUTUBE_CHANNELS);
     const daysAgo = Math.random() * daysBack;
     const createdUtc = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
 
     posts.push({
       id: `mock_${i}`,
-      redditId,
-      subreddit,
-      title: randomElement(POST_TITLES),
+      videoId,
+      source: channel,
+      sourceIcon: '▶️',
+      title: randomElement(VIDEO_TITLES),
       body,
       author: randomElement(AUTHORS),
-      score: randomInt(1, 500),
-      numComments: randomInt(0, 150),
-      url: `https://reddit.com/r/${subreddit}/comments/${redditId}`,
-      permalink: `/r/${subreddit}/comments/${redditId}/post_title/`,
+      score: randomInt(100, 50000),
+      numComments: randomInt(10, 500),
+      url: `https://youtube.com/watch?v=${videoId}`,
       createdUtc,
       sentiment,
       sentimentScore,
@@ -139,7 +139,7 @@ export function generateMockPosts(count: number = 50, daysBack: number = 30): Mo
   return posts.sort((a, b) => b.createdUtc.getTime() - a.createdUtc.getTime());
 }
 
-export function generateMockTrendingTerms(daysBack: number = 7): Array<{
+export function generateMockTrendingTerms(): Array<{
   term: string;
   mentions: number;
   sentiment: number;
@@ -182,13 +182,13 @@ export function generateMockDashboardData(days: number = 7) {
 
   const avgSentiment = posts.reduce((sum, p) => sum + p.sentimentScore, 0) / posts.length;
 
-  // Subreddit distribution
-  const subredditCounts: Record<string, number> = {};
+  // Source distribution
+  const sourceCounts: Record<string, number> = {};
   posts.forEach(p => {
-    subredditCounts[p.subreddit] = (subredditCounts[p.subreddit] || 0) + 1;
+    sourceCounts[p.source] = (sourceCounts[p.source] || 0) + 1;
   });
-  const topSubreddit = Object.entries(subredditCounts)
-    .sort(([,a], [,b]) => b - a)[0]?.[0] || 'MakeupAddiction';
+  const topSource = Object.entries(sourceCounts)
+    .sort(([,a], [,b]) => b - a)[0]?.[0] || 'YouTube';
 
   // Generate daily trend data
   const sentimentTrend = [];
@@ -237,7 +237,7 @@ export function generateMockDashboardData(days: number = 7) {
       avgSentiment,
       sentimentChange: randomInt(-5, 15),
       trendingTopicsCount: randomInt(10, 25),
-      topSubreddit,
+      topSource,
       positiveCount,
       neutralCount,
       negativeCount,
@@ -247,11 +247,12 @@ export function generateMockDashboardData(days: number = 7) {
     recentMentions: posts.slice(0, 10).map(p => ({
       id: p.id,
       title: p.title,
-      subreddit: p.subreddit,
+      source: p.source,
+      sourceIcon: p.sourceIcon,
       sentiment: p.sentiment,
       score: p.score,
       createdAt: p.createdUtc.toISOString(),
-      permalink: p.permalink,
+      url: p.url,
     })),
   };
 }

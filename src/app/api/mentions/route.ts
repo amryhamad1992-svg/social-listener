@@ -30,7 +30,8 @@ export async function GET(request: NextRequest) {
         id: p.id,
         title: p.title,
         body: p.body,
-        subreddit: p.subreddit,
+        source: p.source,
+        sourceIcon: p.sourceIcon,
         author: p.author,
         score: p.score,
         numComments: p.numComments,
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
         sentimentScore: p.sentimentScore,
         matchedKeyword: p.matchedKeyword,
         createdAt: p.createdUtc.toISOString(),
-        permalink: `https://reddit.com${p.permalink}`,
+        url: p.url,
       }));
 
       return NextResponse.json({

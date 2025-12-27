@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
     // Use mock data if database not configured
     if (USE_MOCK_DATA) {
-      const trending = generateMockTrendingTerms(days);
+      const trending = generateMockTrendingTerms();
       return NextResponse.json({
         success: true,
         data: {

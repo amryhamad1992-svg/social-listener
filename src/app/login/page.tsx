@@ -58,7 +58,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-2xl font-bold text-foreground">Social Listener</h1>
           <p className="text-muted mt-2">
-            Monitor brand mentions across Reddit
+            Monitor brand mentions across social media
           </p>
         </div>
 
@@ -182,7 +182,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-sm text-muted mt-6">
-          Powered by Reddit API & OpenAI
+          Powered by YouTube API & OpenAI
         </p>
       </div>
     </div>

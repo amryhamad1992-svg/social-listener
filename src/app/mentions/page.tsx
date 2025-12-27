@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation';
 import { Loader2, ExternalLink, Filter } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { SentimentBadge } from '@/components/DataTable';
+import { SourceSelector } from '@/components/SourceSelector';
 
 interface Mention {
   id: number;
   title: string;
   body: string;
-  subreddit: string;
+  source: string;
+  sourceIcon: string;
   author: string;
   score: number;
   numComments: number;
@@ -18,7 +20,7 @@ interface Mention {
   sentimentScore: number | null;
   matchedKeyword: string;
   createdAt: string;
-  permalink: string | null;
+  url: string | null;
 }
 
 export default function MentionsPage() {
@@ -77,16 +79,19 @@ export default function MentionsPage() {
       <main className="flex-1 overflow-auto">
         <div className="p-8 space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <h1 className="text-2xl font-bold text-foreground">
                 Brand Mentions
               </h1>
               <p className="text-muted mt-1">
-                All Reddit posts mentioning your brand
+                All social media posts mentioning your brand
               </p>
             </div>
             <div className="flex items-center gap-3">
+              {/* Source Selector */}
+              <SourceSelector />
+
               {/* Sentiment Filter */}
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-muted" />
@@ -127,7 +132,7 @@ export default function MentionsPage() {
           ) : mentions.length === 0 ? (
             <div className="bg-white rounded-xl border border-border p-12 text-center">
               <p className="text-muted">
-                No mentions found. Run the data fetcher to populate data.
+                No mentions found. Connect a data source to start monitoring.
               </p>
             </div>
           ) : (
@@ -141,12 +146,13 @@ export default function MentionsPage() {
                     <div className="flex-1 min-w-0">
                       {/* Header */}
                       <div className="flex items-center gap-3 mb-2">
+                        <span className="text-lg">{mention.sourceIcon}</span>
                         <span className="text-sm font-medium text-accent">
-                          r/{mention.subreddit}
+                          {mention.source}
                         </span>
                         <span className="text-muted">•</span>
                         <span className="text-sm text-muted">
-                          u/{mention.author}
+                          {mention.author}
                         </span>
                         <span className="text-muted">•</span>
                         <SentimentBadge label={mention.sentiment} />
@@ -169,7 +175,7 @@ export default function MentionsPage() {
                         <span className="bg-accent/10 text-accent px-2 py-1 rounded">
                           Matched: {mention.matchedKeyword}
                         </span>
-                        <span>{mention.score} upvotes</span>
+                        <span>{mention.score.toLocaleString()} engagements</span>
                         <span>{mention.numComments} comments</span>
                         <span>
                           {new Date(mention.createdAt).toLocaleDateString()}
@@ -178,14 +184,14 @@ export default function MentionsPage() {
                     </div>
 
                     {/* Link */}
-                    {mention.permalink && (
+                    {mention.url && (
                       <a
-                        href={mention.permalink}
+                        href={mention.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-1 text-sm text-accent hover:underline shrink-0"
                       >
-                        View on Reddit
+                        View Source
                         <ExternalLink className="w-4 h-4" />
                       </a>
                     )}

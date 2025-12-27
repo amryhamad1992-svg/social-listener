@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Social Listener - Reddit Brand Monitoring",
-  description: "Monitor brand mentions, sentiment, and trending topics across Reddit",
+  title: "Social Listener - Social Media Brand Monitoring",
+  description: "Monitor brand mentions, sentiment, and trending topics across social media platforms",
 };
 
 export default function RootLayout({

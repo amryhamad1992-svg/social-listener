@@ -13,6 +13,7 @@ import {
 import { KPICard } from '@/components/KPICard';
 import { SentimentChart, SentimentDistribution, TopicBubbleChart } from '@/components/SentimentChart';
 import { SentimentBadge } from '@/components/DataTable';
+import { SourceSelector } from '@/components/SourceSelector';
 
 interface DashboardData {
   brand: { name: string };
@@ -22,7 +23,7 @@ interface DashboardData {
     avgSentiment: number;
     sentimentChange: number;
     trendingTopicsCount: number;
-    topSubreddit: string;
+    topSource: string;
     positiveCount: number;
     neutralCount: number;
     negativeCount: number;
@@ -41,11 +42,12 @@ interface DashboardData {
   recentMentions: Array<{
     id: number;
     title: string;
-    subreddit: string;
+    source: string;
+    sourceIcon: string;
     sentiment: string | null;
     score: number;
     createdAt: string;
-    permalink: string | null;
+    url: string | null;
   }>;
 }
 
@@ -103,14 +105,15 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
           <p className="text-muted mt-1">
-            Monitoring {data.brand.name} mentions across Reddit
+            Monitoring {data.brand.name} mentions across social media
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <SourceSelector />
           <select
             value={days}
             onChange={(e) => setDays(parseInt(e.target.value, 10))}
@@ -144,8 +147,8 @@ export default function DashboardPage() {
           icon={<TrendingUp className="w-5 h-5" />}
         />
         <KPICard
-          title="Top Subreddit"
-          value={`r/${data.kpis.topSubreddit}`}
+          title="Top Source"
+          value={data.kpis.topSource}
           icon={<Hash className="w-5 h-5" />}
         />
       </div>
@@ -201,7 +204,7 @@ export default function DashboardPage() {
         <div className="space-y-4">
           {data.recentMentions.length === 0 ? (
             <p className="text-muted text-center py-8">
-              No mentions found. Run the data fetcher to populate data.
+              No mentions found. Connect a data source to start monitoring.
             </p>
           ) : (
             data.recentMentions.map((mention) => (
@@ -211,8 +214,9 @@ export default function DashboardPage() {
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg">{mention.sourceIcon}</span>
                     <span className="text-xs font-medium text-accent">
-                      r/{mention.subreddit}
+                      {mention.source}
                     </span>
                     <SentimentBadge label={mention.sentiment} />
                   </div>
@@ -220,15 +224,15 @@ export default function DashboardPage() {
                     {mention.title}
                   </p>
                   <div className="flex items-center gap-4 mt-2 text-xs text-muted">
-                    <span>{mention.score} upvotes</span>
+                    <span>{mention.score} engagements</span>
                     <span>
                       {new Date(mention.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
-                {mention.permalink && (
+                {mention.url && (
                   <a
-                    href={`https://reddit.com${mention.permalink}`}
+                    href={mention.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-muted hover:text-accent"
