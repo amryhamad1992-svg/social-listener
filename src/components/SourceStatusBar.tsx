@@ -12,7 +12,7 @@ export function SourceStatusBar() {
   const [sources, setSources] = useState<Source[]>([
     { id: 'youtube', name: 'YouTube', status: 'pending' },
     { id: 'news', name: 'News', status: 'pending' },
-    { id: 'reddit', name: 'Reddit', status: 'pending' },
+    { id: 'web', name: 'Web', status: 'pending' },
   ]);
 
   useEffect(() => {
@@ -48,8 +48,18 @@ export function SourceStatusBar() {
       updated.push({ id: 'news', name: 'News', status: 'disconnected' });
     }
 
-    // Reddit pending
-    updated.push({ id: 'reddit', name: 'Reddit', status: 'pending' });
+    // Check Web Scrapers (Reddit, MakeupAlley, Blogs)
+    try {
+      const res = await fetch('/api/scrape');
+      const data = await res.json();
+      updated.push({
+        id: 'web',
+        name: 'Web',
+        status: data.success ? 'connected' : 'disconnected',
+      });
+    } catch {
+      updated.push({ id: 'web', name: 'Web', status: 'disconnected' });
+    }
 
     setSources(updated);
   };

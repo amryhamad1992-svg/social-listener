@@ -10,6 +10,7 @@ import { BrandKeywordExplorer } from '@/components/BrandKeywordExplorer';
 import { MediaMentions } from '@/components/MediaMentions';
 import { CompetitorComparison } from '@/components/CompetitorComparison';
 import { SearchTrends } from '@/components/SearchTrends';
+import { WebMentions } from '@/components/WebMentions';
 
 interface DashboardData {
   brand: { name: string };
@@ -179,6 +180,9 @@ export default function DashboardPage() {
         <MediaMentions />
         <CompetitorComparison />
       </div>
+
+      {/* Web Mentions (Scraped Sources) */}
+      <WebMentions />
     </div>
   );
 }
