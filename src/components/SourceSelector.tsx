@@ -19,10 +19,12 @@ export function SourceSelector({ onSourceChange }: SourceSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [sources, setSources] = useState<Source[]>([
     { id: 'youtube', name: 'YouTube', enabled: true, icon: '▶️' },
-    { id: 'reddit', name: 'Reddit', enabled: false, comingSoon: true, icon: '🔴' },
-    { id: 'x', name: 'X (Twitter)', enabled: false, comingSoon: true, icon: '𝕏' },
-    { id: 'threads', name: 'Threads', enabled: false, comingSoon: true, icon: '@' },
-    { id: 'meta', name: 'Meta (Facebook/Instagram)', enabled: false, comingSoon: true, icon: '📘' },
+    { id: 'news', name: 'News', enabled: true, icon: '📰' },
+    { id: 'reddit', name: 'Reddit', enabled: true, icon: '🔴' },
+    { id: 'makeupalley', name: 'MakeupAlley', enabled: true, icon: '💄' },
+    { id: 'temptalia', name: 'Temptalia', enabled: true, icon: '💋' },
+    { id: 'intothegloss', name: 'Into The Gloss', enabled: true, icon: '✨' },
+    { id: 'allure', name: 'Allure', enabled: true, icon: '📖' },
   ]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 

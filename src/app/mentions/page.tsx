@@ -2,65 +2,186 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ExternalLink, Filter } from 'lucide-react';
+import { Loader2, ExternalLink, Filter, ThumbsUp, MessageSquare, Flame } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { SentimentBadge } from '@/components/DataTable';
-import { SourceSelector } from '@/components/SourceSelector';
 
-interface Mention {
-  id: number;
+interface UnifiedMention {
+  id: string;
   title: string;
   body: string;
   source: string;
   sourceIcon: string;
-  author: string;
+  author?: string;
   score: number;
   numComments: number;
   sentiment: string | null;
-  sentimentScore: number | null;
   matchedKeyword: string;
   createdAt: string;
-  url: string | null;
+  url: string;
+  isHighEngagement?: boolean;
 }
+
+interface SourceFilter {
+  id: string;
+  name: string;
+  icon: string;
+  enabled: boolean;
+}
+
+const SOURCE_FILTERS: SourceFilter[] = [
+  { id: 'youtube', name: 'YouTube', icon: '▶️', enabled: true },
+  { id: 'news', name: 'News', icon: '📰', enabled: true },
+  { id: 'reddit', name: 'Reddit', icon: '🔴', enabled: true },
+  { id: 'makeupalley', name: 'MakeupAlley', icon: '💄', enabled: true },
+  { id: 'temptalia', name: 'Temptalia', icon: '💋', enabled: true },
+  { id: 'intothegloss', name: 'Into The Gloss', icon: '✨', enabled: true },
+  { id: 'allure', name: 'Allure', icon: '📖', enabled: true },
+];
 
 export default function MentionsPage() {
   const router = useRouter();
-  const [mentions, setMentions] = useState<Mention[]>([]);
+  const [mentions, setMentions] = useState<UnifiedMention[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [days, setDays] = useState(7);
   const [sentiment, setSentiment] = useState<string>('');
-  const [hasMore, setHasMore] = useState(false);
+  const [sources, setSources] = useState<SourceFilter[]>(SOURCE_FILTERS);
 
   useEffect(() => {
-    fetchMentions();
+    fetchAllMentions();
   }, [days, sentiment]);
 
-  const fetchMentions = async () => {
+  const toggleSource = (id: string) => {
+    setSources(prev => prev.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
+  };
+
+  const fetchAllMentions = async () => {
     setLoading(true);
+    const allMentions: UnifiedMention[] = [];
+
     try {
-      const params = new URLSearchParams({
-        days: days.toString(),
-        limit: '50',
-      });
-      if (sentiment) {
-        params.set('sentiment', sentiment);
-      }
-
-      const response = await fetch(`/api/mentions?${params}`);
-      const result = await response.json();
-
-      if (!result.success) {
-        if (response.status === 401) {
-          router.push('/login');
-          return;
+      // Fetch YouTube
+      try {
+        const ytRes = await fetch(`/api/youtube?days=${days}`);
+        const ytData = await ytRes.json();
+        if (ytData.success && ytData.data?.videos) {
+          ytData.data.videos.forEach((v: {
+            id: string;
+            title: string;
+            description: string;
+            channelTitle: string;
+            viewCount: number;
+            likeCount: number;
+            commentCount: number;
+            publishedAt: string;
+            url: string;
+            sentiment?: { label: string };
+          }) => {
+            allMentions.push({
+              id: `yt-${v.id}`,
+              title: v.title,
+              body: v.description?.slice(0, 200) || '',
+              source: 'YouTube',
+              sourceIcon: '▶️',
+              author: v.channelTitle,
+              score: v.viewCount || 0,
+              numComments: v.commentCount || 0,
+              sentiment: v.sentiment?.label || 'neutral',
+              matchedKeyword: 'Revlon',
+              createdAt: v.publishedAt,
+              url: v.url,
+              isHighEngagement: (v.viewCount || 0) > 10000,
+            });
+          });
         }
-        setError(result.error);
-        return;
+      } catch { /* silently fail */ }
+
+      // Fetch News
+      try {
+        const newsRes = await fetch(`/api/news?days=${days}`);
+        const newsData = await newsRes.json();
+        if (newsData.success && newsData.data) {
+          newsData.data.forEach((a: {
+            url: string;
+            title: string;
+            description: string;
+            source: { name: string };
+            publishedAt: string;
+            sentiment?: { label: string };
+          }) => {
+            allMentions.push({
+              id: `news-${a.url}`,
+              title: a.title,
+              body: a.description || '',
+              source: 'News',
+              sourceIcon: '📰',
+              author: a.source?.name,
+              score: 0,
+              numComments: 0,
+              sentiment: a.sentiment?.label || 'neutral',
+              matchedKeyword: 'Revlon',
+              createdAt: a.publishedAt,
+              url: a.url,
+            });
+          });
+        }
+      } catch { /* silently fail */ }
+
+      // Fetch Web Scrapers (Reddit, MakeupAlley, Blogs)
+      try {
+        const scrapeRes = await fetch('/api/scrape');
+        const scrapeData = await scrapeRes.json();
+        if (scrapeData.success && scrapeData.data?.mentions) {
+          scrapeData.data.mentions.forEach((m: {
+            id: string;
+            source: string;
+            title: string;
+            snippet: string;
+            author?: string;
+            engagement: { upvotes?: number; comments?: number };
+            sentiment?: { label: string };
+            matchedKeyword: string;
+            publishedAt: string;
+            url: string;
+            isHighEngagement: boolean;
+          }) => {
+            const iconMap: { [key: string]: string } = {
+              'Reddit': '🔴',
+              'MakeupAlley': '💄',
+              'Temptalia': '💋',
+              'Into The Gloss': '✨',
+              'Allure': '📖',
+            };
+            allMentions.push({
+              id: m.id,
+              title: m.title,
+              body: m.snippet,
+              source: m.source,
+              sourceIcon: iconMap[m.source] || '🌐',
+              author: m.author,
+              score: m.engagement?.upvotes || 0,
+              numComments: m.engagement?.comments || 0,
+              sentiment: m.sentiment?.label || 'neutral',
+              matchedKeyword: m.matchedKeyword,
+              createdAt: m.publishedAt,
+              url: m.url,
+              isHighEngagement: m.isHighEngagement,
+            });
+          });
+        }
+      } catch { /* silently fail */ }
+
+      // Sort by date
+      allMentions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      // Filter by sentiment if selected
+      let filtered = allMentions;
+      if (sentiment) {
+        filtered = filtered.filter(m => m.sentiment === sentiment);
       }
 
-      setMentions(result.data.mentions);
-      setHasMore(result.data.pagination.hasMore);
+      setMentions(filtered);
     } catch {
       setError('Failed to load mentions');
     } finally {
@@ -72,6 +193,23 @@ export default function MentionsPage() {
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
   };
+
+  // Get source name mapping for filtering
+  const getSourceId = (source: string): string => {
+    const map: { [key: string]: string } = {
+      'YouTube': 'youtube',
+      'News': 'news',
+      'Reddit': 'reddit',
+      'MakeupAlley': 'makeupalley',
+      'Temptalia': 'temptalia',
+      'Into The Gloss': 'intothegloss',
+      'Allure': 'allure',
+    };
+    return map[source] || source.toLowerCase();
+  };
+
+  const enabledSourceIds = sources.filter(s => s.enabled).map(s => s.id);
+  const filteredMentions = mentions.filter(m => enabledSourceIds.includes(getSourceId(m.source)));
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -85,20 +223,17 @@ export default function MentionsPage() {
                 Brand Mentions
               </h1>
               <p className="text-muted mt-1">
-                All social media posts mentioning your brand
+                All mentions from YouTube, News, and Web sources
               </p>
             </div>
             <div className="flex items-center gap-3">
-              {/* Source Selector */}
-              <SourceSelector />
-
               {/* Sentiment Filter */}
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-muted" />
                 <select
                   value={sentiment}
                   onChange={(e) => setSentiment(e.target.value)}
-                  className="px-4 py-2 border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent"
                 >
                   <option value="">All Sentiments</option>
                   <option value="positive">Positive</option>
@@ -111,13 +246,37 @@ export default function MentionsPage() {
               <select
                 value={days}
                 onChange={(e) => setDays(parseInt(e.target.value, 10))}
-                className="px-4 py-2 border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                className="px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent"
               >
                 <option value={7}>Last 7 days</option>
                 <option value={14}>Last 14 days</option>
                 <option value={30}>Last 30 days</option>
               </select>
             </div>
+          </div>
+
+          {/* Source Filters */}
+          <div className="flex flex-wrap items-center gap-3 p-4 bg-white rounded-lg border border-border">
+            <span className="text-sm text-muted font-medium">Sources:</span>
+            {sources.map((source) => (
+              <label key={source.id} className="flex items-center gap-2 cursor-pointer">
+                <div
+                  className={`w-4 h-4 border-2 rounded flex items-center justify-center transition-colors ${
+                    source.enabled
+                      ? 'bg-[#0F172A] border-[#0F172A]'
+                      : 'bg-white border-gray-300'
+                  }`}
+                  onClick={() => toggleSource(source.id)}
+                >
+                  {source.enabled && (
+                    <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </div>
+                <span className="text-sm">{source.icon} {source.name}</span>
+              </label>
+            ))}
           </div>
 
           {/* Content */}
@@ -129,37 +288,50 @@ export default function MentionsPage() {
             <div className="bg-danger/10 text-danger p-4 rounded-lg">
               {error}
             </div>
-          ) : mentions.length === 0 ? (
+          ) : filteredMentions.length === 0 ? (
             <div className="bg-white rounded-xl border border-border p-12 text-center">
               <p className="text-muted">
-                No mentions found. Connect a data source to start monitoring.
+                No mentions found. Try enabling more sources or adjusting filters.
               </p>
             </div>
           ) : (
             <div className="space-y-4">
-              {mentions.map((mention) => (
+              <p className="text-sm text-muted">
+                Showing {filteredMentions.length} mentions from {enabledSourceIds.length} sources
+              </p>
+              {filteredMentions.map((mention) => (
                 <div
                   key={mention.id}
-                  className="bg-white rounded-xl border border-border p-6 hover:border-accent/50 transition-colors"
+                  className="bg-white rounded-xl border border-border p-5 hover:border-accent/50 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       {/* Header */}
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <span className="text-lg">{mention.sourceIcon}</span>
                         <span className="text-sm font-medium text-accent">
                           {mention.source}
                         </span>
-                        <span className="text-muted">•</span>
-                        <span className="text-sm text-muted">
-                          {mention.author}
-                        </span>
+                        {mention.author && (
+                          <>
+                            <span className="text-muted">•</span>
+                            <span className="text-sm text-muted">
+                              {mention.author}
+                            </span>
+                          </>
+                        )}
                         <span className="text-muted">•</span>
                         <SentimentBadge label={mention.sentiment} />
+                        {mention.isHighEngagement && (
+                          <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded">
+                            <Flame className="w-3 h-3" />
+                            Hot
+                          </span>
+                        )}
                       </div>
 
                       {/* Title */}
-                      <h3 className="font-semibold text-foreground mb-2">
+                      <h3 className="font-semibold text-foreground mb-2 line-clamp-2">
                         {mention.title}
                       </h3>
 
@@ -171,12 +343,22 @@ export default function MentionsPage() {
                       )}
 
                       {/* Meta */}
-                      <div className="flex items-center gap-4 text-xs text-muted">
+                      <div className="flex items-center gap-3 text-xs text-muted flex-wrap">
                         <span className="bg-accent/10 text-accent px-2 py-1 rounded">
-                          Matched: {mention.matchedKeyword}
+                          {mention.matchedKeyword}
                         </span>
-                        <span>{mention.score.toLocaleString()} engagements</span>
-                        <span>{mention.numComments} comments</span>
+                        {mention.score > 0 && (
+                          <span className="flex items-center gap-1">
+                            <ThumbsUp className="w-3 h-3" />
+                            {mention.score.toLocaleString()}
+                          </span>
+                        )}
+                        {mention.numComments > 0 && (
+                          <span className="flex items-center gap-1">
+                            <MessageSquare className="w-3 h-3" />
+                            {mention.numComments}
+                          </span>
+                        )}
                         <span>
                           {new Date(mention.createdAt).toLocaleDateString()}
                         </span>
@@ -191,26 +373,13 @@ export default function MentionsPage() {
                         rel="noopener noreferrer"
                         className="flex items-center gap-1 text-sm text-accent hover:underline shrink-0"
                       >
-                        View Source
+                        View
                         <ExternalLink className="w-4 h-4" />
                       </a>
                     )}
                   </div>
                 </div>
               ))}
-
-              {hasMore && (
-                <div className="text-center py-4">
-                  <button
-                    onClick={() => {
-                      /* Load more logic */
-                    }}
-                    className="text-accent hover:underline"
-                  >
-                    Load more
-                  </button>
-                </div>
-              )}
             </div>
           )}
         </div>

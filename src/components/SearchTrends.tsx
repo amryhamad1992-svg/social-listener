@@ -106,16 +106,25 @@ const COLORS = {
   accent: '#0EA5E9',
 };
 
+const DAYS_OPTIONS = [
+  { value: 7, label: '7 days', trendsParam: 'now 7-d' },
+  { value: 14, label: '14 days', trendsParam: 'today 1-m' },
+  { value: 30, label: '30 days', trendsParam: 'today 1-m' },
+  { value: 90, label: '90 days', trendsParam: 'today 3-m' },
+];
+
 export function SearchTrends() {
   const [selectedBrand, setSelectedBrand] = useState('Revlon');
   const [view, setView] = useState<'branded' | 'generic'>('branded');
+  const [days, setDays] = useState(90);
 
   const brandData = BRAND_TRENDS[selectedBrand];
   const displayTerms = view === 'branded' ? brandData.branded : GENERIC_TRENDS;
 
+  const daysOption = DAYS_OPTIONS.find(d => d.value === days) || DAYS_OPTIONS[3];
   const googleTrendsUrl = view === 'branded'
-    ? `https://trends.google.com/trends/explore?q=${encodeURIComponent(selectedBrand)}&geo=US&cat=44`
-    : `https://trends.google.com/trends/explore?q=drugstore%20makeup,makeup%20tutorial&geo=US&cat=44`;
+    ? `https://trends.google.com/trends/explore?q=${encodeURIComponent(selectedBrand)}&geo=US&cat=44&date=${encodeURIComponent(daysOption.trendsParam)}`
+    : `https://trends.google.com/trends/explore?q=drugstore%20makeup,makeup%20tutorial&geo=US&cat=44&date=${encodeURIComponent(daysOption.trendsParam)}`;
 
   return (
     <div className="bg-white rounded-lg p-5 shadow-sm">
@@ -162,6 +171,17 @@ export function SearchTrends() {
               ))}
             </select>
           )}
+
+          {/* Days Selector */}
+          <select
+            value={days}
+            onChange={(e) => setDays(parseInt(e.target.value, 10))}
+            className="px-2 py-1 text-[11px] border border-[#E2E8F0] rounded bg-white focus:outline-none focus:border-[#0F172A]"
+          >
+            {DAYS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
 
           <a
             href={googleTrendsUrl}
@@ -220,7 +240,7 @@ export function SearchTrends() {
         <span className="text-[10px] text-[#64748B] uppercase tracking-wide font-medium">
           {view === 'branded' ? `Top ${selectedBrand} Searches` : 'Trending Beauty Terms'}
         </span>
-        <span className="text-[9px] text-[#94A3B8] ml-auto">Last 90 days</span>
+        <span className="text-[9px] text-[#94A3B8] ml-auto">Last {days} days</span>
       </div>
 
       {/* Terms Grid */}

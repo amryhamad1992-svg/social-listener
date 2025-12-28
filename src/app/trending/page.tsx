@@ -215,56 +215,56 @@ export default function TrendingPage() {
                 Most discussed terms and topics related to your brand
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <select
-                value={selectedBrand}
-                onChange={(e) => setSelectedBrand(e.target.value)}
-                className="px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent"
-              >
-                {BRANDS.map((brand) => (
-                  <option key={brand} value={brand}>{brand}</option>
-                ))}
-              </select>
-              <select
-                value={days}
-                onChange={(e) => setDays(parseInt(e.target.value, 10))}
-                className="px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent"
-              >
-                <option value={7}>Last 7 days</option>
-                <option value={14}>Last 14 days</option>
-                <option value={30}>Last 30 days</option>
-              </select>
-            </div>
           </div>
 
           {/* Google Search Trends */}
           <SearchTrends />
 
           {/* Trending Topics Table */}
-          <div>
-            <h2 className="text-lg font-semibold text-foreground mb-3">
-              {selectedBrand === 'All Brands' ? 'Industry' : selectedBrand} Trending Topics
-            </h2>
+          <div className="bg-white rounded-xl border border-border">
+            {/* Table Header with Filters */}
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground">
+                {selectedBrand === 'All Brands' ? 'Industry' : selectedBrand} Trending Topics
+              </h2>
+              <div className="flex items-center gap-3">
+                <select
+                  value={selectedBrand}
+                  onChange={(e) => setSelectedBrand(e.target.value)}
+                  className="px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                >
+                  {BRANDS.map((brand) => (
+                    <option key={brand} value={brand}>{brand}</option>
+                  ))}
+                </select>
+                <select
+                  value={days}
+                  onChange={(e) => setDays(parseInt(e.target.value, 10))}
+                  className="px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                >
+                  <option value={7}>Last 7 days</option>
+                  <option value={14}>Last 14 days</option>
+                  <option value={30}>Last 30 days</option>
+                </select>
+              </div>
+            </div>
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="w-8 h-8 animate-spin text-accent" />
               </div>
             ) : error ? (
-              <div className="bg-danger/10 text-danger p-4 rounded-lg">
+              <div className="bg-danger/10 text-danger p-4 m-4 rounded-lg">
                 {error}
               </div>
-            ) : (
-              <div className="bg-white rounded-xl border border-border">
-                <DataTable
-                  columns={columns}
-                  data={data.map((item, index) => ({ ...item, id: index }))}
-                />
-                {data.length === 0 && (
-                  <div className="text-center py-12 text-muted">
-                    No trending topics found for {selectedBrand}.
-                  </div>
-                )}
+            ) : data.length === 0 ? (
+              <div className="text-center py-12 text-muted">
+                No trending topics found for {selectedBrand}.
               </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={data.map((item, index) => ({ ...item, id: index }))}
+              />
             )}
           </div>
         </div>
