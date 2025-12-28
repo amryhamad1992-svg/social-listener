@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { TrendingUp, TrendingDown, Minus, BarChart3 } from 'lucide-react';
 import {
-  ScatterChart,
-  Scatter,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
-  ZAxis,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from 'recharts';
 
 interface KeywordData {
@@ -66,11 +67,15 @@ const COLORS = {
   positiveDark: '#166534',
   neutralDark: '#475569',
   negativeDark: '#991B1B',
+  primary: '#0F172A',
+  primaryLight: '#E2E8F0',
+  accent: '#0EA5E9',
 };
 
 export function BrandKeywordExplorer() {
   const [selectedBrand, setSelectedBrand] = useState('Revlon');
   const [compareBrand, setCompareBrand] = useState<string | null>(null);
+  const [view, setView] = useState<'chart' | 'table'>('chart');
 
   const getSentimentColor = (sentiment: number) => {
     if (sentiment >= 0.6) return COLORS.positive;
@@ -84,60 +89,87 @@ export function BrandKeywordExplorer() {
     return COLORS.negativeDark;
   };
 
+  const getSentimentLabel = (sentiment: number) => {
+    if (sentiment >= 0.6) return 'Positive';
+    if (sentiment >= 0.45) return 'Neutral';
+    return 'Negative';
+  };
+
   const primaryData = BRAND_KEYWORDS[selectedBrand] || [];
   const compareData = compareBrand ? BRAND_KEYWORDS[compareBrand] || [] : [];
 
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: KeywordData & { brand?: string } }> }) => {
+  // Sort by mentions for chart
+  const sortedPrimaryData = [...primaryData].sort((a, b) => b.mentions - a.mentions).slice(0, 6);
+
+  // Prepare comparison data
+  const comparisonChartData = sortedPrimaryData.map(item => {
+    const compareItem = compareData.find(c => c.keyword.toLowerCase() === item.keyword.toLowerCase());
+    return {
+      keyword: item.keyword,
+      [selectedBrand]: item.mentions,
+      [`${selectedBrand}Sentiment`]: item.sentiment,
+      ...(compareBrand ? {
+        [compareBrand]: compareItem?.mentions || 0,
+        [`${compareBrand}Sentiment`]: compareItem?.sentiment || 0,
+      } : {}),
+    };
+  });
+
+  // Calculate totals for share of voice
+  const primaryTotal = primaryData.reduce((sum, item) => sum + item.mentions, 0);
+  const compareTotal = compareBrand ? compareData.reduce((sum, item) => sum + item.mentions, 0) : 0;
+
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; payload: Record<string, number> }>; label?: string }) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload;
       return (
-        <div className="bg-white border border-[#E2E8F0] rounded p-2.5 shadow-lg">
-          <p className="text-[12px] font-medium text-[#0F172A] mb-1">{data.keyword}</p>
-          <div className="space-y-0.5 text-[10px]">
-            <p className="text-[#64748B]">
-              Mentions: <span className="text-[#0F172A] font-medium">{data.mentions.toLocaleString()}</span>
-            </p>
-            <p className="text-[#64748B]">
-              Sentiment: <span className="font-medium" style={{ color: getSentimentTextColor(data.sentiment) }}>
-                {data.sentiment >= 0 ? '+' : ''}{data.sentiment.toFixed(2)}
-              </span>
-            </p>
-          </div>
+        <div className="bg-white border border-[#E2E8F0] rounded-lg p-3 shadow-lg">
+          <p className="text-[12px] font-medium text-[#0F172A] mb-2">{label}</p>
+          {payload.map((entry, index) => (
+            <div key={index} className="flex items-center justify-between gap-4 text-[11px]">
+              <span className="text-[#64748B]">{entry.name}:</span>
+              <span className="font-medium text-[#0F172A]">{entry.value.toLocaleString()}</span>
+            </div>
+          ))}
         </div>
       );
     }
     return null;
   };
 
-  // Transform data for scatter chart - position keywords in a grid
-  const scatterData = primaryData.map((item, index) => ({
-    ...item,
-    x: (index % 4) * 100 + 50,
-    y: Math.floor(index / 4) * 150 + 100,
-    z: item.engagement / 500,
-    brand: selectedBrand,
-  }));
-
-  const compareScatterData = compareData.map((item, index) => ({
-    ...item,
-    x: (index % 4) * 100 + 50,
-    y: Math.floor(index / 4) * 150 + 100,
-    z: item.engagement / 500,
-    brand: compareBrand,
-  }));
-
   return (
     <div className="bg-white rounded-lg p-5 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <div>
+        <div className="flex items-center gap-2">
+          <BarChart3 className="w-4 h-4 text-[#64748B]" />
           <h2 className="text-sm font-medium text-[#0F172A]">Brand Keyword Analysis</h2>
-          <p className="text-[10px] text-[#64748B] mt-0.5">
-            Bubble size = mentions · Color = sentiment
-          </p>
         </div>
 
         <div className="flex items-center gap-3">
+          {/* View Toggle */}
+          <div className="flex bg-[#F1F5F9] rounded-md p-0.5">
+            <button
+              onClick={() => setView('chart')}
+              className={`px-2.5 py-1 text-[10px] font-medium rounded transition-colors ${
+                view === 'chart'
+                  ? 'bg-white text-[#0F172A] shadow-sm'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+            >
+              Chart
+            </button>
+            <button
+              onClick={() => setView('table')}
+              className={`px-2.5 py-1 text-[10px] font-medium rounded transition-colors ${
+                view === 'table'
+                  ? 'bg-white text-[#0F172A] shadow-sm'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+            >
+              Table
+            </button>
+          </div>
+
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-[#64748B]">Brand:</span>
             <select
@@ -167,125 +199,186 @@ export function BrandKeywordExplorer() {
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-6 mb-4 pb-3 border-b border-[#E2E8F0]">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.positive }} />
-          <span className="text-[10px] text-[#64748B]">Positive</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.neutral }} />
-          <span className="text-[10px] text-[#64748B]">Neutral</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.negative }} />
-          <span className="text-[10px] text-[#64748B]">Negative</span>
-        </div>
-        {compareBrand && (
-          <div className="flex items-center gap-2 ml-auto text-[10px] text-[#64748B]">
-            <span className="font-medium text-[#0F172A]">{selectedBrand}</span>
-            <span>vs</span>
-            <span className="font-medium text-[#0F172A]">{compareBrand}</span>
-            <span>(dashed)</span>
+      {/* Share of Voice (when comparing) */}
+      {compareBrand && (
+        <div className="mb-4 p-3 bg-[#F8FAFC] rounded-lg">
+          <div className="text-[10px] text-[#64748B] uppercase tracking-wide mb-2 font-medium">
+            Share of Voice (Total Mentions)
           </div>
-        )}
-      </div>
+          <div className="flex h-6 rounded-md overflow-hidden">
+            <div
+              className="flex items-center justify-center text-[11px] font-medium text-white bg-[#0F172A] transition-all"
+              style={{ width: `${(primaryTotal / (primaryTotal + compareTotal)) * 100}%` }}
+            >
+              {selectedBrand}: {((primaryTotal / (primaryTotal + compareTotal)) * 100).toFixed(0)}%
+            </div>
+            <div
+              className="flex items-center justify-center text-[11px] font-medium text-[#0F172A] bg-[#CBD5E1] transition-all"
+              style={{ width: `${(compareTotal / (primaryTotal + compareTotal)) * 100}%` }}
+            >
+              {compareBrand}: {((compareTotal / (primaryTotal + compareTotal)) * 100).toFixed(0)}%
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Bubble Chart */}
-      <div className="h-[280px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-            <XAxis type="number" dataKey="x" hide domain={[0, 400]} />
-            <YAxis type="number" dataKey="y" hide domain={[0, 350]} />
-            <ZAxis type="number" dataKey="z" range={[400, 2000]} />
-            <Tooltip content={<CustomTooltip />} />
+      {/* Chart View */}
+      {view === 'chart' && (
+        <div className="h-[240px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={comparisonChartData}
+              layout="vertical"
+              margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
+            >
+              <XAxis type="number" tick={{ fontSize: 10, fill: '#64748B' }} axisLine={false} tickLine={false} />
+              <YAxis
+                type="category"
+                dataKey="keyword"
+                tick={{ fontSize: 11, fill: '#0F172A' }}
+                axisLine={false}
+                tickLine={false}
+                width={75}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar dataKey={selectedBrand} radius={[0, 4, 4, 0]} barSize={compareBrand ? 12 : 20}>
+                {comparisonChartData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={getSentimentColor(entry[`${selectedBrand}Sentiment`] as number)}
+                  />
+                ))}
+              </Bar>
+              {compareBrand && (
+                <Bar dataKey={compareBrand} radius={[0, 4, 4, 0]} barSize={12}>
+                  {comparisonChartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-compare-${index}`}
+                      fill={getSentimentColor((entry[`${compareBrand}Sentiment`] as number) || 0)}
+                      opacity={0.6}
+                    />
+                  ))}
+                </Bar>
+              )}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
-            {/* Primary Brand */}
-            <Scatter
-              data={scatterData}
-              shape={(props: unknown) => {
-                const { cx, cy, payload } = props as { cx: number; cy: number; payload: KeywordData };
-                const size = Math.max(30, Math.min(Math.sqrt(payload.mentions) * 2.5, 65));
-                const fillColor = getSentimentColor(payload.sentiment);
-                const textColor = getSentimentTextColor(payload.sentiment);
-
-                // Truncate keyword to fit
-                const maxChars = size > 50 ? 10 : size > 40 ? 8 : 6;
-                const displayText = payload.keyword.length > maxChars
-                  ? payload.keyword.slice(0, maxChars - 1) + '…'
-                  : payload.keyword;
+      {/* Table View */}
+      {view === 'table' && (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-[#E2E8F0]">
+                <th className="text-left text-[10px] text-[#64748B] uppercase tracking-wide py-2 font-medium">Keyword</th>
+                <th className="text-right text-[10px] text-[#64748B] uppercase tracking-wide py-2 font-medium">Mentions</th>
+                <th className="text-center text-[10px] text-[#64748B] uppercase tracking-wide py-2 font-medium">Sentiment</th>
+                <th className="text-right text-[10px] text-[#64748B] uppercase tracking-wide py-2 font-medium">Engagement</th>
+                {compareBrand && (
+                  <>
+                    <th className="text-right text-[10px] text-[#64748B] uppercase tracking-wide py-2 font-medium pl-4">
+                      {compareBrand}
+                    </th>
+                    <th className="text-center text-[10px] text-[#64748B] uppercase tracking-wide py-2 font-medium">Diff</th>
+                  </>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {sortedPrimaryData.map((item) => {
+                const compareItem = compareData.find(c => c.keyword.toLowerCase() === item.keyword.toLowerCase());
+                const diff = compareItem ? ((item.mentions - compareItem.mentions) / compareItem.mentions) * 100 : 0;
 
                 return (
-                  <g>
-                    <circle
-                      cx={cx}
-                      cy={cy}
-                      r={size}
-                      fill={fillColor}
-                      stroke="#fff"
-                      strokeWidth={2}
-                    />
-                    <text
-                      x={cx}
-                      y={cy}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fontSize={size > 50 ? 11 : size > 40 ? 10 : 9}
-                      fill={textColor}
-                      fontWeight={500}
-                    >
-                      {displayText}
-                    </text>
-                  </g>
+                  <tr key={item.keyword} className="border-b border-[#F1F5F9] hover:bg-[#F8FAFC]">
+                    <td className="py-2.5">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: getSentimentColor(item.sentiment) }}
+                        />
+                        <span className="text-[12px] font-medium text-[#0F172A]">{item.keyword}</span>
+                      </div>
+                    </td>
+                    <td className="text-right py-2.5">
+                      <span className="text-[12px] font-semibold text-[#0F172A]">{item.mentions.toLocaleString()}</span>
+                    </td>
+                    <td className="text-center py-2.5">
+                      <span
+                        className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: getSentimentColor(item.sentiment),
+                          color: getSentimentTextColor(item.sentiment),
+                        }}
+                      >
+                        {getSentimentLabel(item.sentiment)}
+                      </span>
+                    </td>
+                    <td className="text-right py-2.5">
+                      <span className="text-[11px] text-[#64748B]">
+                        {item.engagement >= 1000 ? `${(item.engagement / 1000).toFixed(1)}K` : item.engagement}
+                      </span>
+                    </td>
+                    {compareBrand && (
+                      <>
+                        <td className="text-right py-2.5 pl-4">
+                          <span className="text-[12px] text-[#64748B]">
+                            {compareItem ? compareItem.mentions.toLocaleString() : '-'}
+                          </span>
+                        </td>
+                        <td className="text-center py-2.5">
+                          {compareItem ? (
+                            <div className={`flex items-center justify-center gap-0.5 text-[10px] font-medium ${
+                              diff > 0 ? 'text-[#166534]' : diff < 0 ? 'text-[#991B1B]' : 'text-[#64748B]'
+                            }`}>
+                              {diff > 0 ? (
+                                <TrendingUp className="w-3 h-3" />
+                              ) : diff < 0 ? (
+                                <TrendingDown className="w-3 h-3" />
+                              ) : (
+                                <Minus className="w-3 h-3" />
+                              )}
+                              <span>{diff > 0 ? '+' : ''}{diff.toFixed(0)}%</span>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-[#94A3B8]">-</span>
+                          )}
+                        </td>
+                      </>
+                    )}
+                  </tr>
                 );
-              }}
-            />
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-            {/* Compare Brand */}
-            {compareBrand && (
-              <Scatter
-                data={compareScatterData}
-                shape={(props: unknown) => {
-                  const { cx, cy, payload } = props as { cx: number; cy: number; payload: KeywordData };
-                  const size = Math.max(25, Math.min(Math.sqrt(payload.mentions) * 2, 55));
-                  const strokeColor = getSentimentColor(payload.sentiment);
-
-                  return (
-                    <g>
-                      <circle
-                        cx={cx + 15}
-                        cy={cy - 15}
-                        r={size}
-                        fill="transparent"
-                        stroke={strokeColor}
-                        strokeWidth={2}
-                        strokeDasharray="6 3"
-                      />
-                    </g>
-                  );
-                }}
-              />
-            )}
-          </ScatterChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Keyword Pills */}
-      <div className="mt-3 pt-3 border-t border-[#E2E8F0]">
-        <div className="flex flex-wrap gap-2">
-          {primaryData.map((item) => (
-            <div
-              key={item.keyword}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#E2E8F0]"
-            >
-              <div
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: getSentimentColor(item.sentiment) }}
-              />
-              <span className="text-[10px] font-medium text-[#0F172A]">{item.keyword}</span>
-              <span className="text-[9px] text-[#64748B]">{item.mentions}</span>
+      {/* Legend */}
+      <div className="mt-4 pt-3 border-t border-[#E2E8F0]">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.positive }} />
+              <span className="text-[10px] text-[#64748B]">Positive (≥0.6)</span>
             </div>
-          ))}
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.neutral }} />
+              <span className="text-[10px] text-[#64748B]">Neutral (0.45-0.6)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.negative }} />
+              <span className="text-[10px] text-[#64748B]">Negative (&lt;0.45)</span>
+            </div>
+          </div>
+          {compareBrand && (
+            <div className="flex items-center gap-2 text-[10px] text-[#64748B]">
+              <span className="font-medium text-[#0F172A]">{selectedBrand}</span>
+              <span>vs</span>
+              <span className="font-medium text-[#0F172A]">{compareBrand}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

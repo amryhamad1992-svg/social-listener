@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { TrendingUp, TrendingDown, Search, ExternalLink } from 'lucide-react';
 import {
   LineChart,
@@ -18,87 +18,206 @@ interface TrendTerm {
   type: 'branded' | 'generic';
 }
 
-interface BrandTrends {
-  branded: TrendTerm[];
-  chartData: Array<{ date: string; interest: number }>;
+// Generate chart data based on days
+function generateChartData(days: number, brand: string): Array<{ date: string; interest: number }> {
+  const baseInterest: { [key: string]: number } = {
+    'Revlon': 65,
+    'e.l.f.': 78,
+    'Maybelline': 70,
+  };
+
+  const base = baseInterest[brand] || 65;
+  const data: Array<{ date: string; interest: number }> = [];
+  const now = new Date();
+
+  // Number of data points based on days
+  const points = days <= 7 ? 7 : days <= 14 ? 7 : days <= 30 ? 8 : 10;
+  const interval = Math.floor(days / points);
+
+  for (let i = points - 1; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - (i * interval));
+
+    // Add some variation
+    const variation = Math.sin(i * 0.8) * 15 + Math.random() * 10;
+    const interest = Math.min(100, Math.max(20, Math.round(base + variation)));
+
+    // Format date based on range
+    let dateStr: string;
+    if (days <= 7) {
+      dateStr = date.toLocaleDateString('en-US', { weekday: 'short' });
+    } else if (days <= 14) {
+      dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    } else {
+      dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    data.push({ date: dateStr, interest });
+  }
+
+  return data;
 }
 
-// Mock trend data by brand
-const BRAND_TRENDS: { [key: string]: BrandTrends } = {
-  Revlon: {
-    branded: [
-      { term: 'revlon colorstay', interest: 72, change: 8, type: 'branded' },
-      { term: 'revlon super lustrous', interest: 65, change: -3, type: 'branded' },
-      { term: 'revlon lipstick', interest: 58, change: 12, type: 'branded' },
-      { term: 'revlon foundation', interest: 45, change: 5, type: 'branded' },
-      { term: 'revlon hair dryer', interest: 82, change: 25, type: 'branded' },
-      { term: 'revlon one step', interest: 78, change: 18, type: 'branded' },
-    ],
-    chartData: [
-      { date: 'Oct 1', interest: 55 },
-      { date: 'Oct 15', interest: 62 },
-      { date: 'Nov 1', interest: 58 },
-      { date: 'Nov 15', interest: 70 },
-      { date: 'Dec 1', interest: 85 },
-      { date: 'Dec 15', interest: 78 },
-      { date: 'Dec 27', interest: 72 },
-    ],
-  },
-  'e.l.f.': {
-    branded: [
-      { term: 'elf camo concealer', interest: 88, change: 15, type: 'branded' },
-      { term: 'elf power grip primer', interest: 92, change: 22, type: 'branded' },
-      { term: 'elf halo glow', interest: 85, change: 35, type: 'branded' },
-      { term: 'elf makeup', interest: 76, change: 10, type: 'branded' },
-      { term: 'elf dupe', interest: 68, change: 28, type: 'branded' },
-      { term: 'elf bronzing drops', interest: 72, change: 45, type: 'branded' },
-    ],
-    chartData: [
-      { date: 'Oct 1', interest: 65 },
-      { date: 'Oct 15', interest: 72 },
-      { date: 'Nov 1', interest: 78 },
-      { date: 'Nov 15', interest: 82 },
-      { date: 'Dec 1', interest: 90 },
-      { date: 'Dec 15', interest: 88 },
-      { date: 'Dec 27', interest: 85 },
-    ],
-  },
-  Maybelline: {
-    branded: [
-      { term: 'maybelline sky high mascara', interest: 85, change: 12, type: 'branded' },
-      { term: 'maybelline fit me', interest: 72, change: 5, type: 'branded' },
-      { term: 'maybelline superstay', interest: 68, change: -2, type: 'branded' },
-      { term: 'maybelline vinyl ink', interest: 75, change: 18, type: 'branded' },
-      { term: 'maybelline lash sensational', interest: 62, change: 8, type: 'branded' },
-      { term: 'maybelline concealer', interest: 58, change: 3, type: 'branded' },
-    ],
-    chartData: [
-      { date: 'Oct 1', interest: 60 },
-      { date: 'Oct 15', interest: 65 },
-      { date: 'Nov 1', interest: 70 },
-      { date: 'Nov 15', interest: 72 },
-      { date: 'Dec 1', interest: 78 },
-      { date: 'Dec 15', interest: 75 },
-      { date: 'Dec 27', interest: 72 },
-    ],
-  },
-};
+// Generate trend terms based on days (different trends for different periods)
+function getBrandedTerms(brand: string, days: number): TrendTerm[] {
+  const allTerms: { [key: string]: { [key: number]: TrendTerm[] } } = {
+    'Revlon': {
+      7: [
+        { term: 'revlon colorstay', interest: 72, change: 8, type: 'branded' },
+        { term: 'revlon one step', interest: 85, change: 32, type: 'branded' },
+        { term: 'revlon lipstick', interest: 58, change: 12, type: 'branded' },
+        { term: 'revlon hair dryer', interest: 82, change: 25, type: 'branded' },
+        { term: 'revlon super lustrous', interest: 65, change: -3, type: 'branded' },
+        { term: 'revlon foundation', interest: 45, change: 5, type: 'branded' },
+      ],
+      14: [
+        { term: 'revlon one step', interest: 80, change: 28, type: 'branded' },
+        { term: 'revlon colorstay', interest: 68, change: 5, type: 'branded' },
+        { term: 'revlon hair dryer', interest: 78, change: 20, type: 'branded' },
+        { term: 'revlon lipstick', interest: 62, change: 15, type: 'branded' },
+        { term: 'revlon super lustrous', interest: 60, change: 2, type: 'branded' },
+        { term: 'revlon makeup', interest: 48, change: 8, type: 'branded' },
+      ],
+      30: [
+        { term: 'revlon one step hair dryer', interest: 75, change: 22, type: 'branded' },
+        { term: 'revlon colorstay foundation', interest: 65, change: 10, type: 'branded' },
+        { term: 'revlon super lustrous lipstick', interest: 58, change: 5, type: 'branded' },
+        { term: 'revlon hair dryer brush', interest: 72, change: 18, type: 'branded' },
+        { term: 'revlon lip liner', interest: 42, change: -2, type: 'branded' },
+        { term: 'revlon mascara', interest: 38, change: 3, type: 'branded' },
+      ],
+      90: [
+        { term: 'revlon colorstay', interest: 70, change: 15, type: 'branded' },
+        { term: 'revlon one step', interest: 78, change: 35, type: 'branded' },
+        { term: 'revlon super lustrous', interest: 55, change: 8, type: 'branded' },
+        { term: 'revlon hair tools', interest: 68, change: 42, type: 'branded' },
+        { term: 'revlon lipstick shades', interest: 52, change: 12, type: 'branded' },
+        { term: 'revlon foundation match', interest: 45, change: 6, type: 'branded' },
+      ],
+    },
+    'e.l.f.': {
+      7: [
+        { term: 'elf halo glow', interest: 92, change: 45, type: 'branded' },
+        { term: 'elf power grip primer', interest: 88, change: 22, type: 'branded' },
+        { term: 'elf camo concealer', interest: 82, change: 15, type: 'branded' },
+        { term: 'elf bronzing drops', interest: 78, change: 55, type: 'branded' },
+        { term: 'elf dupe', interest: 72, change: 28, type: 'branded' },
+        { term: 'elf makeup', interest: 68, change: 10, type: 'branded' },
+      ],
+      14: [
+        { term: 'elf power grip primer', interest: 90, change: 25, type: 'branded' },
+        { term: 'elf halo glow', interest: 88, change: 38, type: 'branded' },
+        { term: 'elf bronzing drops', interest: 75, change: 48, type: 'branded' },
+        { term: 'elf camo concealer', interest: 80, change: 12, type: 'branded' },
+        { term: 'elf lip oil', interest: 65, change: 35, type: 'branded' },
+        { term: 'elf dupe charlotte tilbury', interest: 70, change: 32, type: 'branded' },
+      ],
+      30: [
+        { term: 'elf power grip primer', interest: 85, change: 20, type: 'branded' },
+        { term: 'elf halo glow filter', interest: 82, change: 32, type: 'branded' },
+        { term: 'elf camo cc cream', interest: 72, change: 18, type: 'branded' },
+        { term: 'elf bronzing drops', interest: 70, change: 42, type: 'branded' },
+        { term: 'elf putty primer', interest: 65, change: 8, type: 'branded' },
+        { term: 'elf sephora', interest: 58, change: 15, type: 'branded' },
+      ],
+      90: [
+        { term: 'elf camo concealer', interest: 88, change: 25, type: 'branded' },
+        { term: 'elf power grip primer', interest: 92, change: 35, type: 'branded' },
+        { term: 'elf halo glow', interest: 85, change: 52, type: 'branded' },
+        { term: 'elf makeup', interest: 76, change: 18, type: 'branded' },
+        { term: 'elf dupe', interest: 68, change: 40, type: 'branded' },
+        { term: 'elf bronzing drops', interest: 72, change: 65, type: 'branded' },
+      ],
+    },
+    'Maybelline': {
+      7: [
+        { term: 'maybelline sky high mascara', interest: 88, change: 18, type: 'branded' },
+        { term: 'maybelline vinyl ink', interest: 78, change: 25, type: 'branded' },
+        { term: 'maybelline fit me', interest: 70, change: 8, type: 'branded' },
+        { term: 'maybelline superstay', interest: 65, change: 12, type: 'branded' },
+        { term: 'maybelline concealer', interest: 62, change: 5, type: 'branded' },
+        { term: 'maybelline lash sensational', interest: 58, change: -2, type: 'branded' },
+      ],
+      14: [
+        { term: 'maybelline sky high', interest: 85, change: 15, type: 'branded' },
+        { term: 'maybelline vinyl ink', interest: 75, change: 22, type: 'branded' },
+        { term: 'maybelline superstay lipstick', interest: 68, change: 10, type: 'branded' },
+        { term: 'maybelline fit me foundation', interest: 72, change: 6, type: 'branded' },
+        { term: 'maybelline instant age rewind', interest: 60, change: 8, type: 'branded' },
+        { term: 'maybelline falsies', interest: 55, change: 3, type: 'branded' },
+      ],
+      30: [
+        { term: 'maybelline sky high mascara', interest: 82, change: 12, type: 'branded' },
+        { term: 'maybelline fit me', interest: 70, change: 8, type: 'branded' },
+        { term: 'maybelline superstay', interest: 65, change: 5, type: 'branded' },
+        { term: 'maybelline vinyl ink lip', interest: 72, change: 18, type: 'branded' },
+        { term: 'maybelline age rewind', interest: 58, change: 10, type: 'branded' },
+        { term: 'maybelline matte lipstick', interest: 52, change: 2, type: 'branded' },
+      ],
+      90: [
+        { term: 'maybelline sky high mascara', interest: 85, change: 20, type: 'branded' },
+        { term: 'maybelline fit me', interest: 72, change: 12, type: 'branded' },
+        { term: 'maybelline superstay', interest: 68, change: 8, type: 'branded' },
+        { term: 'maybelline vinyl ink', interest: 75, change: 32, type: 'branded' },
+        { term: 'maybelline lash sensational', interest: 62, change: 10, type: 'branded' },
+        { term: 'maybelline concealer', interest: 58, change: 5, type: 'branded' },
+      ],
+    },
+  };
 
-// Generic beauty category terms (not brand-specific)
-const GENERIC_TRENDS: TrendTerm[] = [
-  { term: 'best drugstore foundation', interest: 82, change: 15, type: 'generic' },
-  { term: 'makeup tutorial', interest: 95, change: 5, type: 'generic' },
-  { term: 'clean girl makeup', interest: 88, change: 32, type: 'generic' },
-  { term: 'lip combo', interest: 76, change: 45, type: 'generic' },
-  { term: 'viral mascara', interest: 90, change: 28, type: 'generic' },
-  { term: 'glass skin', interest: 85, change: 18, type: 'generic' },
-  { term: 'drugstore dupes', interest: 78, change: 22, type: 'generic' },
-  { term: 'affordable makeup', interest: 72, change: 12, type: 'generic' },
-];
+  return allTerms[brand]?.[days] || allTerms[brand]?.[90] || [];
+}
+
+// Generic beauty category terms by time period
+function getGenericTerms(days: number): TrendTerm[] {
+  const allTerms: { [key: number]: TrendTerm[] } = {
+    7: [
+      { term: 'clean girl makeup', interest: 92, change: 35, type: 'generic' },
+      { term: 'lip combo', interest: 88, change: 48, type: 'generic' },
+      { term: 'viral mascara', interest: 95, change: 32, type: 'generic' },
+      { term: 'glass skin routine', interest: 82, change: 25, type: 'generic' },
+      { term: 'drugstore dupes', interest: 78, change: 18, type: 'generic' },
+      { term: 'makeup tutorial', interest: 90, change: 5, type: 'generic' },
+      { term: 'holiday makeup', interest: 85, change: 65, type: 'generic' },
+      { term: 'winter skincare', interest: 72, change: 42, type: 'generic' },
+    ],
+    14: [
+      { term: 'makeup tutorial', interest: 92, change: 8, type: 'generic' },
+      { term: 'clean girl aesthetic', interest: 88, change: 28, type: 'generic' },
+      { term: 'viral mascara tiktok', interest: 90, change: 35, type: 'generic' },
+      { term: 'lip combo ideas', interest: 82, change: 42, type: 'generic' },
+      { term: 'drugstore foundation', interest: 75, change: 15, type: 'generic' },
+      { term: 'glass skin', interest: 80, change: 20, type: 'generic' },
+      { term: 'affordable makeup', interest: 70, change: 12, type: 'generic' },
+      { term: 'sephora sale', interest: 68, change: 55, type: 'generic' },
+    ],
+    30: [
+      { term: 'makeup tutorial', interest: 95, change: 5, type: 'generic' },
+      { term: 'clean girl makeup', interest: 85, change: 25, type: 'generic' },
+      { term: 'drugstore dupes', interest: 80, change: 22, type: 'generic' },
+      { term: 'viral mascara', interest: 88, change: 28, type: 'generic' },
+      { term: 'glass skin', interest: 78, change: 18, type: 'generic' },
+      { term: 'best drugstore foundation', interest: 82, change: 15, type: 'generic' },
+      { term: 'lip combo', interest: 76, change: 38, type: 'generic' },
+      { term: 'affordable makeup', interest: 72, change: 12, type: 'generic' },
+    ],
+    90: [
+      { term: 'best drugstore foundation', interest: 82, change: 15, type: 'generic' },
+      { term: 'makeup tutorial', interest: 95, change: 5, type: 'generic' },
+      { term: 'clean girl makeup', interest: 88, change: 32, type: 'generic' },
+      { term: 'lip combo', interest: 76, change: 45, type: 'generic' },
+      { term: 'viral mascara', interest: 90, change: 28, type: 'generic' },
+      { term: 'glass skin', interest: 85, change: 18, type: 'generic' },
+      { term: 'drugstore dupes', interest: 78, change: 22, type: 'generic' },
+      { term: 'affordable makeup', interest: 72, change: 12, type: 'generic' },
+    ],
+  };
+
+  return allTerms[days] || allTerms[90];
+}
 
 const BRANDS = ['Revlon', 'e.l.f.', 'Maybelline'];
 
-// Pastel colors
 const COLORS = {
   primary: '#0F172A',
   positive: '#86EFAC',
@@ -118,8 +237,12 @@ export function SearchTrends() {
   const [view, setView] = useState<'branded' | 'generic'>('branded');
   const [days, setDays] = useState(90);
 
-  const brandData = BRAND_TRENDS[selectedBrand];
-  const displayTerms = view === 'branded' ? brandData.branded : GENERIC_TRENDS;
+  // Generate dynamic data based on selections
+  const chartData = useMemo(() => generateChartData(days, selectedBrand), [days, selectedBrand]);
+  const brandedTerms = useMemo(() => getBrandedTerms(selectedBrand, days), [selectedBrand, days]);
+  const genericTerms = useMemo(() => getGenericTerms(days), [days]);
+
+  const displayTerms = view === 'branded' ? brandedTerms : genericTerms;
 
   const daysOption = DAYS_OPTIONS.find(d => d.value === days) || DAYS_OPTIONS[3];
   const googleTrendsUrl = view === 'branded'
@@ -199,7 +322,7 @@ export function SearchTrends() {
       {view === 'branded' && (
         <div className="h-[140px] mb-4">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={brandData.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <XAxis
                 dataKey="date"
                 tick={{ fontSize: 10, fill: '#64748B' }}
@@ -248,7 +371,7 @@ export function SearchTrends() {
         {displayTerms.map((term) => (
           <a
             key={term.term}
-            href={`https://trends.google.com/trends/explore?q=${encodeURIComponent(term.term)}&geo=US&cat=44`}
+            href={`https://trends.google.com/trends/explore?q=${encodeURIComponent(term.term)}&geo=US&cat=44&date=${encodeURIComponent(daysOption.trendsParam)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-between p-2.5 rounded-lg border border-[#E2E8F0] hover:border-[#0F172A] hover:bg-[#F8FAFC] transition-colors group"

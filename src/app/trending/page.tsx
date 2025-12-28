@@ -42,6 +42,16 @@ const BRAND_TRENDING: { [key: string]: { [days: number]: TrendingItem[] } } = {
       { term: 'mascara comparison', mentions: 2880, sentiment: 0.62, change: 15, source: 'YouTube' },
       { term: 'affordable dupes', mentions: 2580, sentiment: 0.75, change: 32, source: 'News' },
     ],
+    90: [
+      { term: 'drugstore makeup', mentions: 15800, sentiment: 0.55, change: 35, source: 'YouTube' },
+      { term: 'clean girl aesthetic', mentions: 12200, sentiment: 0.80, change: 52, source: 'News' },
+      { term: 'lip combo', mentions: 10500, sentiment: 0.68, change: 48, source: 'YouTube' },
+      { term: 'foundation review', mentions: 9800, sentiment: 0.48, change: 22, source: 'YouTube' },
+      { term: 'mascara comparison', mentions: 8900, sentiment: 0.65, change: 18, source: 'YouTube' },
+      { term: 'affordable dupes', mentions: 7800, sentiment: 0.78, change: 38, source: 'News' },
+      { term: 'skincare routine', mentions: 7200, sentiment: 0.72, change: 28, source: 'YouTube' },
+      { term: 'viral beauty products', mentions: 6500, sentiment: 0.82, change: 65, source: 'News' },
+    ],
   },
   Revlon: {
     7: [
@@ -64,6 +74,14 @@ const BRAND_TRENDING: { [key: string]: { [days: number]: TrendingItem[] } } = {
       { term: 'one step hair dryer', mentions: 2150, sentiment: 0.82, change: 45, source: 'YouTube' },
       { term: 'revlon review', mentions: 1180, sentiment: 0.48, change: 5, source: 'News' },
       { term: 'drugstore vs high end', mentions: 780, sentiment: 0.62, change: 18, source: 'YouTube' },
+    ],
+    90: [
+      { term: 'one step hair dryer', mentions: 6850, sentiment: 0.85, change: 55, source: 'YouTube' },
+      { term: 'colorstay foundation', mentions: 5600, sentiment: 0.62, change: 28, source: 'YouTube' },
+      { term: 'super lustrous lipstick', mentions: 4800, sentiment: 0.78, change: 18, source: 'YouTube' },
+      { term: 'revlon review', mentions: 3500, sentiment: 0.52, change: 12, source: 'News' },
+      { term: 'drugstore vs high end', mentions: 2400, sentiment: 0.65, change: 22, source: 'YouTube' },
+      { term: 'revlon hair tools', mentions: 2100, sentiment: 0.80, change: 42, source: 'YouTube' },
     ],
   },
   'e.l.f.': {
@@ -88,6 +106,15 @@ const BRAND_TRENDING: { [key: string]: { [days: number]: TrendingItem[] } } = {
       { term: 'elf dupe', mentions: 1620, sentiment: 0.72, change: 42, source: 'YouTube' },
       { term: 'bronzing drops', mentions: 1350, sentiment: 0.78, change: 68, source: 'News' },
     ],
+    90: [
+      { term: 'power grip primer', mentions: 8600, sentiment: 0.92, change: 45, source: 'YouTube' },
+      { term: 'camo concealer', mentions: 6800, sentiment: 0.88, change: 28, source: 'YouTube' },
+      { term: 'halo glow', mentions: 5900, sentiment: 0.90, change: 62, source: 'YouTube' },
+      { term: 'elf dupe', mentions: 4900, sentiment: 0.75, change: 52, source: 'YouTube' },
+      { term: 'bronzing drops', mentions: 4200, sentiment: 0.82, change: 78, source: 'News' },
+      { term: 'elf lip oil', mentions: 3500, sentiment: 0.85, change: 48, source: 'YouTube' },
+      { term: 'elf vs charlotte tilbury', mentions: 2800, sentiment: 0.72, change: 38, source: 'YouTube' },
+    ],
   },
   Maybelline: {
     7: [
@@ -110,6 +137,14 @@ const BRAND_TRENDING: { [key: string]: { [days: number]: TrendingItem[] } } = {
       { term: 'superstay lipstick', mentions: 1520, sentiment: 0.65, change: 18, source: 'YouTube' },
       { term: 'vinyl ink', mentions: 1220, sentiment: 0.82, change: 32, source: 'YouTube' },
       { term: 'lash sensational', mentions: 950, sentiment: 0.72, change: 12, source: 'News' },
+    ],
+    90: [
+      { term: 'sky high mascara', mentions: 7500, sentiment: 0.82, change: 35, source: 'YouTube' },
+      { term: 'fit me foundation', mentions: 5400, sentiment: 0.72, change: 20, source: 'YouTube' },
+      { term: 'vinyl ink', mentions: 3800, sentiment: 0.85, change: 42, source: 'YouTube' },
+      { term: 'superstay lipstick', mentions: 4600, sentiment: 0.70, change: 22, source: 'YouTube' },
+      { term: 'lash sensational', mentions: 2900, sentiment: 0.75, change: 15, source: 'News' },
+      { term: 'maybelline instant age rewind', mentions: 2400, sentiment: 0.78, change: 18, source: 'YouTube' },
     ],
   },
 };
@@ -245,6 +280,7 @@ export default function TrendingPage() {
                   <option value={7}>Last 7 days</option>
                   <option value={14}>Last 14 days</option>
                   <option value={30}>Last 30 days</option>
+                  <option value={90}>Last 90 days</option>
                 </select>
               </div>
             </div>
