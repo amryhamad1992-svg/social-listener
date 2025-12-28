@@ -237,7 +237,7 @@ export default function TrendingPage() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar brandName="Revlon" onLogout={handleLogout} />
+      <Sidebar onLogout={handleLogout} />
       <main className="flex-1 overflow-auto">
         <div className="p-8 space-y-6">
           {/* Header */}

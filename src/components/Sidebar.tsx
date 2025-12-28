@@ -19,11 +19,11 @@ const navigation = [
 ];
 
 interface SidebarProps {
-  brandName?: string;
+  categoryName?: string;
   onLogout?: () => void;
 }
 
-export function Sidebar({ brandName = 'Revlon', onLogout }: SidebarProps) {
+export function Sidebar({ categoryName = 'Beauty', onLogout }: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -40,18 +40,16 @@ export function Sidebar({ brandName = 'Revlon', onLogout }: SidebarProps) {
         />
       </div>
 
-      {/* Brand Selector */}
+      {/* Category Selector */}
       <div className="px-3 py-3 border-b border-white/10">
         <button className="w-full flex items-center justify-between gap-2 p-2 hover:bg-white/5 rounded transition-colors">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded bg-white/10 flex items-center justify-center">
-              <span className="font-medium text-xs">
-                {brandName.charAt(0)}
-              </span>
+              <span className="text-sm">💄</span>
             </div>
             <div className="text-left">
-              <span className="text-sm font-medium block">{brandName}</span>
-              <span className="text-[10px] text-white/50">Organization</span>
+              <span className="text-sm font-medium block">{categoryName}</span>
+              <span className="text-[10px] text-white/50">Category</span>
             </div>
           </div>
           <ChevronDown className="w-4 h-4 text-white/50" />

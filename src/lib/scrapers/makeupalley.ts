@@ -21,7 +21,7 @@ export class MakeupAlleyScraper implements BaseScraper {
     sourceType: 'review',
     rateLimit: 20,
     requiresJs: false,
-    enabled: true,
+    enabled: false, // Disabled - DNS/access issues
   };
 
   private userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';

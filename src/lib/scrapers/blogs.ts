@@ -22,7 +22,7 @@ export class TemptaliaScraper implements BaseScraper {
     sourceType: 'blog',
     rateLimit: 15,
     requiresJs: false,
-    enabled: true,
+    enabled: false, // Disabled - needs HTML parsing updates
   };
 
   private userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
@@ -153,7 +153,7 @@ export class IntoTheGlossScraper implements BaseScraper {
     sourceType: 'blog',
     rateLimit: 15,
     requiresJs: false,
-    enabled: true,
+    enabled: false, // Disabled - needs HTML parsing updates
   };
 
   private userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
@@ -284,7 +284,7 @@ export class AllureScraper implements BaseScraper {
     sourceType: 'blog',
     rateLimit: 15,
     requiresJs: false,
-    enabled: true,
+    enabled: false, // Disabled - needs HTML parsing updates
   };
 
   private userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';

@@ -33,11 +33,14 @@ const SOURCE_FILTERS: SourceFilter[] = [
   { id: 'youtube', name: 'YouTube', icon: '▶️', enabled: true },
   { id: 'news', name: 'News', icon: '📰', enabled: true },
   { id: 'reddit', name: 'Reddit', icon: '🔴', enabled: true },
-  { id: 'makeupalley', name: 'MakeupAlley', icon: '💄', enabled: true },
-  { id: 'temptalia', name: 'Temptalia', icon: '💋', enabled: true },
-  { id: 'intothegloss', name: 'Into The Gloss', icon: '✨', enabled: true },
-  { id: 'allure', name: 'Allure', icon: '📖', enabled: true },
+  // Disabled sources - need scraper fixes
+  // { id: 'makeupalley', name: 'MakeupAlley', icon: '💄', enabled: true },
+  // { id: 'temptalia', name: 'Temptalia', icon: '💋', enabled: true },
+  // { id: 'intothegloss', name: 'Into The Gloss', icon: '✨', enabled: true },
+  // { id: 'allure', name: 'Allure', icon: '📖', enabled: true },
 ];
+
+const BRANDS = ['All Brands', 'Revlon', 'e.l.f.', 'Maybelline'];
 
 export default function MentionsPage() {
   const router = useRouter();
@@ -46,6 +49,7 @@ export default function MentionsPage() {
   const [error, setError] = useState('');
   const [days, setDays] = useState(7);
   const [sentiment, setSentiment] = useState<string>('');
+  const [selectedBrand, setSelectedBrand] = useState('All Brands');
   const [sources, setSources] = useState<SourceFilter[]>(SOURCE_FILTERS);
 
   useEffect(() => {
@@ -128,9 +132,9 @@ export default function MentionsPage() {
         }
       } catch { /* silently fail */ }
 
-      // Fetch Web Scrapers (Reddit, MakeupAlley, Blogs)
+      // Fetch Web Scrapers (Reddit, MakeupAlley, Blogs) - use live=true for real data
       try {
-        const scrapeRes = await fetch('/api/scrape');
+        const scrapeRes = await fetch('/api/scrape?live=true');
         const scrapeData = await scrapeRes.json();
         if (scrapeData.success && scrapeData.data?.mentions) {
           scrapeData.data.mentions.forEach((m: {
@@ -200,20 +204,26 @@ export default function MentionsPage() {
       'YouTube': 'youtube',
       'News': 'news',
       'Reddit': 'reddit',
-      'MakeupAlley': 'makeupalley',
-      'Temptalia': 'temptalia',
-      'Into The Gloss': 'intothegloss',
-      'Allure': 'allure',
     };
     return map[source] || source.toLowerCase();
   };
 
   const enabledSourceIds = sources.filter(s => s.enabled).map(s => s.id);
-  const filteredMentions = mentions.filter(m => enabledSourceIds.includes(getSourceId(m.source)));
+  const filteredMentions = mentions.filter(m => {
+    // Filter by source
+    if (!enabledSourceIds.includes(getSourceId(m.source))) return false;
+    // Filter by brand
+    if (selectedBrand !== 'All Brands') {
+      const keyword = m.matchedKeyword.toLowerCase();
+      const brand = selectedBrand.toLowerCase();
+      if (!keyword.includes(brand) && !brand.includes(keyword.split(' ')[0])) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar brandName="Revlon" onLogout={handleLogout} />
+      <Sidebar onLogout={handleLogout} />
       <main className="flex-1 overflow-auto">
         <div className="p-8 space-y-6">
           {/* Header */}
@@ -227,6 +237,17 @@ export default function MentionsPage() {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              {/* Brand Filter */}
+              <select
+                value={selectedBrand}
+                onChange={(e) => setSelectedBrand(e.target.value)}
+                className="px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+              >
+                {BRANDS.map((brand) => (
+                  <option key={brand} value={brand}>{brand}</option>
+                ))}
+              </select>
+
               {/* Sentiment Filter */}
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-muted" />

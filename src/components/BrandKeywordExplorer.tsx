@@ -9,7 +9,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  Cell,
+  Legend,
 } from 'recharts';
 
 interface KeywordData {
@@ -23,53 +23,60 @@ interface BrandKeywords {
   [key: string]: KeywordData[];
 }
 
-// Mock data - in production this would come from API
+// Generic beauty terms for cross-brand comparison
+// These are terms people search alongside any brand
 const BRAND_KEYWORDS: BrandKeywords = {
   Revlon: [
-    { keyword: 'ColorStay', mentions: 450, sentiment: 0.65, engagement: 12000 },
-    { keyword: 'Super Lustrous', mentions: 380, sentiment: 0.72, engagement: 9500 },
-    { keyword: 'lipstick', mentions: 520, sentiment: 0.45, engagement: 15000 },
-    { keyword: 'foundation', mentions: 290, sentiment: 0.38, engagement: 8200 },
-    { keyword: 'drugstore', mentions: 180, sentiment: 0.55, engagement: 4500 },
-    { keyword: 'affordable', mentions: 220, sentiment: 0.68, engagement: 5800 },
-    { keyword: 'long-wear', mentions: 150, sentiment: 0.42, engagement: 3200 },
-    { keyword: 'hair dryer', mentions: 340, sentiment: 0.78, engagement: 11000 },
+    { keyword: 'affordable', mentions: 420, sentiment: 0.62, engagement: 12000 },
+    { keyword: 'drugstore', mentions: 380, sentiment: 0.58, engagement: 9500 },
+    { keyword: 'long-lasting', mentions: 290, sentiment: 0.45, engagement: 7200 },
+    { keyword: 'full coverage', mentions: 260, sentiment: 0.52, engagement: 6800 },
+    { keyword: 'lipstick', mentions: 520, sentiment: 0.68, engagement: 15000 },
+    { keyword: 'foundation', mentions: 340, sentiment: 0.42, engagement: 8900 },
+    { keyword: 'mascara', mentions: 180, sentiment: 0.55, engagement: 4500 },
+    { keyword: 'dupe', mentions: 120, sentiment: 0.48, engagement: 3200 },
+    { keyword: 'viral', mentions: 85, sentiment: 0.38, engagement: 2100 },
+    { keyword: 'TikTok', mentions: 95, sentiment: 0.42, engagement: 2800 },
   ],
   'e.l.f.': [
-    { keyword: 'Camo', mentions: 680, sentiment: 0.82, engagement: 22000 },
-    { keyword: 'Power Grip', mentions: 520, sentiment: 0.88, engagement: 18500 },
-    { keyword: 'Halo Glow', mentions: 450, sentiment: 0.75, engagement: 14000 },
-    { keyword: 'affordable', mentions: 390, sentiment: 0.72, engagement: 11000 },
-    { keyword: 'dupe', mentions: 620, sentiment: 0.68, engagement: 25000 },
-    { keyword: 'TikTok', mentions: 480, sentiment: 0.65, engagement: 19000 },
-    { keyword: 'vegan', mentions: 180, sentiment: 0.58, engagement: 4200 },
-    { keyword: 'primer', mentions: 340, sentiment: 0.71, engagement: 9800 },
+    { keyword: 'affordable', mentions: 890, sentiment: 0.82, engagement: 28000 },
+    { keyword: 'drugstore', mentions: 420, sentiment: 0.75, engagement: 12500 },
+    { keyword: 'long-lasting', mentions: 340, sentiment: 0.68, engagement: 9800 },
+    { keyword: 'full coverage', mentions: 380, sentiment: 0.72, engagement: 11200 },
+    { keyword: 'lipstick', mentions: 290, sentiment: 0.65, engagement: 8500 },
+    { keyword: 'foundation', mentions: 420, sentiment: 0.78, engagement: 13500 },
+    { keyword: 'mascara', mentions: 220, sentiment: 0.62, engagement: 6200 },
+    { keyword: 'dupe', mentions: 680, sentiment: 0.85, engagement: 32000 },
+    { keyword: 'viral', mentions: 520, sentiment: 0.78, engagement: 24000 },
+    { keyword: 'TikTok', mentions: 750, sentiment: 0.82, engagement: 38000 },
   ],
   Maybelline: [
-    { keyword: 'Lash', mentions: 520, sentiment: 0.75, engagement: 16000 },
-    { keyword: 'Fit Me', mentions: 480, sentiment: 0.68, engagement: 14500 },
-    { keyword: 'SuperStay', mentions: 390, sentiment: 0.62, engagement: 11000 },
-    { keyword: 'mascara', mentions: 680, sentiment: 0.72, engagement: 21000 },
-    { keyword: 'drugstore', mentions: 250, sentiment: 0.55, engagement: 7200 },
-    { keyword: 'affordable', mentions: 320, sentiment: 0.65, engagement: 9500 },
-    { keyword: 'Sky High', mentions: 410, sentiment: 0.78, engagement: 13500 },
-    { keyword: 'foundation', mentions: 360, sentiment: 0.58, engagement: 10200 },
+    { keyword: 'affordable', mentions: 520, sentiment: 0.65, engagement: 14500 },
+    { keyword: 'drugstore', mentions: 480, sentiment: 0.62, engagement: 12800 },
+    { keyword: 'long-lasting', mentions: 410, sentiment: 0.58, engagement: 10500 },
+    { keyword: 'full coverage', mentions: 320, sentiment: 0.55, engagement: 8200 },
+    { keyword: 'lipstick', mentions: 380, sentiment: 0.68, engagement: 11000 },
+    { keyword: 'foundation', mentions: 450, sentiment: 0.62, engagement: 13200 },
+    { keyword: 'mascara', mentions: 680, sentiment: 0.78, engagement: 22000 },
+    { keyword: 'dupe', mentions: 280, sentiment: 0.52, engagement: 7500 },
+    { keyword: 'viral', mentions: 320, sentiment: 0.65, engagement: 9800 },
+    { keyword: 'TikTok', mentions: 420, sentiment: 0.68, engagement: 14500 },
   ],
 };
 
 const BRANDS = ['Revlon', 'e.l.f.', 'Maybelline'];
 
-// Pastel Stackline colors
-const COLORS = {
-  positive: '#86EFAC', // pastel green
-  neutral: '#CBD5E1',  // pastel gray
-  negative: '#FCA5A5', // pastel red
-  positiveDark: '#166534',
-  neutralDark: '#475569',
-  negativeDark: '#991B1B',
-  primary: '#0F172A',
-  primaryLight: '#E2E8F0',
-  accent: '#0EA5E9',
+// Simple, clear colors - Primary brand is dark, comparison is light
+const BRAND_COLORS = {
+  primary: '#0F172A',      // Dark navy for selected brand
+  comparison: '#94A3B8',   // Light gray for comparison brand
+};
+
+// Sentiment badge colors (separate from bar colors)
+const SENTIMENT = {
+  positive: { bg: '#DCFCE7', text: '#166534', label: 'Positive' },
+  neutral: { bg: '#F1F5F9', text: '#475569', label: 'Neutral' },
+  negative: { bg: '#FEE2E2', text: '#991B1B', label: 'Negative' },
 };
 
 export function BrandKeywordExplorer() {
@@ -77,22 +84,10 @@ export function BrandKeywordExplorer() {
   const [compareBrand, setCompareBrand] = useState<string | null>(null);
   const [view, setView] = useState<'chart' | 'table'>('chart');
 
-  const getSentimentColor = (sentiment: number) => {
-    if (sentiment >= 0.6) return COLORS.positive;
-    if (sentiment >= 0.45) return COLORS.neutral;
-    return COLORS.negative;
-  };
-
-  const getSentimentTextColor = (sentiment: number) => {
-    if (sentiment >= 0.6) return COLORS.positiveDark;
-    if (sentiment >= 0.45) return COLORS.neutralDark;
-    return COLORS.negativeDark;
-  };
-
-  const getSentimentLabel = (sentiment: number) => {
-    if (sentiment >= 0.6) return 'Positive';
-    if (sentiment >= 0.45) return 'Neutral';
-    return 'Negative';
+  const getSentiment = (score: number) => {
+    if (score >= 0.6) return SENTIMENT.positive;
+    if (score >= 0.45) return SENTIMENT.neutral;
+    return SENTIMENT.negative;
   };
 
   const primaryData = BRAND_KEYWORDS[selectedBrand] || [];
@@ -101,16 +96,15 @@ export function BrandKeywordExplorer() {
   // Sort by mentions for chart
   const sortedPrimaryData = [...primaryData].sort((a, b) => b.mentions - a.mentions).slice(0, 6);
 
-  // Prepare comparison data
-  const comparisonChartData = sortedPrimaryData.map(item => {
+  // Prepare comparison data - simple structure
+  const chartData = sortedPrimaryData.map(item => {
     const compareItem = compareData.find(c => c.keyword.toLowerCase() === item.keyword.toLowerCase());
     return {
       keyword: item.keyword,
       [selectedBrand]: item.mentions,
-      [`${selectedBrand}Sentiment`]: item.sentiment,
+      sentiment: item.sentiment,
       ...(compareBrand ? {
         [compareBrand]: compareItem?.mentions || 0,
-        [`${compareBrand}Sentiment`]: compareItem?.sentiment || 0,
       } : {}),
     };
   });
@@ -119,13 +113,17 @@ export function BrandKeywordExplorer() {
   const primaryTotal = primaryData.reduce((sum, item) => sum + item.mentions, 0);
   const compareTotal = compareBrand ? compareData.reduce((sum, item) => sum + item.mentions, 0) : 0;
 
-  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; payload: Record<string, number> }>; label?: string }) => {
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; dataKey: string }>; label?: string }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white border border-[#E2E8F0] rounded-lg p-3 shadow-lg">
           <p className="text-[12px] font-medium text-[#0F172A] mb-2">{label}</p>
           {payload.map((entry, index) => (
-            <div key={index} className="flex items-center justify-between gap-4 text-[11px]">
+            <div key={index} className="flex items-center gap-2 text-[11px]">
+              <div
+                className="w-3 h-3 rounded"
+                style={{ backgroundColor: entry.dataKey === selectedBrand ? BRAND_COLORS.primary : BRAND_COLORS.comparison }}
+              />
               <span className="text-[#64748B]">{entry.name}:</span>
               <span className="font-medium text-[#0F172A]">{entry.value.toLocaleString()}</span>
             </div>
@@ -207,14 +205,14 @@ export function BrandKeywordExplorer() {
           </div>
           <div className="flex h-6 rounded-md overflow-hidden">
             <div
-              className="flex items-center justify-center text-[11px] font-medium text-white bg-[#0F172A] transition-all"
-              style={{ width: `${(primaryTotal / (primaryTotal + compareTotal)) * 100}%` }}
+              className="flex items-center justify-center text-[11px] font-medium text-white transition-all"
+              style={{ width: `${(primaryTotal / (primaryTotal + compareTotal)) * 100}%`, backgroundColor: BRAND_COLORS.primary }}
             >
               {selectedBrand}: {((primaryTotal / (primaryTotal + compareTotal)) * 100).toFixed(0)}%
             </div>
             <div
-              className="flex items-center justify-center text-[11px] font-medium text-[#0F172A] bg-[#CBD5E1] transition-all"
-              style={{ width: `${(compareTotal / (primaryTotal + compareTotal)) * 100}%` }}
+              className="flex items-center justify-center text-[11px] font-medium text-white transition-all"
+              style={{ width: `${(compareTotal / (primaryTotal + compareTotal)) * 100}%`, backgroundColor: BRAND_COLORS.comparison }}
             >
               {compareBrand}: {((compareTotal / (primaryTotal + compareTotal)) * 100).toFixed(0)}%
             </div>
@@ -227,7 +225,7 @@ export function BrandKeywordExplorer() {
         <div className="h-[240px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={comparisonChartData}
+              data={chartData}
               layout="vertical"
               margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
             >
@@ -241,24 +239,26 @@ export function BrandKeywordExplorer() {
                 width={75}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey={selectedBrand} radius={[0, 4, 4, 0]} barSize={compareBrand ? 12 : 20}>
-                {comparisonChartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={getSentimentColor(entry[`${selectedBrand}Sentiment`] as number)}
-                  />
-                ))}
-              </Bar>
               {compareBrand && (
-                <Bar dataKey={compareBrand} radius={[0, 4, 4, 0]} barSize={12}>
-                  {comparisonChartData.map((entry, index) => (
-                    <Cell
-                      key={`cell-compare-${index}`}
-                      fill={getSentimentColor((entry[`${compareBrand}Sentiment`] as number) || 0)}
-                      opacity={0.6}
-                    />
-                  ))}
-                </Bar>
+                <Legend
+                  verticalAlign="top"
+                  height={30}
+                  formatter={(value) => <span className="text-[11px] text-[#64748B]">{value}</span>}
+                />
+              )}
+              <Bar
+                dataKey={selectedBrand}
+                fill={BRAND_COLORS.primary}
+                radius={[0, 4, 4, 0]}
+                barSize={compareBrand ? 12 : 20}
+              />
+              {compareBrand && (
+                <Bar
+                  dataKey={compareBrand}
+                  fill={BRAND_COLORS.comparison}
+                  radius={[0, 4, 4, 0]}
+                  barSize={12}
+                />
               )}
             </BarChart>
           </ResponsiveContainer>
@@ -272,13 +272,20 @@ export function BrandKeywordExplorer() {
             <thead>
               <tr className="border-b border-[#E2E8F0]">
                 <th className="text-left text-[10px] text-[#64748B] uppercase tracking-wide py-2 font-medium">Keyword</th>
-                <th className="text-right text-[10px] text-[#64748B] uppercase tracking-wide py-2 font-medium">Mentions</th>
+                <th className="text-right text-[10px] text-[#64748B] uppercase tracking-wide py-2 font-medium">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="w-2 h-2 rounded" style={{ backgroundColor: BRAND_COLORS.primary }}></span>
+                    {selectedBrand}
+                  </span>
+                </th>
                 <th className="text-center text-[10px] text-[#64748B] uppercase tracking-wide py-2 font-medium">Sentiment</th>
-                <th className="text-right text-[10px] text-[#64748B] uppercase tracking-wide py-2 font-medium">Engagement</th>
                 {compareBrand && (
                   <>
                     <th className="text-right text-[10px] text-[#64748B] uppercase tracking-wide py-2 font-medium pl-4">
-                      {compareBrand}
+                      <span className="inline-flex items-center gap-1">
+                        <span className="w-2 h-2 rounded" style={{ backgroundColor: BRAND_COLORS.comparison }}></span>
+                        {compareBrand}
+                      </span>
                     </th>
                     <th className="text-center text-[10px] text-[#64748B] uppercase tracking-wide py-2 font-medium">Diff</th>
                   </>
@@ -289,17 +296,12 @@ export function BrandKeywordExplorer() {
               {sortedPrimaryData.map((item) => {
                 const compareItem = compareData.find(c => c.keyword.toLowerCase() === item.keyword.toLowerCase());
                 const diff = compareItem ? ((item.mentions - compareItem.mentions) / compareItem.mentions) * 100 : 0;
+                const sentimentStyle = getSentiment(item.sentiment);
 
                 return (
                   <tr key={item.keyword} className="border-b border-[#F1F5F9] hover:bg-[#F8FAFC]">
                     <td className="py-2.5">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: getSentimentColor(item.sentiment) }}
-                        />
-                        <span className="text-[12px] font-medium text-[#0F172A]">{item.keyword}</span>
-                      </div>
+                      <span className="text-[12px] font-medium text-[#0F172A]">{item.keyword}</span>
                     </td>
                     <td className="text-right py-2.5">
                       <span className="text-[12px] font-semibold text-[#0F172A]">{item.mentions.toLocaleString()}</span>
@@ -307,17 +309,9 @@ export function BrandKeywordExplorer() {
                     <td className="text-center py-2.5">
                       <span
                         className="text-[10px] font-medium px-2 py-0.5 rounded-full"
-                        style={{
-                          backgroundColor: getSentimentColor(item.sentiment),
-                          color: getSentimentTextColor(item.sentiment),
-                        }}
+                        style={{ backgroundColor: sentimentStyle.bg, color: sentimentStyle.text }}
                       >
-                        {getSentimentLabel(item.sentiment)}
-                      </span>
-                    </td>
-                    <td className="text-right py-2.5">
-                      <span className="text-[11px] text-[#64748B]">
-                        {item.engagement >= 1000 ? `${(item.engagement / 1000).toFixed(1)}K` : item.engagement}
+                        {sentimentStyle.label}
                       </span>
                     </td>
                     {compareBrand && (
@@ -355,30 +349,24 @@ export function BrandKeywordExplorer() {
         </div>
       )}
 
-      {/* Legend */}
+      {/* Legend - simpler */}
       <div className="mt-4 pt-3 border-t border-[#E2E8F0]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.positive }} />
-              <span className="text-[10px] text-[#64748B]">Positive (≥0.6)</span>
+              <div className="w-3 h-3 rounded" style={{ backgroundColor: BRAND_COLORS.primary }} />
+              <span className="text-[10px] text-[#64748B]">{selectedBrand}</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.neutral }} />
-              <span className="text-[10px] text-[#64748B]">Neutral (0.45-0.6)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.negative }} />
-              <span className="text-[10px] text-[#64748B]">Negative (&lt;0.45)</span>
-            </div>
+            {compareBrand && (
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: BRAND_COLORS.comparison }} />
+                <span className="text-[10px] text-[#64748B]">{compareBrand}</span>
+              </div>
+            )}
           </div>
-          {compareBrand && (
-            <div className="flex items-center gap-2 text-[10px] text-[#64748B]">
-              <span className="font-medium text-[#0F172A]">{selectedBrand}</span>
-              <span>vs</span>
-              <span className="font-medium text-[#0F172A]">{compareBrand}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-3 text-[9px] text-[#94A3B8]">
+            <span>Sentiment shown as badges in table view</span>
+          </div>
         </div>
       </div>
     </div>
