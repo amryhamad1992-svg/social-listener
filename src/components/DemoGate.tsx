@@ -63,18 +63,16 @@ export function DemoGate({ children }: DemoGateProps) {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 bg-[#0F172A] rounded-xl mb-4">
+            <div className="flex justify-center mb-4">
               <Image
                 src="/logo.svg"
                 alt="Stackline"
-                width={100}
-                height={18}
-                className="brightness-0 invert"
+                width={180}
+                height={32}
                 priority
               />
             </div>
-            <h1 className="text-[#0F172A] text-xl font-medium">Social Listener</h1>
-            <p className="text-[#64748B] text-sm mt-1">
+            <p className="text-[13px] text-[#64748B] mt-1">
               Enter your access code to continue
             </p>
           </div>
@@ -138,8 +136,8 @@ export function DemoGate({ children }: DemoGateProps) {
           </div>
 
           {/* Footer */}
-          <p className="text-center text-[#94A3B8] text-[11px] mt-6">
-            Powered by Stackline • Social Listening Platform
+          <p className="text-center text-[#94A3B8] text-[11px] mt-5">
+            A Stackline Product
           </p>
         </div>
       </div>
