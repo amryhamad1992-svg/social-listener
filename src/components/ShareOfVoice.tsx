@@ -11,6 +11,7 @@ interface BrandData {
   change: number;
   color: string;
   sentiment: number;
+  [key: string]: string | number;
 }
 
 // Generate share of voice data based on time period
