@@ -59,33 +59,35 @@ export function DemoGate({ children }: DemoGateProps) {
   // Show password gate
   if (!hasAccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0F172A] to-[#1E293B] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="text-center mb-8">
-            <Image
-              src="/logo.svg"
-              alt="Stackline"
-              width={150}
-              height={26}
-              className="brightness-0 invert mx-auto mb-4"
-              priority
-            />
-            <h1 className="text-white text-xl font-medium">Social Listener Demo</h1>
-            <p className="text-white/60 text-sm mt-1">
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-[#0F172A] rounded-xl mb-4">
+              <Image
+                src="/logo.svg"
+                alt="Stackline"
+                width={100}
+                height={18}
+                className="brightness-0 invert"
+                priority
+              />
+            </div>
+            <h1 className="text-[#0F172A] text-xl font-medium">Social Listener</h1>
+            <p className="text-[#64748B] text-sm mt-1">
               Enter your access code to continue
             </p>
           </div>
 
           {/* Login Card */}
-          <div className="bg-white rounded-xl p-6 shadow-xl">
-            <div className="flex items-center justify-center w-12 h-12 bg-[#0EA5E9]/10 rounded-full mx-auto mb-4">
-              <Lock className="w-6 h-6 text-[#0EA5E9]" />
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-[#E2E8F0]">
+            <div className="flex items-center justify-center w-10 h-10 bg-[#0EA5E9]/10 rounded-lg mx-auto mb-4">
+              <Lock className="w-5 h-5 text-[#0EA5E9]" />
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#334155] mb-1.5">
+                <label className="block text-[12px] font-medium text-[#334155] mb-1.5">
                   Access Code
                 </label>
                 <div className="relative">
@@ -94,7 +96,7 @@ export function DemoGate({ children }: DemoGateProps) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value.toUpperCase())}
                     placeholder="Enter access code"
-                    className="w-full px-4 py-3 border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#0EA5E9] focus:border-transparent text-center tracking-widest font-mono"
+                    className="w-full px-4 py-2.5 border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#0EA5E9] focus:border-transparent text-center tracking-widest font-mono text-sm"
                     autoFocus
                   />
                   <button
@@ -102,22 +104,22 @@ export function DemoGate({ children }: DemoGateProps) {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#64748B]"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
               {error && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-lg">
                   <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-                  <p className="text-sm text-red-600">{error}</p>
+                  <p className="text-[12px] text-red-600">{error}</p>
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={!password || isLoading}
-                className="w-full py-3 bg-[#0F172A] text-white rounded-lg font-medium hover:bg-[#1E293B] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-2.5 bg-[#0EA5E9] text-white rounded-lg text-[13px] font-medium hover:bg-[#0284C7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <>
@@ -130,13 +132,13 @@ export function DemoGate({ children }: DemoGateProps) {
               </button>
             </form>
 
-            <p className="text-center text-[11px] text-[#94A3B8] mt-4">
+            <p className="text-center text-[10px] text-[#94A3B8] mt-4">
               This demo contains confidential data. Unauthorized access is prohibited.
             </p>
           </div>
 
           {/* Footer */}
-          <p className="text-center text-white/40 text-xs mt-6">
+          <p className="text-center text-[#94A3B8] text-[11px] mt-6">
             Powered by Stackline • Social Listening Platform
           </p>
         </div>
