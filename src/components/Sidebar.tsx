@@ -9,7 +9,6 @@ import {
   Search,
   Settings,
   LogOut,
-  ChevronDown,
 } from 'lucide-react';
 import { useSettings } from '@/lib/useSettings';
 
@@ -20,22 +19,25 @@ const navigation = [
 ];
 
 interface SidebarProps {
-  categoryName?: string;
   onLogout?: () => void;
 }
 
-export function Sidebar({ categoryName, onLogout }: SidebarProps) {
+const BRANDS = [
+  { id: 'revlon', name: 'Revlon', emoji: '💄' },
+  { id: 'elf', name: 'e.l.f.', emoji: '✨' },
+  { id: 'maybelline', name: 'Maybelline', emoji: '💋' },
+];
+
+export function Sidebar({ onLogout }: SidebarProps) {
   const pathname = usePathname();
-  const { getBrandName, settings } = useSettings();
+  const { settings, saveSettings } = useSettings();
 
   // Get brand emoji based on selected brand
-  const brandEmoji = {
-    'revlon': '💄',
-    'elf': '✨',
-    'maybelline': '💋',
-  }[settings.selectedBrand] || '💄';
+  const currentBrand = BRANDS.find(b => b.id === settings.selectedBrand) || BRANDS[0];
 
-  const displayName = categoryName || getBrandName();
+  const handleBrandChange = (brandId: string) => {
+    saveSettings({ selectedBrand: brandId });
+  };
 
   return (
     <div className="flex flex-col h-full w-56 bg-[#0F172A] text-white">
@@ -53,21 +55,26 @@ export function Sidebar({ categoryName, onLogout }: SidebarProps) {
 
       {/* Brand Selector */}
       <div className="px-3 py-3 border-b border-white/10">
-        <Link
-          href="/settings"
-          className="w-full flex items-center justify-between gap-2 p-2 hover:bg-white/5 rounded transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded bg-white/10 flex items-center justify-center">
-              <span className="text-sm">{brandEmoji}</span>
-            </div>
-            <div className="text-left">
-              <span className="text-sm font-medium block">{displayName}</span>
-              <span className="text-[10px] text-white/50">Selected Brand</span>
-            </div>
+        <div className="flex items-center gap-2 p-2">
+          <div className="w-7 h-7 rounded bg-white/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-sm">{currentBrand.emoji}</span>
           </div>
-          <ChevronDown className="w-4 h-4 text-white/50" />
-        </Link>
+          <div className="flex-1">
+            <select
+              value={settings.selectedBrand}
+              onChange={(e) => handleBrandChange(e.target.value)}
+              className="w-full bg-transparent text-sm font-medium text-white border-none focus:outline-none cursor-pointer appearance-none"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right center', paddingRight: '16px' }}
+            >
+              {BRANDS.map((brand) => (
+                <option key={brand.id} value={brand.id} className="bg-[#0F172A] text-white">
+                  {brand.name}
+                </option>
+              ))}
+            </select>
+            <span className="text-[10px] text-white/50 block">Selected Brand</span>
+          </div>
+        </div>
       </div>
 
       {/* Navigation */}

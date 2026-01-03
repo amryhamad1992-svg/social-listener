@@ -119,27 +119,27 @@ export function ExecutiveSummary() {
   };
 
   return (
-    <div className="bg-gradient-to-r from-[#0F172A] to-[#1E293B] rounded-lg p-5 shadow-sm text-white">
+    <div className="bg-white rounded-lg p-5 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#0EA5E9]/20 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-[#0EA5E9]/10 flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-[#0EA5E9]" />
           </div>
           <div>
-            <h2 className="text-sm font-medium">Executive Summary</h2>
-            <p className="text-[10px] text-white/60">AI-powered insights for {getBrandName()}</p>
+            <h2 className="text-sm font-medium text-[#0F172A]">Executive Summary</h2>
+            <p className="text-[10px] text-[#64748B]">AI-powered insights for {getBrandName()}</p>
           </div>
         </div>
         <select
           value={days}
           onChange={(e) => setDays(parseInt(e.target.value, 10))}
-          className="px-2 py-1 text-[11px] bg-white/10 border border-white/20 rounded text-white focus:outline-none focus:border-[#0EA5E9]"
+          className="px-2 py-1 text-[11px] border border-[#E2E8F0] rounded bg-white text-[#0F172A] focus:outline-none focus:border-[#0EA5E9]"
         >
-          <option value={7} className="text-[#0F172A]">Last 7 days</option>
-          <option value={14} className="text-[#0F172A]">Last 14 days</option>
-          <option value={30} className="text-[#0F172A]">Last 30 days</option>
-          <option value={90} className="text-[#0F172A]">Last 90 days</option>
+          <option value={7}>Last 7 days</option>
+          <option value={14}>Last 14 days</option>
+          <option value={30}>Last 30 days</option>
+          <option value={90}>Last 90 days</option>
         </select>
       </div>
 
@@ -153,7 +153,7 @@ export function ExecutiveSummary() {
             <div className="flex-shrink-0 mt-0.5">
               {insight.icon}
             </div>
-            <p className="text-[12px] leading-relaxed text-white/90">
+            <p className="text-[12px] leading-relaxed text-[#334155]">
               {insight.text}
             </p>
           </div>
@@ -161,13 +161,13 @@ export function ExecutiveSummary() {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/10">
-        <p className="text-[10px] text-white/50">
+      <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#E2E8F0]">
+        <p className="text-[10px] text-[#64748B]">
           Insights generated from {days}-day data analysis
         </p>
         <div className="flex items-center gap-1">
           <div className="w-1.5 h-1.5 rounded-full bg-[#0EA5E9] animate-pulse" />
-          <span className="text-[10px] text-white/50">Updated just now</span>
+          <span className="text-[10px] text-[#64748B]">Updated just now</span>
         </div>
       </div>
     </div>
