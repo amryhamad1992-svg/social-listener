@@ -232,10 +232,20 @@ const DAYS_OPTIONS = [
   { value: 90, label: '90 days', trendsParam: 'today 3-m' },
 ];
 
+const COUNTRIES = [
+  { code: 'US', name: 'United States', flag: '🇺🇸' },
+  { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
+  { code: 'DE', name: 'Germany', flag: '🇩🇪' },
+  { code: 'FR', name: 'France', flag: '🇫🇷' },
+  { code: 'IT', name: 'Italy', flag: '🇮🇹' },
+  { code: 'ES', name: 'Spain', flag: '🇪🇸' },
+];
+
 export function SearchTrends() {
   const [selectedBrand, setSelectedBrand] = useState('Revlon');
   const [view, setView] = useState<'branded' | 'generic'>('branded');
   const [days, setDays] = useState(90);
+  const [country, setCountry] = useState('US');
 
   // Generate dynamic data based on selections
   const chartData = useMemo(() => generateChartData(days, selectedBrand), [days, selectedBrand]);
@@ -245,9 +255,10 @@ export function SearchTrends() {
   const displayTerms = view === 'branded' ? brandedTerms : genericTerms;
 
   const daysOption = DAYS_OPTIONS.find(d => d.value === days) || DAYS_OPTIONS[3];
+  const selectedCountry = COUNTRIES.find(c => c.code === country) || COUNTRIES[0];
   const googleTrendsUrl = view === 'branded'
-    ? `https://trends.google.com/trends/explore?q=${encodeURIComponent(selectedBrand)}&geo=US&cat=44&date=${encodeURIComponent(daysOption.trendsParam)}`
-    : `https://trends.google.com/trends/explore?q=drugstore%20makeup,makeup%20tutorial&geo=US&cat=44&date=${encodeURIComponent(daysOption.trendsParam)}`;
+    ? `https://trends.google.com/trends/explore?q=${encodeURIComponent(selectedBrand)}&geo=${country}&cat=44&date=${encodeURIComponent(daysOption.trendsParam)}`
+    : `https://trends.google.com/trends/explore?q=drugstore%20makeup,makeup%20tutorial&geo=${country}&cat=44&date=${encodeURIComponent(daysOption.trendsParam)}`;
 
   return (
     <div className="bg-white rounded-lg p-5 shadow-sm">
@@ -303,6 +314,17 @@ export function SearchTrends() {
           >
             {DAYS_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+
+          {/* Country Selector */}
+          <select
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            className="px-2 py-1 text-[11px] border border-[#E2E8F0] rounded bg-white focus:outline-none focus:border-[#0F172A]"
+          >
+            {COUNTRIES.map((c) => (
+              <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
             ))}
           </select>
 
@@ -371,7 +393,7 @@ export function SearchTrends() {
         {displayTerms.map((term) => (
           <a
             key={term.term}
-            href={`https://trends.google.com/trends/explore?q=${encodeURIComponent(term.term)}&geo=US&cat=44&date=${encodeURIComponent(daysOption.trendsParam)}`}
+            href={`https://trends.google.com/trends/explore?q=${encodeURIComponent(term.term)}&geo=${country}&cat=44&date=${encodeURIComponent(daysOption.trendsParam)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-between p-2.5 rounded-lg border border-[#E2E8F0] hover:border-[#0F172A] hover:bg-[#F8FAFC] transition-colors group"
@@ -411,7 +433,7 @@ export function SearchTrends() {
 
       {/* Footer */}
       <p className="text-[9px] text-[#94A3B8] text-center mt-3 pt-2 border-t border-[#E2E8F0]">
-        Search interest scores (0-100) • Data simulated from Google Trends patterns
+        {selectedCountry.flag} {selectedCountry.name} • Search interest scores (0-100) • Data simulated from Google Trends patterns
       </p>
     </div>
   );

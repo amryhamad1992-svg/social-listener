@@ -11,6 +11,8 @@ import { MediaMentions } from '@/components/MediaMentions';
 import { CompetitorComparison } from '@/components/CompetitorComparison';
 import { SearchTrends } from '@/components/SearchTrends';
 import { WebMentions } from '@/components/WebMentions';
+import { ExecutiveSummary } from '@/components/ExecutiveSummary';
+import { ShareOfVoice } from '@/components/ShareOfVoice';
 import { useSettings } from '@/lib/useSettings';
 
 interface DashboardData {
@@ -137,6 +139,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Executive Summary */}
+      <ExecutiveSummary />
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
@@ -189,11 +194,14 @@ export default function DashboardPage() {
       {/* Google Search Trends */}
       <SearchTrends />
 
-      {/* Media Mentions & Competitor Comparison */}
+      {/* Share of Voice & Competitor Comparison */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <MediaMentions />
+        <ShareOfVoice />
         <CompetitorComparison />
       </div>
+
+      {/* Media Mentions */}
+      <MediaMentions />
 
       {/* Web Mentions (Scraped Sources) */}
       <WebMentions />
