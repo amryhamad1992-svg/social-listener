@@ -18,15 +18,31 @@ interface TrendTerm {
   type: 'branded' | 'generic';
 }
 
-// Generate chart data based on days
-function generateChartData(days: number, brand: string): Array<{ date: string; interest: number }> {
+// Generate chart data based on days, brand, and country
+function generateChartData(days: number, brand: string, country: string): Array<{ date: string; interest: number }> {
+  // Base interest varies by brand
   const baseInterest: { [key: string]: number } = {
     'Revlon': 65,
     'e.l.f.': 78,
     'Maybelline': 70,
   };
 
-  const base = baseInterest[brand] || 65;
+  // Country modifiers - different markets have different brand strengths
+  const countryModifiers: { [key: string]: { [key: string]: number } } = {
+    'US': { 'Revlon': 1.0, 'e.l.f.': 1.15, 'Maybelline': 1.0 },
+    'GB': { 'Revlon': 0.85, 'e.l.f.': 1.05, 'Maybelline': 1.1 },
+    'DE': { 'Revlon': 0.7, 'e.l.f.': 0.8, 'Maybelline': 1.25 },
+    'FR': { 'Revlon': 0.75, 'e.l.f.': 0.9, 'Maybelline': 1.2 },
+    'IT': { 'Revlon': 0.8, 'e.l.f.': 0.85, 'Maybelline': 1.15 },
+    'ES': { 'Revlon': 0.9, 'e.l.f.': 0.95, 'Maybelline': 1.1 },
+  };
+
+  const modifier = countryModifiers[country]?.[brand] || 1.0;
+  const base = Math.round((baseInterest[brand] || 65) * modifier);
+
+  // Use country code to create consistent but different patterns per country
+  const countrySeed = country.charCodeAt(0) + country.charCodeAt(1);
+
   const data: Array<{ date: string; interest: number }> = [];
   const now = new Date();
 
@@ -38,8 +54,8 @@ function generateChartData(days: number, brand: string): Array<{ date: string; i
     const date = new Date(now);
     date.setDate(date.getDate() - (i * interval));
 
-    // Add some variation
-    const variation = Math.sin(i * 0.8) * 15 + Math.random() * 10;
+    // Add variation that's consistent for each country (using countrySeed)
+    const variation = Math.sin(i * 0.8 + countrySeed * 0.1) * 15 + ((countrySeed + i) % 10);
     const interest = Math.min(100, Math.max(20, Math.round(base + variation)));
 
     // Format date based on range
@@ -247,8 +263,8 @@ export function SearchTrends() {
   const [days, setDays] = useState(90);
   const [country, setCountry] = useState('US');
 
-  // Generate dynamic data based on selections
-  const chartData = useMemo(() => generateChartData(days, selectedBrand), [days, selectedBrand]);
+  // Generate dynamic data based on selections (including country)
+  const chartData = useMemo(() => generateChartData(days, selectedBrand, country), [days, selectedBrand, country]);
   const brandedTerms = useMemo(() => getBrandedTerms(selectedBrand, days), [selectedBrand, days]);
   const genericTerms = useMemo(() => getGenericTerms(days), [days]);
 
