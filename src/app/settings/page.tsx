@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Building2,
   Calendar,
@@ -12,15 +12,17 @@ import {
   Newspaper,
   MessageCircle
 } from 'lucide-react';
+import { useSettings } from '@/lib/useSettings';
 
 interface SettingsSection {
   title: string;
   description: string;
   icon: React.ReactNode;
   children: React.ReactNode;
+  badge?: string;
 }
 
-function SettingsCard({ title, description, icon, children }: SettingsSection) {
+function SettingsCard({ title, description, icon, children, badge }: SettingsSection) {
   return (
     <div className="bg-white rounded-lg p-6 shadow-sm">
       <div className="flex items-start gap-4 mb-5">
@@ -28,7 +30,14 @@ function SettingsCard({ title, description, icon, children }: SettingsSection) {
           {icon}
         </div>
         <div>
-          <h2 className="text-sm font-medium text-[#1E293B]">{title}</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-medium text-[#1E293B]">{title}</h2>
+            {badge && (
+              <span className="text-[10px] px-2 py-0.5 bg-[#94A3B8]/20 text-[#64748B] rounded-full">
+                {badge}
+              </span>
+            )}
+          </div>
           <p className="text-[12px] text-[#64748B] mt-0.5">{description}</p>
         </div>
       </div>
@@ -38,19 +47,24 @@ function SettingsCard({ title, description, icon, children }: SettingsSection) {
 }
 
 export default function SettingsPage() {
+  const { settings, isLoaded, saveSettings, getBrandName } = useSettings();
   const [selectedBrand, setSelectedBrand] = useState('revlon');
-  const [defaultDays, setDefaultDays] = useState('7');
+  const [defaultDays, setDefaultDays] = useState(7);
   const [dataSources, setDataSources] = useState({
     youtube: true,
     news: true,
     reddit: false,
   });
-  const [notifications, setNotifications] = useState({
-    trending: true,
-    sentiment: false,
-    weekly: true,
-  });
   const [saved, setSaved] = useState(false);
+
+  // Load settings from hook when available
+  useEffect(() => {
+    if (isLoaded) {
+      setSelectedBrand(settings.selectedBrand);
+      setDefaultDays(settings.defaultDays);
+      setDataSources(settings.dataSources);
+    }
+  }, [isLoaded, settings]);
 
   const brands = [
     { id: 'revlon', name: 'Revlon', emoji: '💄' },
@@ -59,17 +73,34 @@ export default function SettingsPage() {
   ];
 
   const handleSave = () => {
+    saveSettings({
+      selectedBrand,
+      defaultDays,
+      dataSources,
+    });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleBrandChange = (brandId: string) => {
+    setSelectedBrand(brandId);
+  };
+
+  const handleDaysChange = (days: number) => {
+    setDefaultDays(days);
   };
 
   const toggleDataSource = (source: keyof typeof dataSources) => {
     setDataSources(prev => ({ ...prev, [source]: !prev[source] }));
   };
 
-  const toggleNotification = (type: keyof typeof notifications) => {
-    setNotifications(prev => ({ ...prev, [type]: !prev[type] }));
-  };
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-6 h-6 border-2 border-[#0EA5E9] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -85,7 +116,7 @@ export default function SettingsPage() {
           onClick={handleSave}
           className={`px-4 py-2 rounded-lg text-[13px] font-medium transition-all ${
             saved
-              ? 'bg-green-500 text-white'
+              ? 'bg-[#0EA5E9] text-white'
               : 'bg-[#0EA5E9] text-white hover:bg-[#0284C7]'
           }`}
         >
@@ -110,7 +141,7 @@ export default function SettingsPage() {
           {brands.map((brand) => (
             <button
               key={brand.id}
-              onClick={() => setSelectedBrand(brand.id)}
+              onClick={() => handleBrandChange(brand.id)}
               className={`p-4 rounded-lg border-2 transition-all ${
                 selectedBrand === brand.id
                   ? 'border-[#0EA5E9] bg-[#0EA5E9]/5'
@@ -141,14 +172,14 @@ export default function SettingsPage() {
       >
         <div className="flex gap-3">
           {[
-            { value: '7', label: '7 Days' },
-            { value: '14', label: '14 Days' },
-            { value: '30', label: '30 Days' },
-            { value: '90', label: '90 Days' },
+            { value: 7, label: '7 Days' },
+            { value: 14, label: '14 Days' },
+            { value: 30, label: '30 Days' },
+            { value: 90, label: '90 Days' },
           ].map((option) => (
             <button
               key={option.value}
-              onClick={() => setDefaultDays(option.value)}
+              onClick={() => handleDaysChange(option.value)}
               className={`px-4 py-2 rounded-lg text-[13px] font-medium transition-all ${
                 defaultDays === option.value
                   ? 'bg-[#0EA5E9] text-white'
@@ -199,7 +230,7 @@ export default function SettingsPage() {
                   <div className="text-[13px] font-medium text-[#1E293B] flex items-center gap-2">
                     {source.name}
                     {source.comingSoon && (
-                      <span className="text-[10px] px-2 py-0.5 bg-[#FEF3C7] text-[#92400E] rounded-full">
+                      <span className="text-[10px] px-2 py-0.5 bg-[#94A3B8]/20 text-[#64748B] rounded-full">
                         Coming Soon
                       </span>
                     )}
@@ -231,26 +262,27 @@ export default function SettingsPage() {
         </div>
       </SettingsCard>
 
-      {/* Notifications */}
+      {/* Notifications - Coming Soon */}
       <SettingsCard
         title="Notifications"
         description="Configure alerts and report delivery preferences"
         icon={<Bell className="w-5 h-5" />}
+        badge="Coming Soon"
       >
-        <div className="space-y-3">
+        <div className="space-y-3 opacity-50 pointer-events-none">
           {[
             {
-              key: 'trending' as const,
+              key: 'trending',
               name: 'Trending Alerts',
               description: 'Get notified when topics spike in mentions'
             },
             {
-              key: 'sentiment' as const,
+              key: 'sentiment',
               name: 'Sentiment Changes',
               description: 'Alert when sentiment shifts significantly'
             },
             {
-              key: 'weekly' as const,
+              key: 'weekly',
               name: 'Weekly Digest',
               description: 'Summary report every Monday'
             },
@@ -267,18 +299,9 @@ export default function SettingsPage() {
                   {notif.description}
                 </div>
               </div>
-              <button
-                onClick={() => toggleNotification(notif.key)}
-                className={`relative w-11 h-6 rounded-full transition-colors ${
-                  notifications[notif.key] ? 'bg-[#0EA5E9]' : 'bg-[#CBD5E1]'
-                }`}
-              >
-                <div
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-                    notifications[notif.key] ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
+              <div className="relative w-11 h-6 rounded-full bg-[#E2E8F0]">
+                <div className="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow" />
+              </div>
             </div>
           ))}
         </div>
@@ -301,6 +324,12 @@ export default function SettingsPage() {
             <span className="text-[13px] text-[#64748B]">Organization</span>
             <span className="text-[13px] font-medium text-[#1E293B]">
               Stackline
+            </span>
+          </div>
+          <div className="flex items-center justify-between py-3 border-b border-[#E2E8F0]">
+            <span className="text-[13px] text-[#64748B]">Selected Brand</span>
+            <span className="text-[13px] font-medium text-[#1E293B]">
+              {getBrandName()}
             </span>
           </div>
           <div className="flex items-center justify-between py-3">

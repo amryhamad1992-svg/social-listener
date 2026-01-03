@@ -11,6 +11,7 @@ import { MediaMentions } from '@/components/MediaMentions';
 import { CompetitorComparison } from '@/components/CompetitorComparison';
 import { SearchTrends } from '@/components/SearchTrends';
 import { WebMentions } from '@/components/WebMentions';
+import { useSettings } from '@/lib/useSettings';
 
 interface DashboardData {
   brand: { name: string };
@@ -50,14 +51,26 @@ interface DashboardData {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { settings, isLoaded, getBrandName } = useSettings();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [days, setDays] = useState(7);
+  const [settingsApplied, setSettingsApplied] = useState(false);
+
+  // Apply default days from settings once loaded
+  useEffect(() => {
+    if (isLoaded && !settingsApplied) {
+      setDays(settings.defaultDays);
+      setSettingsApplied(true);
+    }
+  }, [isLoaded, settings.defaultDays, settingsApplied]);
 
   useEffect(() => {
-    fetchDashboard();
-  }, [days]);
+    if (settingsApplied) {
+      fetchDashboard();
+    }
+  }, [days, settingsApplied, settings.selectedBrand]);
 
   const fetchDashboard = async () => {
     try {
@@ -81,7 +94,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (loading) {
+  if (loading || !isLoaded) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-6 h-6 animate-spin text-[#64748B]" />
@@ -104,7 +117,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-medium text-[#1E293B]">Dashboard</h1>
+          <h1 className="text-xl font-medium text-[#1E293B]">{getBrandName()} Dashboard</h1>
           <p className="text-[13px] text-[#64748B] mt-0.5">
             Brand monitoring and competitive intelligence
           </p>
@@ -119,6 +132,7 @@ export default function DashboardPage() {
             <option value={7}>Last 7 days</option>
             <option value={14}>Last 14 days</option>
             <option value={30}>Last 30 days</option>
+            <option value={90}>Last 90 days</option>
           </select>
         </div>
       </div>

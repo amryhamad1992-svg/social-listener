@@ -11,6 +11,7 @@ import {
   LogOut,
   ChevronDown,
 } from 'lucide-react';
+import { useSettings } from '@/lib/useSettings';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -23,8 +24,18 @@ interface SidebarProps {
   onLogout?: () => void;
 }
 
-export function Sidebar({ categoryName = 'Beauty', onLogout }: SidebarProps) {
+export function Sidebar({ categoryName, onLogout }: SidebarProps) {
   const pathname = usePathname();
+  const { getBrandName, settings } = useSettings();
+
+  // Get brand emoji based on selected brand
+  const brandEmoji = {
+    'revlon': '💄',
+    'elf': '✨',
+    'maybelline': '💋',
+  }[settings.selectedBrand] || '💄';
+
+  const displayName = categoryName || getBrandName();
 
   return (
     <div className="flex flex-col h-full w-56 bg-[#0F172A] text-white">
@@ -40,20 +51,23 @@ export function Sidebar({ categoryName = 'Beauty', onLogout }: SidebarProps) {
         />
       </div>
 
-      {/* Category Selector */}
+      {/* Brand Selector */}
       <div className="px-3 py-3 border-b border-white/10">
-        <button className="w-full flex items-center justify-between gap-2 p-2 hover:bg-white/5 rounded transition-colors">
+        <Link
+          href="/settings"
+          className="w-full flex items-center justify-between gap-2 p-2 hover:bg-white/5 rounded transition-colors"
+        >
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded bg-white/10 flex items-center justify-center">
-              <span className="text-sm">💄</span>
+              <span className="text-sm">{brandEmoji}</span>
             </div>
             <div className="text-left">
-              <span className="text-sm font-medium block">{categoryName}</span>
-              <span className="text-[10px] text-white/50">Category</span>
+              <span className="text-sm font-medium block">{displayName}</span>
+              <span className="text-[10px] text-white/50">Selected Brand</span>
             </div>
           </div>
           <ChevronDown className="w-4 h-4 text-white/50" />
-        </button>
+        </Link>
       </div>
 
       {/* Navigation */}

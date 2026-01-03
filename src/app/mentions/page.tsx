@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2, ExternalLink, Filter, ThumbsUp, MessageSquare, Flame } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { SentimentBadge } from '@/components/DataTable';
+import { useSettings } from '@/lib/useSettings';
 
 interface UnifiedMention {
   id: string;
@@ -44,6 +45,7 @@ const BRANDS = ['All Brands', 'Revlon', 'e.l.f.', 'Maybelline'];
 
 export default function MentionsPage() {
   const router = useRouter();
+  const { settings, isLoaded, getBrandName } = useSettings();
   const [mentions, setMentions] = useState<UnifiedMention[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -51,10 +53,28 @@ export default function MentionsPage() {
   const [sentiment, setSentiment] = useState<string>('');
   const [selectedBrand, setSelectedBrand] = useState('All Brands');
   const [sources, setSources] = useState<SourceFilter[]>(SOURCE_FILTERS);
+  const [settingsApplied, setSettingsApplied] = useState(false);
+
+  // Apply settings from storage
+  useEffect(() => {
+    if (isLoaded && !settingsApplied) {
+      setDays(settings.defaultDays);
+      // Set brand filter based on stored brand
+      const brandMap: Record<string, string> = {
+        'revlon': 'Revlon',
+        'elf': 'e.l.f.',
+        'maybelline': 'Maybelline',
+      };
+      setSelectedBrand(brandMap[settings.selectedBrand] || 'All Brands');
+      setSettingsApplied(true);
+    }
+  }, [isLoaded, settings, settingsApplied]);
 
   useEffect(() => {
-    fetchAllMentions();
-  }, [days, sentiment]);
+    if (settingsApplied) {
+      fetchAllMentions();
+    }
+  }, [days, sentiment, settingsApplied]);
 
   const toggleSource = (id: string) => {
     setSources(prev => prev.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
@@ -230,7 +250,7 @@ export default function MentionsPage() {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <h1 className="text-2xl font-bold text-foreground">
-                Brand Mentions
+                {getBrandName()} Mentions
               </h1>
               <p className="text-muted mt-1">
                 All mentions from YouTube, News, and Web sources
@@ -272,6 +292,7 @@ export default function MentionsPage() {
                 <option value={7}>Last 7 days</option>
                 <option value={14}>Last 14 days</option>
                 <option value={30}>Last 30 days</option>
+                <option value={90}>Last 90 days</option>
               </select>
             </div>
           </div>
@@ -301,7 +322,7 @@ export default function MentionsPage() {
           </div>
 
           {/* Content */}
-          {loading ? (
+          {(loading || !isLoaded) ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="w-8 h-8 animate-spin text-accent" />
             </div>
