@@ -12,6 +12,7 @@ interface ProductCategory {
   sentiment: number;
   trending: boolean;
   color: string;
+  [key: string]: string | number | boolean;
 }
 
 // Product breakdown data by brand
