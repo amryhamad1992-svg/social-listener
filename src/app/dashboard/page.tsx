@@ -13,6 +13,9 @@ import { SearchTrends } from '@/components/SearchTrends';
 import { WebMentions } from '@/components/WebMentions';
 import { ExecutiveSummary } from '@/components/ExecutiveSummary';
 import { ShareOfVoice } from '@/components/ShareOfVoice';
+import { ProductBreakdown } from '@/components/ProductBreakdown';
+import { CompetitorBattlecard } from '@/components/CompetitorBattlecard';
+import { PurchaseIntentSignals } from '@/components/PurchaseIntentSignals';
 import { useSettings } from '@/lib/SettingsContext';
 
 interface DashboardData {
@@ -194,9 +197,18 @@ export default function DashboardPage() {
       {/* Google Search Trends */}
       <SearchTrends />
 
-      {/* Share of Voice & Competitor Comparison */}
+      {/* Share of Voice & Product Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ShareOfVoice />
+        <ProductBreakdown />
+      </div>
+
+      {/* Competitor Battlecard - Full Width */}
+      <CompetitorBattlecard />
+
+      {/* Purchase Intent & Competitor Comparison */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <PurchaseIntentSignals />
         <CompetitorComparison />
       </div>
 
