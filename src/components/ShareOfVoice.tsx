@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { useSettings } from '@/lib/useSettings';
+import { useSettings } from '@/lib/SettingsContext';
 
 interface BrandData {
   name: string;

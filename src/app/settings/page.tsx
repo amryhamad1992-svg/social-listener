@@ -12,7 +12,7 @@ import {
   Newspaper,
   MessageCircle
 } from 'lucide-react';
-import { useSettings } from '@/lib/useSettings';
+import { useSettings } from '@/lib/SettingsContext';
 
 interface SettingsSection {
   title: string;

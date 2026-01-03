@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Sparkles, TrendingUp, TrendingDown, AlertTriangle, Zap } from 'lucide-react';
-import { useSettings } from '@/lib/useSettings';
+import { useSettings } from '@/lib/SettingsContext';
 
 interface Insight {
   type: 'positive' | 'negative' | 'neutral' | 'alert';

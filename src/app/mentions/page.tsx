@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2, ExternalLink, Filter, ThumbsUp, MessageSquare, Flame } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { SentimentBadge } from '@/components/DataTable';
-import { useSettings } from '@/lib/useSettings';
+import { useSettings } from '@/lib/SettingsContext';
 
 interface UnifiedMention {
   id: string;
@@ -59,16 +59,21 @@ export default function MentionsPage() {
   useEffect(() => {
     if (isLoaded && !settingsApplied) {
       setDays(settings.defaultDays);
-      // Set brand filter based on stored brand
+      setSettingsApplied(true);
+    }
+  }, [isLoaded, settings.defaultDays, settingsApplied]);
+
+  // React to brand changes from sidebar dropdown
+  useEffect(() => {
+    if (isLoaded) {
       const brandMap: Record<string, string> = {
         'revlon': 'Revlon',
         'elf': 'e.l.f.',
         'maybelline': 'Maybelline',
       };
       setSelectedBrand(brandMap[settings.selectedBrand] || 'All Brands');
-      setSettingsApplied(true);
     }
-  }, [isLoaded, settings, settingsApplied]);
+  }, [isLoaded, settings.selectedBrand]);
 
   useEffect(() => {
     if (settingsApplied) {

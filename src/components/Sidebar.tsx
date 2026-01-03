@@ -10,7 +10,7 @@ import {
   Settings,
   LogOut,
 } from 'lucide-react';
-import { useSettings } from '@/lib/useSettings';
+import { useSettings } from '@/lib/SettingsContext';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },

@@ -13,7 +13,7 @@ import { SearchTrends } from '@/components/SearchTrends';
 import { WebMentions } from '@/components/WebMentions';
 import { ExecutiveSummary } from '@/components/ExecutiveSummary';
 import { ShareOfVoice } from '@/components/ShareOfVoice';
-import { useSettings } from '@/lib/useSettings';
+import { useSettings } from '@/lib/SettingsContext';
 
 interface DashboardData {
   brand: { name: string };
