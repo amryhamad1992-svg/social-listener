@@ -51,7 +51,7 @@ export function GoogleTrendsWidget({ keywords, geo = 'US' }: GoogleTrendsWidgetP
   return (
     <div className="bg-white rounded-lg p-5 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
-        <TrendingUp className="w-4 h-4 text-[#4285F4]" />
+        <TrendingUp className="w-4 h-4 text-[#0EA5E9]" />
         <h2 className="text-sm font-medium text-[#1E293B]">Google Search Trends</h2>
         <span className="text-[10px] text-[#64748B] ml-auto">Last 90 days</span>
       </div>
@@ -74,7 +74,7 @@ export function GoogleTrendsWidget({ keywords, geo = 'US' }: GoogleTrendsWidgetP
             <div
               className="w-3 h-3 rounded-full"
               style={{
-                backgroundColor: index === 0 ? '#4285F4' : index === 1 ? '#EA4335' : '#FBBC04'
+                backgroundColor: index === 0 ? '#0EA5E9' : index === 1 ? '#0F172A' : '#64748B'
               }}
             />
             <span className="text-[12px] text-[#64748B]">{keyword}</span>
@@ -94,7 +94,7 @@ export function GoogleTrendsIframe({ keywords }: { keywords: string[] }) {
     <div className="bg-white rounded-lg p-5 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-[#4285F4]" />
+          <TrendingUp className="w-4 h-4 text-[#0EA5E9]" />
           <h2 className="text-sm font-medium text-[#1E293B]">Google Search Trends</h2>
         </div>
         <a
@@ -114,14 +114,14 @@ export function GoogleTrendsIframe({ keywords }: { keywords: string[] }) {
             key={keyword}
             className="p-4 rounded-lg"
             style={{
-              backgroundColor: index === 0 ? '#EBF5FF' : '#FEF2F2'
+              backgroundColor: index === 0 ? '#F0F9FF' : '#F8FAFC'
             }}
           >
             <div className="flex items-center gap-2 mb-2">
               <div
                 className="w-2 h-2 rounded-full"
                 style={{
-                  backgroundColor: index === 0 ? '#4285F4' : '#EA4335'
+                  backgroundColor: index === 0 ? '#0EA5E9' : '#0F172A'
                 }}
               />
               <span className="text-[13px] font-medium text-[#1E293B]">{keyword}</span>
@@ -132,7 +132,7 @@ export function GoogleTrendsIframe({ keywords }: { keywords: string[] }) {
               </span>
               <span className="text-[11px] text-[#64748B]">avg. interest</span>
             </div>
-            <div className={`text-[11px] mt-1 ${index === 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+            <div className={`text-[11px] mt-1 ${index === 0 ? 'text-[#0EA5E9]' : 'text-[#64748B]'}`}>
               {index === 0 ? '↑ +12% vs last period' : '↓ -8% vs last period'}
             </div>
           </div>

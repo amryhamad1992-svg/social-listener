@@ -79,7 +79,7 @@ export function YouTubeSection() {
     return (
       <div className="bg-white rounded-lg p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
-          <Play className="w-4 h-4 text-[#FF0000]" />
+          <Play className="w-4 h-4 text-[#0EA5E9]" />
           <h2 className="text-sm font-medium text-[#1E293B]">YouTube Mentions</h2>
         </div>
         <div className="flex items-center justify-center h-48">
@@ -93,7 +93,7 @@ export function YouTubeSection() {
     return (
       <div className="bg-white rounded-lg p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
-          <Play className="w-4 h-4 text-[#FF0000]" />
+          <Play className="w-4 h-4 text-[#0EA5E9]" />
           <h2 className="text-sm font-medium text-[#1E293B]">YouTube Mentions</h2>
         </div>
         <p className="text-sm text-red-500">{error}</p>
@@ -106,7 +106,7 @@ export function YouTubeSection() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Play className="w-4 h-4 text-[#FF0000]" />
+          <Play className="w-4 h-4 text-[#0EA5E9]" />
           <h2 className="text-sm font-medium text-[#1E293B]">YouTube Mentions</h2>
         </div>
         <span className="text-[11px] text-[#64748B]">Last 7 days</span>
@@ -167,7 +167,7 @@ export function YouTubeSection() {
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-medium text-[#FF0000]">
+                  <span className="text-[10px] font-medium text-[#0EA5E9]">
                     {video.channelTitle}
                   </span>
                   <SentimentBadge label={video.sentiment.label} />
@@ -194,7 +194,7 @@ export function YouTubeSection() {
               </div>
 
               {/* External link */}
-              <ExternalLink className="w-4 h-4 text-[#94A3B8] group-hover:text-[#FF0000] flex-shrink-0 mt-1" />
+              <ExternalLink className="w-4 h-4 text-[#94A3B8] group-hover:text-[#0EA5E9] flex-shrink-0 mt-1" />
             </a>
           ))
         )}

@@ -16,7 +16,7 @@ export function DataSourcesStatus() {
   const [sources, setSources] = useState<DataSource[]>([
     { id: 'youtube', name: 'YouTube', icon: '▶️', status: 'pending' },
     { id: 'news', name: 'NewsAPI', icon: '📰', status: 'pending' },
-    { id: 'reddit', name: 'Reddit', icon: '🔴', status: 'pending' },
+    { id: 'reddit', name: 'Reddit', icon: '💬', status: 'pending' },
   ]);
   const [checking, setChecking] = useState(true);
 
@@ -74,7 +74,7 @@ export function DataSourcesStatus() {
     updatedSources.push({
       id: 'reddit',
       name: 'Reddit',
-      icon: '🔴',
+      icon: '💬',
       status: 'pending',
     });
 
@@ -85,11 +85,11 @@ export function DataSourcesStatus() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'connected':
-        return <CheckCircle className="w-4 h-4 text-[#22C55E]" />;
+        return <CheckCircle className="w-4 h-4 text-[#0EA5E9]" />;
       case 'pending':
-        return <Clock className="w-4 h-4 text-[#F59E0B]" />;
+        return <Clock className="w-4 h-4 text-[#94A3B8]" />;
       default:
-        return <XCircle className="w-4 h-4 text-[#EF4444]" />;
+        return <XCircle className="w-4 h-4 text-[#64748B]" />;
     }
   };
 
@@ -107,11 +107,11 @@ export function DataSourcesStatus() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'connected':
-        return 'bg-[#DCFCE7] text-[#166534]';
+        return 'bg-[#0EA5E9]/10 text-[#0EA5E9]';
       case 'pending':
-        return 'bg-[#FEF3C7] text-[#92400E]';
+        return 'bg-[#94A3B8]/10 text-[#64748B]';
       default:
-        return 'bg-[#FEE2E2] text-[#991B1B]';
+        return 'bg-[#64748B]/10 text-[#64748B]';
     }
   };
 

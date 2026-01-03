@@ -174,21 +174,18 @@ export default function SettingsPage() {
               name: 'YouTube',
               icon: <Youtube className="w-5 h-5" />,
               description: 'Video mentions and comments',
-              color: 'text-red-500'
             },
             {
               key: 'news' as const,
               name: 'News Articles',
               icon: <Newspaper className="w-5 h-5" />,
               description: 'Press coverage and articles',
-              color: 'text-blue-500'
             },
             {
               key: 'reddit' as const,
               name: 'Reddit',
               icon: <MessageCircle className="w-5 h-5" />,
               description: 'Community discussions',
-              color: 'text-orange-500',
               comingSoon: true
             },
           ].map((source) => (
@@ -197,7 +194,7 @@ export default function SettingsPage() {
               className="flex items-center justify-between p-4 rounded-lg border border-[#E2E8F0]"
             >
               <div className="flex items-center gap-3">
-                <div className={source.color}>{source.icon}</div>
+                <div className="text-[#0EA5E9]">{source.icon}</div>
                 <div>
                   <div className="text-[13px] font-medium text-[#1E293B] flex items-center gap-2">
                     {source.name}

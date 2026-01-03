@@ -32,7 +32,7 @@ interface SourceFilter {
 const SOURCE_FILTERS: SourceFilter[] = [
   { id: 'youtube', name: 'YouTube', icon: '▶️', enabled: true },
   { id: 'news', name: 'News', icon: '📰', enabled: true },
-  { id: 'reddit', name: 'Reddit', icon: '🔴', enabled: true },
+  { id: 'reddit', name: 'Reddit', icon: '💬', enabled: true },
   // Disabled sources - need scraper fixes
   // { id: 'makeupalley', name: 'MakeupAlley', icon: '💄', enabled: true },
   // { id: 'temptalia', name: 'Temptalia', icon: '💋', enabled: true },
@@ -151,7 +151,7 @@ export default function MentionsPage() {
             isHighEngagement: boolean;
           }) => {
             const iconMap: { [key: string]: string } = {
-              'Reddit': '🔴',
+              'Reddit': '💬',
               'MakeupAlley': '💄',
               'Temptalia': '💋',
               'Into The Gloss': '✨',

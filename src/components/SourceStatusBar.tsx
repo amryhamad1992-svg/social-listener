@@ -66,9 +66,9 @@ export function SourceStatusBar() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'connected': return 'bg-[#22C55E]';
-      case 'pending': return 'bg-[#F59E0B]';
-      default: return 'bg-[#EF4444]';
+      case 'connected': return 'bg-[#0EA5E9]';
+      case 'pending': return 'bg-[#94A3B8]';
+      default: return 'bg-[#64748B]';
     }
   };
 
