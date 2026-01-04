@@ -179,7 +179,7 @@ export default function DashboardPage() {
         />
         <KPICard
           title="Share of Voice"
-          value="38%"
+          value={38}
           change={2.4}
           format="percent"
           sparklineData={[32, 34, 33, 35, 36, 37, 38]}
@@ -187,7 +187,7 @@ export default function DashboardPage() {
         />
         <KPICard
           title="Engagement Rate"
-          value="4.2%"
+          value={4.2}
           change={0.8}
           format="percent"
           sparklineData={[3.2, 3.5, 3.4, 3.8, 4.0, 3.9, 4.2]}
