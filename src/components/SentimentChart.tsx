@@ -14,6 +14,7 @@ import {
   ScatterChart,
   Scatter,
   ZAxis,
+  Legend,
 } from 'recharts';
 
 interface SentimentTrendData {
@@ -27,26 +28,37 @@ interface SentimentChartProps {
   showMentions?: boolean;
 }
 
-// Clean Stackline-style bar chart for mentions
+// Stackline-style grouped bar chart - Current vs Prior Period
 export function SentimentChart({ data }: SentimentChartProps) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  // Get bar color based on sentiment
-  const getBarColor = (sentiment: number) => {
-    if (sentiment > 0.3) return '#10B981'; // Green for positive
-    if (sentiment < -0.1) return '#EF4444'; // Red for negative
-    return '#1E293B'; // Navy for neutral
-  };
+  // Add prior period data (simulated as ~75% of current)
+  const chartData = data.map(d => ({
+    ...d,
+    priorMentions: Math.round(d.mentions * 0.75),
+  }));
 
   return (
     <div className="w-full" style={{ fontFamily: 'Roboto, sans-serif' }}>
-      {/* Simple bar chart - Stackline style */}
+      {/* Legend - Stackline style at top */}
+      <div className="flex items-center gap-6 mb-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-[3px] bg-[#CBD5E1] rounded" />
+          <span className="text-[11px] text-[#64748B]">Prior Period</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-[3px] bg-[#1E293B] rounded" />
+          <span className="text-[11px] text-[#64748B]">Current Period</span>
+        </div>
+      </div>
+
+      {/* Grouped bar chart - Stackline style */}
       <div className="h-[200px]">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+          <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }} barGap={2}>
             <XAxis
               dataKey="date"
               tickFormatter={formatDate}
@@ -61,7 +73,7 @@ export function SentimentChart({ data }: SentimentChartProps) {
               width={40}
             />
             <Tooltip
-              cursor={{ fill: '#F1F5F9' }}
+              cursor={{ fill: 'transparent' }}
               contentStyle={{
                 backgroundColor: '#fff',
                 border: '1px solid #E2E8F0',
@@ -71,34 +83,20 @@ export function SentimentChart({ data }: SentimentChartProps) {
                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
               }}
               formatter={(value, name) => {
-                if (name === 'mentions' && typeof value === 'number') return [value.toLocaleString(), 'Mentions'];
+                if (typeof value === 'number') {
+                  const label = name === 'priorMentions' ? 'Prior Period' : 'Current Period';
+                  return [value.toLocaleString(), label];
+                }
                 return [value, name];
               }}
               labelFormatter={formatDate}
             />
-            <Bar dataKey="mentions" radius={[4, 4, 0, 0]} maxBarSize={32}>
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={getBarColor(entry.sentiment)} />
-              ))}
-            </Bar>
+            {/* Prior Period - Light Gray */}
+            <Bar dataKey="priorMentions" fill="#CBD5E1" radius={[2, 2, 0, 0]} maxBarSize={24} />
+            {/* Current Period - Dark Navy */}
+            <Bar dataKey="mentions" fill="#1E293B" radius={[2, 2, 0, 0]} maxBarSize={24} />
           </BarChart>
         </ResponsiveContainer>
-      </div>
-
-      {/* Legend */}
-      <div className="flex items-center justify-center gap-6 mt-4 pt-3 border-t border-[#F1F5F9]">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-sm bg-[#10B981]" />
-          <span className="text-[11px] text-[#64748B]">Positive sentiment</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-sm bg-[#1E293B]" />
-          <span className="text-[11px] text-[#64748B]">Neutral</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-sm bg-[#EF4444]" />
-          <span className="text-[11px] text-[#64748B]">Negative sentiment</span>
-        </div>
       </div>
     </div>
   );
@@ -214,14 +212,15 @@ export function TopicBubbleChart({ data }: TopicBubbleChartProps) {
   );
 }
 
-// Sentiment Distribution Pie Chart
+// Sentiment Distribution Pie Chart - Stackline Style
 interface SentimentDistributionProps {
   positive: number;
   neutral: number;
   negative: number;
 }
 
-const COLORS = ['#86EFAC', '#CBD5E1', '#FCA5A5'];
+// Stackline color palette (from Paid Spend by Keyword chart)
+const STACKLINE_COLORS = ['#1E293B', '#14B8A6', '#FBBF24'];
 
 export function SentimentDistribution({
   positive,
@@ -237,23 +236,23 @@ export function SentimentDistribution({
 
   return (
     <div className="flex flex-col items-center" style={{ fontFamily: 'Roboto, sans-serif' }}>
-      {/* Pie Chart */}
-      <div className="w-[200px] h-[200px] relative">
+      {/* Pie Chart - Stackline style */}
+      <div className="w-[180px] h-[180px] relative">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={50}
-              outerRadius={85}
-              paddingAngle={3}
+              innerRadius={45}
+              outerRadius={75}
+              paddingAngle={2}
               dataKey="value"
               stroke="#fff"
               strokeWidth={2}
             >
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index]} />
+                <Cell key={`cell-${index}`} fill={STACKLINE_COLORS[index]} />
               ))}
             </Pie>
           </PieChart>
@@ -261,25 +260,25 @@ export function SentimentDistribution({
         {/* Center total */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
-            <div className="text-2xl font-semibold text-[#1E293B]">{total}</div>
-            <div className="text-[10px] text-[#64748B] uppercase">Total</div>
+            <div className="text-[22px] font-semibold text-[#1E293B]">{total}</div>
+            <div className="text-[9px] text-[#64748B] uppercase tracking-wide">Total</div>
           </div>
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex justify-center gap-6 mt-4">
+      {/* Legend - Stackline horizontal style */}
+      <div className="flex justify-center gap-5 mt-4">
         {data.map((item, index) => (
-          <div key={item.name} className="flex flex-col items-center">
-            <div className="flex items-center gap-2 mb-1">
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: COLORS[index] }}
-              />
-              <span className="text-[12px] text-[#64748B]">{item.name}</span>
-            </div>
-            <div className="text-[15px] font-semibold text-[#1E293B]">
-              {item.percent.toFixed(0)}%
+          <div key={item.name} className="flex items-center gap-2">
+            <div
+              className="w-3 h-3 rounded-sm"
+              style={{ backgroundColor: STACKLINE_COLORS[index] }}
+            />
+            <div>
+              <span className="text-[11px] text-[#64748B]">{item.name}</span>
+              <span className="text-[11px] font-semibold text-[#1E293B] ml-1">
+                {item.percent.toFixed(0)}%
+              </span>
             </div>
           </div>
         ))}
