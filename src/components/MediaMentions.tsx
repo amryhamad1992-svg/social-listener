@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ExternalLink, Loader2, Eye, ThumbsUp, Clock } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { ExternalLink, Eye, ThumbsUp, Clock } from 'lucide-react';
+import { useSettings } from '@/lib/SettingsContext';
 
 interface Source {
   id: string;
@@ -31,96 +32,54 @@ const SENTIMENT_COLORS = {
   negative: '#FCA5A5',
 };
 
+// Brand-specific media mentions data
+function getMediaItemsByBrand(brand: string): MediaItem[] {
+  const now = new Date();
+  const itemsByBrand: Record<string, MediaItem[]> = {
+    'Revlon': [
+      { id: 'yt1', type: 'youtube', title: 'Revlon One-Step Hair Dryer Review - Worth the Hype?', source: 'Alexandra\'s Girly Talk', url: '#', publishedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(), metrics: { primary: 892000, secondary: 45000 }, sentiment: 'positive' },
+      { id: 'yt2', type: 'youtube', title: 'Revlon ColorStay vs High-End Foundations | Drugstore Dupe Test', source: 'Beauty News', url: '#', publishedAt: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(), metrics: { primary: 234000, secondary: 12000 }, sentiment: 'positive' },
+      { id: 'n1', type: 'news', title: 'Revlon Expands Sustainable Packaging Initiative Across Lip Products', source: 'WWD', url: '#', publishedAt: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(), metrics: { primary: 0 }, sentiment: 'positive' },
+      { id: 'yt3', type: 'youtube', title: 'Full Face Using Only Revlon Products | Drugstore Challenge', source: 'Jackie Aina', url: '#', publishedAt: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(), metrics: { primary: 567000, secondary: 28000 }, sentiment: 'positive' },
+      { id: 'n2', type: 'news', title: 'Revlon Stock Rebounds as Q4 Sales Beat Expectations', source: 'Bloomberg', url: '#', publishedAt: new Date(now.getTime() - 36 * 60 * 60 * 1000).toISOString(), metrics: { primary: 0 }, sentiment: 'neutral' },
+      { id: 'yt4', type: 'youtube', title: 'Testing Viral Revlon Products from TikTok', source: 'Hyram', url: '#', publishedAt: new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString(), metrics: { primary: 1200000, secondary: 89000 }, sentiment: 'positive' },
+    ],
+    'e.l.f.': [
+      { id: 'yt1', type: 'youtube', title: 'e.l.f. Halo Glow vs Charlotte Tilbury Flawless Filter | $14 vs $49', source: 'Mikayla Nogueira', url: '#', publishedAt: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(), metrics: { primary: 2300000, secondary: 156000 }, sentiment: 'positive' },
+      { id: 'yt2', type: 'youtube', title: 'e.l.f. Power Grip Primer - Why Everyone Is Obsessed', source: 'Robert Welsh', url: '#', publishedAt: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(), metrics: { primary: 890000, secondary: 67000 }, sentiment: 'positive' },
+      { id: 'n1', type: 'news', title: 'How e.l.f. Cosmetics Became Gen Z\'s Favorite Beauty Brand', source: 'Forbes', url: '#', publishedAt: new Date(now.getTime() - 10 * 60 * 60 * 1000).toISOString(), metrics: { primary: 0 }, sentiment: 'positive' },
+      { id: 'yt3', type: 'youtube', title: 'Full Face of e.l.f. Dupes for High-End Products', source: 'Kelly Strack', url: '#', publishedAt: new Date(now.getTime() - 18 * 60 * 60 * 1000).toISOString(), metrics: { primary: 456000, secondary: 23000 }, sentiment: 'positive' },
+      { id: 'n2', type: 'news', title: 'e.l.f. Beauty Stock Hits All-Time High After Stellar Earnings', source: 'CNBC', url: '#', publishedAt: new Date(now.getTime() - 30 * 60 * 60 * 1000).toISOString(), metrics: { primary: 0 }, sentiment: 'positive' },
+      { id: 'yt4', type: 'youtube', title: 'e.l.f. Bronzing Drops Review - New Holy Grail?', source: 'Alexandra Anele', url: '#', publishedAt: new Date(now.getTime() - 42 * 60 * 60 * 1000).toISOString(), metrics: { primary: 678000, secondary: 45000 }, sentiment: 'positive' },
+    ],
+    'Maybelline': [
+      { id: 'yt1', type: 'youtube', title: 'Maybelline Sky High Mascara - Honest Review After 6 Months', source: 'NikkieTutorials', url: '#', publishedAt: new Date(now.getTime() - 4 * 60 * 60 * 1000).toISOString(), metrics: { primary: 1500000, secondary: 98000 }, sentiment: 'positive' },
+      { id: 'yt2', type: 'youtube', title: 'Maybelline Fit Me Foundation - All 40 Shades Tested', source: 'Nyma Tang', url: '#', publishedAt: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(), metrics: { primary: 345000, secondary: 18000 }, sentiment: 'neutral' },
+      { id: 'n1', type: 'news', title: 'Maybelline Partners with NYC Fashion Week for Limited Edition Collection', source: 'Allure', url: '#', publishedAt: new Date(now.getTime() - 20 * 60 * 60 * 1000).toISOString(), metrics: { primary: 0 }, sentiment: 'positive' },
+      { id: 'yt3', type: 'youtube', title: 'New Maybelline Vinyl Ink Review vs e.l.f. Lip Oil', source: 'Taylor Wynn', url: '#', publishedAt: new Date(now.getTime() - 28 * 60 * 60 * 1000).toISOString(), metrics: { primary: 234000, secondary: 12000 }, sentiment: 'neutral' },
+      { id: 'n2', type: 'news', title: 'Maybelline Expands Inclusive Shade Range After Consumer Feedback', source: 'Refinery29', url: '#', publishedAt: new Date(now.getTime() - 40 * 60 * 60 * 1000).toISOString(), metrics: { primary: 0 }, sentiment: 'positive' },
+      { id: 'yt4', type: 'youtube', title: 'Drugstore Mascara Battle: Maybelline vs L\'Oreal vs NYX', source: 'Tati', url: '#', publishedAt: new Date(now.getTime() - 52 * 60 * 60 * 1000).toISOString(), metrics: { primary: 789000, secondary: 34000 }, sentiment: 'neutral' },
+    ],
+  };
+
+  return itemsByBrand[brand] || itemsByBrand['Revlon'];
+}
+
 export function MediaMentions() {
+  const { getBrandName } = useSettings();
+  const brandName = getBrandName();
+
   const [sources, setSources] = useState<Source[]>([
     { id: 'youtube', name: 'YouTube', enabled: true },
     { id: 'news', name: 'News', enabled: true },
   ]);
-  const [items, setItems] = useState<MediaItem[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchMedia();
-  }, []);
+  const items = useMemo(() => getMediaItemsByBrand(brandName), [brandName]);
 
   const toggleSource = (id: string) => {
     setSources(prev =>
       prev.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s)
     );
-  };
-
-  const fetchMedia = async () => {
-    setLoading(true);
-
-    const allItems: MediaItem[] = [];
-
-    // Fetch YouTube
-    try {
-      const ytRes = await fetch('/api/youtube?days=7');
-      const ytData = await ytRes.json();
-      if (ytData.success && ytData.data?.videos) {
-        ytData.data.videos.slice(0, 5).forEach((video: {
-          id: string;
-          title: string;
-          channelTitle: string;
-          url: string;
-          thumbnailUrl: string;
-          publishedAt: string;
-          viewCount: number;
-          likeCount: number;
-          sentiment: { label: string };
-        }) => {
-          allItems.push({
-            id: video.id,
-            type: 'youtube',
-            title: video.title,
-            source: video.channelTitle,
-            url: video.url,
-            thumbnail: video.thumbnailUrl,
-            publishedAt: video.publishedAt,
-            metrics: { primary: video.viewCount, secondary: video.likeCount },
-            sentiment: video.sentiment?.label as 'positive' | 'neutral' | 'negative' || 'neutral',
-          });
-        });
-      }
-    } catch {
-      // Silently fail
-    }
-
-    // Fetch News
-    try {
-      const newsRes = await fetch('/api/news?days=7');
-      const newsData = await newsRes.json();
-      if (newsData.success && newsData.data) {
-        newsData.data.slice(0, 5).forEach((article: {
-          url: string;
-          title: string;
-          source: { name: string };
-          urlToImage: string;
-          publishedAt: string;
-          sentiment: { label: string };
-        }) => {
-          allItems.push({
-            id: article.url,
-            type: 'news',
-            title: article.title,
-            source: article.source.name,
-            url: article.url,
-            thumbnail: article.urlToImage,
-            publishedAt: article.publishedAt,
-            metrics: { primary: 0 },
-            sentiment: article.sentiment?.label as 'positive' | 'neutral' | 'negative' || 'neutral',
-          });
-        });
-      }
-    } catch {
-      // Silently fail
-    }
-
-    // Sort by date
-    allItems.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-    setItems(allItems);
-    setLoading(false);
   };
 
   const formatDate = (dateStr: string) => {
@@ -144,17 +103,6 @@ export function MediaMentions() {
 
   const enabledSources = sources.filter(s => s.enabled).map(s => s.id);
   const filteredItems = items.filter(item => enabledSources.includes(item.type));
-
-  if (loading) {
-    return (
-      <div className="bg-white rounded-lg p-5 shadow-sm">
-        <h2 className="text-sm font-medium text-[#0F172A] mb-4">Media Mentions</h2>
-        <div className="flex items-center justify-center h-48">
-          <Loader2 className="w-5 h-5 animate-spin text-[#64748B]" />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-white rounded-lg p-5 shadow-sm">

@@ -1,15 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import {
   ExternalLink,
-  Loader2,
   MessageSquare,
   ThumbsUp,
   Clock,
   Flame,
-  Filter,
 } from 'lucide-react';
+import { useSettings } from '@/lib/SettingsContext';
 
 interface ScrapedMention {
   id: string;
@@ -54,7 +53,43 @@ const SOURCE_ICONS: { [key: string]: string } = {
   Allure: '📰',
 };
 
+// Brand-specific web mentions data
+function getWebMentionsByBrand(brand: string): ScrapedMention[] {
+  const now = new Date();
+  const mentionsByBrand: Record<string, ScrapedMention[]> = {
+    'Revlon': [
+      { id: 'r1', source: 'Reddit', sourceType: 'forum', url: '#', title: 'Revlon One-Step changed my hair routine completely', snippet: 'I was skeptical at first but this thing is amazing. My hair has never looked better and it cuts my styling time in half...', matchedKeyword: 'Revlon One-Step', publishedAt: new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 847, comments: 156 }, sentiment: { label: 'positive', score: 0.92 }, subreddit: 'beauty', isHighEngagement: true },
+      { id: 'r2', source: 'Reddit', sourceType: 'forum', url: '#', title: 'ColorStay Foundation - which shade matches NC25?', snippet: 'Looking for shade recommendations. I\'ve heard the formula is great but finding the right shade is tricky...', matchedKeyword: 'ColorStay', publishedAt: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 234, comments: 89 }, sentiment: { label: 'neutral', score: 0.55 }, subreddit: 'MakeupAddiction', isHighEngagement: false },
+      { id: 'm1', source: 'MakeupAlley', sourceType: 'review', url: '#', title: 'Revlon Super Lustrous Lipstick Review', snippet: 'Classic formula that never disappoints. The shade range is incredible and the price point is unbeatable...', matchedKeyword: 'Super Lustrous', publishedAt: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 45, comments: 12 }, sentiment: { label: 'positive', score: 0.88 }, category: 'Lip Products', isHighEngagement: false },
+      { id: 't1', source: 'Temptalia', sourceType: 'blog', url: '#', title: 'Revlon ColorStay Looks Longwear Eye Shadow Review', snippet: 'The new eye shadow quads offer impressive pigmentation and blend beautifully. A solid drugstore option...', matchedKeyword: 'ColorStay', publishedAt: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 0, comments: 34 }, sentiment: { label: 'positive', score: 0.78 }, category: 'Reviews', isHighEngagement: false },
+      { id: 'r3', source: 'Reddit', sourceType: 'forum', url: '#', title: 'Revlon lip liner is severely underrated', snippet: 'Why isn\'t anyone talking about these? They last all day and the color selection is perfect for everyday wear...', matchedKeyword: 'Revlon lip liner', publishedAt: new Date(now.getTime() - 36 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 567, comments: 78 }, sentiment: { label: 'positive', score: 0.85 }, subreddit: 'drugstoreMUA', isHighEngagement: true },
+      { id: 'g1', source: 'Into The Gloss', sourceType: 'blog', url: '#', title: 'The Drugstore Products Our Editors Actually Use', snippet: 'Revlon\'s One-Step is a staple in our beauty routines. It delivers salon-quality results at home...', matchedKeyword: 'Revlon', publishedAt: new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 0, comments: 23 }, sentiment: { label: 'positive', score: 0.82 }, category: 'Editor Picks', isHighEngagement: false },
+    ],
+    'e.l.f.': [
+      { id: 'r1', source: 'Reddit', sourceType: 'forum', url: '#', title: 'e.l.f. Halo Glow is literally Charlotte Tilbury for $14', snippet: 'I cannot believe how good this is. Side by side comparison and honestly I might prefer the e.l.f. version...', matchedKeyword: 'Halo Glow', publishedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 2340, comments: 456 }, sentiment: { label: 'positive', score: 0.95 }, subreddit: 'MakeupAddiction', isHighEngagement: true },
+      { id: 'r2', source: 'Reddit', sourceType: 'forum', url: '#', title: 'Power Grip Primer - out of stock AGAIN', snippet: 'Third time I\'ve tried to buy this. e.l.f. please restock, this is getting ridiculous...', matchedKeyword: 'Power Grip Primer', publishedAt: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 678, comments: 189 }, sentiment: { label: 'negative', score: 0.35 }, subreddit: 'beauty', isHighEngagement: true },
+      { id: 't1', source: 'Temptalia', sourceType: 'blog', url: '#', title: 'e.l.f. Bronzing Drops Swatches and Review', snippet: 'These give the most beautiful natural glow. Perfect for mixing with foundation or moisturizer...', matchedKeyword: 'Bronzing Drops', publishedAt: new Date(now.getTime() - 10 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 0, comments: 67 }, sentiment: { label: 'positive', score: 0.88 }, category: 'Reviews', isHighEngagement: false },
+      { id: 'm1', source: 'MakeupAlley', sourceType: 'review', url: '#', title: 'e.l.f. Camo Concealer Holy Grail Review', snippet: 'I\'ve tried everything from Tarte to NARS and this $7 concealer outperforms them all...', matchedKeyword: 'Camo Concealer', publishedAt: new Date(now.getTime() - 18 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 89, comments: 34 }, sentiment: { label: 'positive', score: 0.91 }, category: 'Face Products', isHighEngagement: false },
+      { id: 'r3', source: 'Reddit', sourceType: 'forum', url: '#', title: 'e.l.f. keeps winning - new lip oil is amazing', snippet: 'Just picked this up and wow. Glossy, hydrating, and actually has a nice subtle tint. Gen Z knows what\'s up...', matchedKeyword: 'e.l.f. lip oil', publishedAt: new Date(now.getTime() - 28 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 1234, comments: 234 }, sentiment: { label: 'positive', score: 0.89 }, subreddit: 'drugstoreMUA', isHighEngagement: true },
+      { id: 'a1', source: 'Allure', sourceType: 'blog', url: '#', title: 'Best Drugstore Makeup 2024: e.l.f. Dominates', snippet: 'From viral TikTok products to reliable everyday staples, e.l.f. continues to prove that great makeup doesn\'t have to be expensive...', matchedKeyword: 'e.l.f.', publishedAt: new Date(now.getTime() - 40 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 0, comments: 45 }, sentiment: { label: 'positive', score: 0.86 }, category: 'Best Of', isHighEngagement: false },
+    ],
+    'Maybelline': [
+      { id: 'r1', source: 'Reddit', sourceType: 'forum', url: '#', title: 'Sky High Mascara - Does it live up to the hype?', snippet: 'Finally tried it after seeing it everywhere. The wand is unique and it definitely gives length but I found it smudged by end of day...', matchedKeyword: 'Sky High Mascara', publishedAt: new Date(now.getTime() - 4 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 567, comments: 234 }, sentiment: { label: 'neutral', score: 0.58 }, subreddit: 'MakeupAddiction', isHighEngagement: true },
+      { id: 'r2', source: 'Reddit', sourceType: 'forum', url: '#', title: 'Fit Me Foundation shade match help needed', snippet: 'I\'m between 220 and 230, has anyone tried both? The undertones seem different in store vs natural light...', matchedKeyword: 'Fit Me', publishedAt: new Date(now.getTime() - 10 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 189, comments: 78 }, sentiment: { label: 'neutral', score: 0.52 }, subreddit: 'beauty', isHighEngagement: false },
+      { id: 't1', source: 'Temptalia', sourceType: 'blog', url: '#', title: 'Maybelline Vinyl Ink Liquid Lipstick Review', snippet: 'Long-wearing formula that actually feels comfortable. The shade range has improved significantly...', matchedKeyword: 'Vinyl Ink', publishedAt: new Date(now.getTime() - 16 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 0, comments: 45 }, sentiment: { label: 'positive', score: 0.79 }, category: 'Reviews', isHighEngagement: false },
+      { id: 'm1', source: 'MakeupAlley', sourceType: 'review', url: '#', title: 'Maybelline Lash Sensational Review', snippet: 'A classic for a reason. Buildable, doesn\'t clump, and the curved wand makes application easy...', matchedKeyword: 'Lash Sensational', publishedAt: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 67, comments: 23 }, sentiment: { label: 'positive', score: 0.84 }, category: 'Eye Products', isHighEngagement: false },
+      { id: 'r3', source: 'Reddit', sourceType: 'forum', url: '#', title: 'Maybelline vs e.l.f. - which drugstore brand wins?', snippet: 'Comparing the two biggest drugstore names. Maybelline has mascaras on lock but e.l.f. is killing it with face products...', matchedKeyword: 'Maybelline', publishedAt: new Date(now.getTime() - 32 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 890, comments: 345 }, sentiment: { label: 'neutral', score: 0.55 }, subreddit: 'drugstoreMUA', isHighEngagement: true },
+      { id: 'g1', source: 'Into The Gloss', sourceType: 'blog', url: '#', title: 'Drugstore Mascara Round-Up: Maybelline Still Reigns', snippet: 'After testing 15 mascaras, Maybelline formulas consistently deliver. Sky High and Lash Sensational remain top picks...', matchedKeyword: 'Maybelline', publishedAt: new Date(now.getTime() - 44 * 60 * 60 * 1000).toISOString(), engagement: { upvotes: 0, comments: 34 }, sentiment: { label: 'positive', score: 0.81 }, category: 'Roundups', isHighEngagement: false },
+    ],
+  };
+
+  return mentionsByBrand[brand] || mentionsByBrand['Revlon'];
+}
+
 export function WebMentions() {
+  const { getBrandName } = useSettings();
+  const brandName = getBrandName();
+
   const [sources, setSources] = useState<Source[]>([
     { name: 'Reddit', enabled: true },
     { name: 'MakeupAlley', enabled: true },
@@ -62,33 +97,14 @@ export function WebMentions() {
     { name: 'Into The Gloss', enabled: true },
     { name: 'Allure', enabled: true },
   ]);
-  const [mentions, setMentions] = useState<ScrapedMention[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showHighEngagementOnly, setShowHighEngagementOnly] = useState(false);
 
-  useEffect(() => {
-    fetchMentions();
-  }, []);
+  const mentions = useMemo(() => getWebMentionsByBrand(brandName), [brandName]);
 
   const toggleSource = (name: string) => {
     setSources(prev =>
       prev.map(s => s.name === name ? { ...s, enabled: !s.enabled } : s)
     );
-  };
-
-  const fetchMentions = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/scrape');
-      const data = await res.json();
-      if (data.success && data.data?.mentions) {
-        setMentions(data.data.mentions);
-      }
-    } catch (error) {
-      console.error('Failed to fetch web mentions:', error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -114,17 +130,6 @@ export function WebMentions() {
 
   if (showHighEngagementOnly) {
     filteredMentions = filteredMentions.filter(m => m.isHighEngagement);
-  }
-
-  if (loading) {
-    return (
-      <div className="bg-white rounded-lg p-5 shadow-sm">
-        <h2 className="text-sm font-medium text-[#0F172A] mb-4">Web Mentions</h2>
-        <div className="flex items-center justify-center h-48">
-          <Loader2 className="w-5 h-5 animate-spin text-[#64748B]" />
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -267,12 +272,9 @@ export function WebMentions() {
           <span className="text-[9px] text-[#94A3B8]">
             {filteredMentions.length} mentions from {enabledSources.length} sources
           </span>
-          <button
-            onClick={fetchMentions}
-            className="text-[10px] text-[#0EA5E9] hover:underline"
-          >
-            Refresh
-          </button>
+          <span className="text-[10px] text-[#64748B]">
+            {brandName}
+          </span>
         </div>
       )}
     </div>
