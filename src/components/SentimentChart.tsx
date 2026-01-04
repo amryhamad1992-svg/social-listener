@@ -8,6 +8,12 @@ import {
   BarChart,
   Bar,
   Cell,
+  PieChart,
+  Pie,
+  CartesianGrid,
+  ScatterChart,
+  Scatter,
+  ZAxis,
 } from 'recharts';
 
 interface SentimentTrendData {
@@ -98,15 +104,12 @@ export function SentimentChart({ data }: SentimentChartProps) {
   );
 }
 
-// Pie chart for sentiment distribution
-import { PieChart, Pie, Cell, ScatterChart, Scatter, ZAxis } from 'recharts';
-
 // Bubble Chart for Topic Analysis
 interface BubbleData {
   name: string;
-  sentiment: number; // x-axis: -1 to 1
-  mentions: number; // y-axis: count
-  engagement: number; // bubble size
+  sentiment: number;
+  mentions: number;
+  engagement: number;
 }
 
 interface TopicBubbleChartProps {
@@ -119,11 +122,10 @@ export function TopicBubbleChart({ data }: TopicBubbleChartProps) {
     return value.toFixed(2);
   };
 
-  // Color based on sentiment
   const getBubbleColor = (sentiment: number) => {
-    if (sentiment > 0.2) return '#22c55e'; // green
-    if (sentiment < -0.2) return '#ef4444'; // red
-    return '#6b7280'; // gray
+    if (sentiment > 0.2) return '#22c55e';
+    if (sentiment < -0.2) return '#ef4444';
+    return '#6b7280';
   };
 
   return (
@@ -197,28 +199,28 @@ export function TopicBubbleChart({ data }: TopicBubbleChartProps) {
       <div className="flex justify-center gap-6 mt-2">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-[#22c55e]" />
-          <span className="text-xs text-muted">Positive</span>
+          <span className="text-xs text-[#64748B]">Positive</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-[#6b7280]" />
-          <span className="text-xs text-muted">Neutral</span>
+          <span className="text-xs text-[#64748B]">Neutral</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-[#ef4444]" />
-          <span className="text-xs text-muted">Negative</span>
+          <span className="text-xs text-[#64748B]">Negative</span>
         </div>
       </div>
     </div>
   );
 }
 
+// Sentiment Distribution Pie Chart
 interface SentimentDistributionProps {
   positive: number;
   neutral: number;
   negative: number;
 }
 
-// Pastel Stackline colors
 const COLORS = ['#86EFAC', '#CBD5E1', '#FCA5A5'];
 
 export function SentimentDistribution({
@@ -234,7 +236,7 @@ export function SentimentDistribution({
   ];
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center" style={{ fontFamily: 'Roboto, sans-serif' }}>
       {/* Pie Chart */}
       <div className="w-[200px] h-[200px] relative">
         <ResponsiveContainer width="100%" height="100%">
