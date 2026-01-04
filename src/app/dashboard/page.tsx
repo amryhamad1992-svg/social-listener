@@ -189,12 +189,17 @@ export default function DashboardPage() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Sentiment Trend */}
+        {/* Mentions by Day */}
         <div className="lg:col-span-2 bg-white rounded-lg p-5 shadow-sm border border-[#E2E8F0]">
-          <h2 className="text-sm font-medium text-[#1E293B] mb-4" style={{ fontFamily: 'Roboto, sans-serif' }}>
-            Sentiment & Mentions Trend
-          </h2>
-          <SentimentChart data={data.sentimentTrend} showMentions />
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-medium text-[#1E293B]" style={{ fontFamily: 'Roboto, sans-serif' }}>
+              Mentions by Day
+            </h2>
+            <span className="text-[10px] text-[#64748B]" style={{ fontFamily: 'Roboto, sans-serif' }}>
+              Color indicates sentiment
+            </span>
+          </div>
+          <SentimentChart data={data.sentimentTrend} />
         </div>
 
         {/* Sentiment Distribution */}

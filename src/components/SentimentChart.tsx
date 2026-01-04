@@ -1,15 +1,13 @@
 'use client';
 
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Area,
-  AreaChart,
+  BarChart,
+  Bar,
+  Cell,
 } from 'recharts';
 
 interface SentimentTrendData {
@@ -23,114 +21,79 @@ interface SentimentChartProps {
   showMentions?: boolean;
 }
 
-export function SentimentChart({ data, showMentions = false }: SentimentChartProps) {
+// Clean Stackline-style bar chart for mentions
+export function SentimentChart({ data }: SentimentChartProps) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const formatSentiment = (value: number) => {
-    if (value > 0) return `+${value.toFixed(2)}`;
-    return value.toFixed(2);
+  // Get bar color based on sentiment
+  const getBarColor = (sentiment: number) => {
+    if (sentiment > 0.3) return '#10B981'; // Green for positive
+    if (sentiment < -0.1) return '#EF4444'; // Red for negative
+    return '#1E293B'; // Navy for neutral
   };
 
   return (
-    <div className="w-full h-[300px]">
-      <ResponsiveContainer width="100%" height="100%">
-        {showMentions ? (
-          <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id="colorMentions" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+    <div className="w-full" style={{ fontFamily: 'Roboto, sans-serif' }}>
+      {/* Simple bar chart - Stackline style */}
+      <div className="h-[200px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
             <XAxis
               dataKey="date"
               tickFormatter={formatDate}
-              tick={{ fontSize: 12, fill: '#6b7280' }}
-              axisLine={{ stroke: '#e5e7eb' }}
+              tick={{ fontSize: 11, fill: '#64748B' }}
+              axisLine={false}
+              tickLine={false}
             />
             <YAxis
-              yAxisId="left"
-              tick={{ fontSize: 12, fill: '#6b7280' }}
-              axisLine={{ stroke: '#e5e7eb' }}
-            />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              domain={[-1, 1]}
-              tickFormatter={formatSentiment}
-              tick={{ fontSize: 12, fill: '#6b7280' }}
-              axisLine={{ stroke: '#e5e7eb' }}
+              tick={{ fontSize: 11, fill: '#64748B' }}
+              axisLine={false}
+              tickLine={false}
+              width={40}
             />
             <Tooltip
+              cursor={{ fill: '#F1F5F9' }}
               contentStyle={{
                 backgroundColor: '#fff',
-                border: '1px solid #e5e7eb',
+                border: '1px solid #E2E8F0',
                 borderRadius: '8px',
                 padding: '12px',
+                fontFamily: 'Roboto, sans-serif',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
               }}
-              formatter={(value, name) => {
-                if (name === 'sentiment') return [formatSentiment(value as number), 'Sentiment'];
-                return [value as number, 'Mentions'];
+              formatter={(value: number, name: string) => {
+                if (name === 'mentions') return [value.toLocaleString(), 'Mentions'];
+                return [value, name];
               }}
               labelFormatter={formatDate}
             />
-            <Area
-              yAxisId="left"
-              type="monotone"
-              dataKey="mentions"
-              stroke="#0ea5e9"
-              fillOpacity={1}
-              fill="url(#colorMentions)"
-            />
-            <Line
-              yAxisId="right"
-              type="monotone"
-              dataKey="sentiment"
-              stroke="#031425"
-              strokeWidth={2}
-              dot={false}
-            />
-          </AreaChart>
-        ) : (
-          <LineChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis
-              dataKey="date"
-              tickFormatter={formatDate}
-              tick={{ fontSize: 12, fill: '#6b7280' }}
-              axisLine={{ stroke: '#e5e7eb' }}
-            />
-            <YAxis
-              domain={[-1, 1]}
-              tickFormatter={formatSentiment}
-              tick={{ fontSize: 12, fill: '#6b7280' }}
-              axisLine={{ stroke: '#e5e7eb' }}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: '#fff',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                padding: '12px',
-              }}
-              formatter={(value) => [formatSentiment(value as number), 'Sentiment']}
-              labelFormatter={formatDate}
-            />
-            <Line
-              type="monotone"
-              dataKey="sentiment"
-              stroke="#031425"
-              strokeWidth={2}
-              dot={{ fill: '#031425', strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6, fill: '#0ea5e9' }}
-            />
-          </LineChart>
-        )}
-      </ResponsiveContainer>
+            <Bar dataKey="mentions" radius={[4, 4, 0, 0]} maxBarSize={32}>
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={getBarColor(entry.sentiment)} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center justify-center gap-6 mt-4 pt-3 border-t border-[#F1F5F9]">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-sm bg-[#10B981]" />
+          <span className="text-[11px] text-[#64748B]">Positive sentiment</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-sm bg-[#1E293B]" />
+          <span className="text-[11px] text-[#64748B]">Neutral</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-sm bg-[#EF4444]" />
+          <span className="text-[11px] text-[#64748B]">Negative sentiment</span>
+        </div>
+      </div>
     </div>
   );
 }
