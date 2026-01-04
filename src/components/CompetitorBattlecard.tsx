@@ -102,21 +102,21 @@ export function CompetitorBattlecard() {
   }, [data]);
 
   return (
-    <div className="bg-white rounded-lg p-5 shadow-sm">
+    <div className="bg-white rounded-lg p-5 shadow-sm border border-[#E2E8F0]" style={{ fontFamily: 'Roboto, sans-serif' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-[#0EA5E9]" />
+          <Trophy className="w-4 h-4 text-[#1E293B]" />
           <div>
-            <h2 className="text-sm font-medium text-[#0F172A]">Competitor Battlecard</h2>
+            <h2 className="text-sm font-medium text-[#1E293B]">Competitor Battlecard</h2>
             <p className="text-[10px] text-[#64748B]">
               Head-to-head brand comparison • Last 30 days
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1 px-2 py-1 bg-[#0EA5E9]/10 rounded">
-          <span className="text-[10px] text-[#0EA5E9] font-medium">Leader:</span>
-          <span className="text-[10px] font-semibold text-[#0F172A]">{leader.emoji} {leader.name}</span>
+        <div className="flex items-center gap-1 px-2 py-1 bg-[#1E293B]/10 rounded">
+          <span className="text-[10px] text-[#1E293B] font-medium">Leader:</span>
+          <span className="text-[10px] font-semibold text-[#1E293B]">{leader.emoji} {leader.name}</span>
         </div>
       </div>
 

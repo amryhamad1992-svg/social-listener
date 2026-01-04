@@ -7,6 +7,7 @@ interface KPICardProps {
   icon?: React.ReactNode;
   format?: 'number' | 'percent' | 'sentiment';
   subtitle?: string;
+  benchmark?: string;
 }
 
 export function KPICard({
@@ -16,6 +17,7 @@ export function KPICard({
   icon,
   format = 'number',
   subtitle,
+  benchmark,
 }: KPICardProps) {
   const formatValue = () => {
     if (format === 'percent') {
@@ -51,20 +53,20 @@ export function KPICard({
   };
 
   return (
-    <div className="bg-white rounded-lg p-5 shadow-sm">
+    <div className="bg-white rounded-lg p-5 shadow-sm border border-[#E2E8F0]" style={{ fontFamily: 'Roboto, sans-serif' }}>
       {/* Label */}
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[11px] font-medium text-muted uppercase tracking-wider">
+        <span className="text-[11px] font-medium text-[#64748B] uppercase tracking-wider">
           {title}
         </span>
         {icon && (
-          <span className="text-muted">{icon}</span>
+          <span className="text-[#64748B]">{icon}</span>
         )}
       </div>
 
       {/* Value and Change */}
       <div className="flex items-baseline gap-2">
-        <span className="text-[28px] font-medium text-foreground leading-none">
+        <span className="text-[28px] font-medium text-[#1E293B] leading-none">
           {formatValue()}
         </span>
         {change !== undefined && (
@@ -74,9 +76,16 @@ export function KPICard({
         )}
       </div>
 
+      {/* Benchmark */}
+      {benchmark && (
+        <p className="text-[10px] text-[#94A3B8] mt-2 pt-2 border-t border-[#F1F5F9]">
+          {benchmark}
+        </p>
+      )}
+
       {/* Subtitle */}
       {subtitle && (
-        <p className="text-xs text-muted mt-1">{subtitle}</p>
+        <p className="text-xs text-[#64748B] mt-1">{subtitle}</p>
       )}
     </div>
   );

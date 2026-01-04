@@ -119,15 +119,15 @@ export function ExecutiveSummary() {
   };
 
   return (
-    <div className="bg-white rounded-lg p-5 shadow-sm">
+    <div className="bg-white rounded-lg p-5 shadow-sm border border-[#E2E8F0]" style={{ fontFamily: 'Roboto, sans-serif' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#0EA5E9]/10 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-[#0EA5E9]" />
+          <div className="w-8 h-8 rounded-lg bg-[#1E293B]/10 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-[#1E293B]" />
           </div>
           <div>
-            <h2 className="text-sm font-medium text-[#0F172A]">Executive Summary</h2>
+            <h2 className="text-sm font-medium text-[#1E293B]">Executive Summary</h2>
             <p className="text-[10px] text-[#64748B]">AI-powered insights for {getBrandName()}</p>
           </div>
         </div>

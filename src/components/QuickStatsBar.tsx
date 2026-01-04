@@ -49,13 +49,13 @@ export function QuickStatsBar() {
   const stats = useMemo(() => getQuickStats(brandName), [brandName]);
 
   return (
-    <div className="bg-white rounded-lg px-5 py-4 shadow-sm border border-[#E2E8F0]">
+    <div className="bg-white rounded-lg px-5 py-4 shadow-sm border border-[#E2E8F0]" style={{ fontFamily: 'Roboto, sans-serif' }}>
       <div className="flex items-center justify-between gap-6">
         {/* Brand Label with Live Indicator */}
         <div className="flex items-center gap-3 flex-shrink-0 pr-4 border-r border-[#E2E8F0]">
           <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-[#0EA5E9]" />
-            <span className="text-[13px] font-semibold text-[#0F172A]">{brandName}</span>
+            <Activity className="w-4 h-4 text-[#1E293B]" />
+            <span className="text-[13px] font-semibold text-[#1E293B]">{brandName}</span>
           </div>
           <div className="flex items-center gap-1.5 px-2 py-1 bg-[#ECFDF5] rounded-full">
             <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />

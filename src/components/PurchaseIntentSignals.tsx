@@ -199,13 +199,13 @@ export function PurchaseIntentSignals() {
   }, [signals]);
 
   return (
-    <div className="bg-white rounded-lg p-5 shadow-sm">
+    <div className="bg-white rounded-lg p-5 shadow-sm border border-[#E2E8F0]" style={{ fontFamily: 'Roboto, sans-serif' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <ShoppingCart className="w-4 h-4 text-[#0EA5E9]" />
+          <ShoppingCart className="w-4 h-4 text-[#1E293B]" />
           <div>
-            <h2 className="text-sm font-medium text-[#0F172A]">Purchase Intent Signals</h2>
+            <h2 className="text-sm font-medium text-[#1E293B]">Purchase Intent Signals</h2>
             <p className="text-[10px] text-[#64748B]">
               Real-time buying signals for {brandName}
             </p>

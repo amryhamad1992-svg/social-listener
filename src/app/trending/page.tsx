@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, TrendingUp, TrendingDown, Minus, Flame, Zap, BarChart3, Hash, ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Minus, Flame, Zap, BarChart3, Hash, ArrowUpRight, ArrowDownRight, Activity, Download, Calendar } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
-import { SearchTrends } from '@/components/SearchTrends';
+import { BrandKeywordExplorer } from '@/components/BrandKeywordExplorer';
 import { useSettings } from '@/lib/SettingsContext';
 
 interface TrendingItem {
@@ -226,24 +226,39 @@ export default function TrendingPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-semibold text-[#0F172A]">
+              <h1 className="text-xl font-medium text-[#1E293B]" style={{ fontFamily: 'Roboto, sans-serif' }}>
                 Trending Topics
               </h1>
-              <p className="text-[13px] text-[#64748B] mt-0.5">
+              <p className="text-[13px] text-[#64748B] mt-0.5" style={{ fontFamily: 'Roboto, sans-serif' }}>
                 Most discussed terms and topics for {getBrandName()}
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <select
-                value={days}
-                onChange={(e) => setDays(parseInt(e.target.value, 10))}
-                className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:border-[#0EA5E9]"
+              {/* Global Date Range */}
+              <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#E2E8F0] rounded-lg">
+                <Calendar className="w-4 h-4 text-[#64748B]" />
+                <select
+                  value={days}
+                  onChange={(e) => setDays(parseInt(e.target.value, 10))}
+                  className="text-[13px] text-[#1E293B] bg-transparent border-none focus:outline-none cursor-pointer font-medium"
+                  style={{ fontFamily: 'Roboto, sans-serif' }}
+                >
+                  <option value={7}>Last 7 days</option>
+                  <option value={14}>Last 14 days</option>
+                  <option value={30}>Last 30 days</option>
+                  <option value={90}>Last 90 days</option>
+                </select>
+              </div>
+
+              {/* Export Button */}
+              <button
+                className="flex items-center gap-2 px-4 py-2 bg-[#1E293B] text-white rounded-lg text-[13px] font-medium hover:bg-[#334155] transition-colors"
+                style={{ fontFamily: 'Roboto, sans-serif' }}
+                onClick={() => alert('Export feature coming soon')}
               >
-                <option value={7}>Last 7 days</option>
-                <option value={14}>Last 14 days</option>
-                <option value={30}>Last 30 days</option>
-                <option value={90}>Last 90 days</option>
-              </select>
+                <Download className="w-4 h-4" />
+                Export
+              </button>
             </div>
           </div>
 
@@ -302,8 +317,8 @@ export default function TrendingPage() {
             </div>
           </div>
 
-          {/* Google Search Trends */}
-          <SearchTrends />
+          {/* Brand Keyword Explorer */}
+          <BrandKeywordExplorer />
 
           {/* Word Cloud View */}
           {viewMode === 'cloud' && !loading && data.length > 0 && (

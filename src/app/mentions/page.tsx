@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ExternalLink, ThumbsUp, MessageSquare, Flame, Clock, Users, TrendingUp, Filter, LayoutGrid, List, ArrowUpDown } from 'lucide-react';
+import { Loader2, ExternalLink, ThumbsUp, MessageSquare, Flame, Clock, Users, TrendingUp, Filter, LayoutGrid, List, ArrowUpDown, Download, Calendar } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
+import { PurchaseIntentSignals } from '@/components/PurchaseIntentSignals';
 import { useSettings } from '@/lib/SettingsContext';
 
 interface UnifiedMention {
@@ -215,26 +216,44 @@ export default function MentionsPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-semibold text-[#0F172A]">
+              <h1 className="text-xl font-medium text-[#1E293B]" style={{ fontFamily: 'Roboto, sans-serif' }}>
                 {getBrandName()} Mentions
               </h1>
-              <p className="text-[13px] text-[#64748B] mt-0.5">
-                All brand mentions from YouTube, News, Reddit & more
+              <p className="text-[13px] text-[#64748B] mt-0.5" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                All brand mentions & purchase intent signals
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <select
-                value={days}
-                onChange={(e) => setDays(parseInt(e.target.value, 10))}
-                className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:border-[#0EA5E9]"
+              {/* Global Date Range */}
+              <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#E2E8F0] rounded-lg">
+                <Calendar className="w-4 h-4 text-[#64748B]" />
+                <select
+                  value={days}
+                  onChange={(e) => setDays(parseInt(e.target.value, 10))}
+                  className="text-[13px] text-[#1E293B] bg-transparent border-none focus:outline-none cursor-pointer font-medium"
+                  style={{ fontFamily: 'Roboto, sans-serif' }}
+                >
+                  <option value={7}>Last 7 days</option>
+                  <option value={14}>Last 14 days</option>
+                  <option value={30}>Last 30 days</option>
+                  <option value={90}>Last 90 days</option>
+                </select>
+              </div>
+
+              {/* Export Button */}
+              <button
+                className="flex items-center gap-2 px-4 py-2 bg-[#1E293B] text-white rounded-lg text-[13px] font-medium hover:bg-[#334155] transition-colors"
+                style={{ fontFamily: 'Roboto, sans-serif' }}
+                onClick={() => alert('Export feature coming soon')}
               >
-                <option value={7}>Last 7 days</option>
-                <option value={14}>Last 14 days</option>
-                <option value={30}>Last 30 days</option>
-                <option value={90}>Last 90 days</option>
-              </select>
+                <Download className="w-4 h-4" />
+                Export
+              </button>
             </div>
           </div>
+
+          {/* Purchase Intent Signals - Moved from Dashboard */}
+          <PurchaseIntentSignals />
 
           {/* Summary Stats Bar */}
           <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">

@@ -2,22 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Download, Calendar } from 'lucide-react';
 import { KPICard } from '@/components/KPICard';
 import { SentimentChart, SentimentDistribution } from '@/components/SentimentChart';
-import { SourceStatusBar } from '@/components/SourceStatusBar';
-import { BrandKeywordExplorer } from '@/components/BrandKeywordExplorer';
-import { MediaMentions } from '@/components/MediaMentions';
-import { CompetitorComparison } from '@/components/CompetitorComparison';
-import { SearchTrends } from '@/components/SearchTrends';
-import { WebMentions } from '@/components/WebMentions';
 import { ExecutiveSummary } from '@/components/ExecutiveSummary';
-import { ShareOfVoice } from '@/components/ShareOfVoice';
-import { ProductBreakdown } from '@/components/ProductBreakdown';
 import { CompetitorBattlecard } from '@/components/CompetitorBattlecard';
-import { PurchaseIntentSignals } from '@/components/PurchaseIntentSignals';
 import { SpikeAlerts } from '@/components/SpikeAlerts';
-import { TopVoices } from '@/components/TopVoices';
 import { QuickStatsBar } from '@/components/QuickStatsBar';
 import { useSettings } from '@/lib/SettingsContext';
 
@@ -125,74 +115,91 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-medium text-[#1E293B]">{getBrandName()} Dashboard</h1>
-          <p className="text-[13px] text-[#64748B] mt-0.5">
-            Brand monitoring and competitive intelligence
+          <h1 className="text-xl font-medium text-[#1E293B]" style={{ fontFamily: 'Roboto, sans-serif' }}>
+            {getBrandName()} Dashboard
+          </h1>
+          <p className="text-[13px] text-[#64748B] mt-0.5" style={{ fontFamily: 'Roboto, sans-serif' }}>
+            Executive overview • Brand monitoring and competitive intelligence
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <SourceStatusBar />
-          <select
-            value={days}
-            onChange={(e) => setDays(parseInt(e.target.value, 10))}
-            className="px-3 py-1.5 text-[12px] border border-[#E2E8F0] rounded bg-white focus:outline-none focus:border-[#0EA5E9]"
+        <div className="flex items-center gap-3">
+          {/* Global Date Range */}
+          <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#E2E8F0] rounded-lg">
+            <Calendar className="w-4 h-4 text-[#64748B]" />
+            <select
+              value={days}
+              onChange={(e) => setDays(parseInt(e.target.value, 10))}
+              className="text-[13px] text-[#1E293B] bg-transparent border-none focus:outline-none cursor-pointer font-medium"
+              style={{ fontFamily: 'Roboto, sans-serif' }}
+            >
+              <option value={7}>Last 7 days</option>
+              <option value={14}>Last 14 days</option>
+              <option value={30}>Last 30 days</option>
+              <option value={90}>Last 90 days</option>
+            </select>
+          </div>
+
+          {/* Export Button */}
+          <button
+            className="flex items-center gap-2 px-4 py-2 bg-[#1E293B] text-white rounded-lg text-[13px] font-medium hover:bg-[#334155] transition-colors"
+            style={{ fontFamily: 'Roboto, sans-serif' }}
+            onClick={() => alert('Export feature coming soon - PDF & PowerPoint reports')}
           >
-            <option value={7}>Last 7 days</option>
-            <option value={14}>Last 14 days</option>
-            <option value={30}>Last 30 days</option>
-            <option value={90}>Last 90 days</option>
-          </select>
+            <Download className="w-4 h-4" />
+            Export
+          </button>
         </div>
       </div>
 
       {/* Quick Stats Bar - Live Metrics */}
       <QuickStatsBar />
 
-      {/* Executive Summary */}
+      {/* Executive Summary - AI Insights */}
       <ExecutiveSummary />
 
-      {/* Spike Alerts & Top Voices */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <SpikeAlerts />
-        <TopVoices />
-      </div>
+      {/* Spike Alerts - Full Width for Priority */}
+      <SpikeAlerts />
 
-      {/* KPI Cards */}
+      {/* KPI Cards with Benchmarks */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           title="Total Mentions"
           value={data.kpis.totalMentions}
           change={data.kpis.mentionsChange}
+          benchmark="Avg: 1,850"
         />
         <KPICard
           title="Avg. Sentiment"
           value={data.kpis.avgSentiment}
           change={data.kpis.sentimentChange}
           format="sentiment"
+          benchmark="Industry: 0.62"
         />
         <KPICard
           title="Trending Topics"
           value={data.kpis.trendingTopicsCount}
+          benchmark="vs Last Period: 4"
         />
         <KPICard
           title="Top Source"
           value={data.kpis.topSource}
+          benchmark="42% of mentions"
         />
       </div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Sentiment Trend */}
-        <div className="lg:col-span-2 bg-white rounded-lg p-5 shadow-sm">
-          <h2 className="text-sm font-medium text-[#1E293B] mb-4">
+        <div className="lg:col-span-2 bg-white rounded-lg p-5 shadow-sm border border-[#E2E8F0]">
+          <h2 className="text-sm font-medium text-[#1E293B] mb-4" style={{ fontFamily: 'Roboto, sans-serif' }}>
             Sentiment & Mentions Trend
           </h2>
           <SentimentChart data={data.sentimentTrend} showMentions />
         </div>
 
         {/* Sentiment Distribution */}
-        <div className="bg-white rounded-lg p-5 shadow-sm">
-          <h2 className="text-sm font-medium text-[#1E293B] mb-4">
+        <div className="bg-white rounded-lg p-5 shadow-sm border border-[#E2E8F0]">
+          <h2 className="text-sm font-medium text-[#1E293B] mb-4" style={{ fontFamily: 'Roboto, sans-serif' }}>
             Sentiment Distribution
           </h2>
           <SentimentDistribution
@@ -203,32 +210,19 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Brand Keyword Explorer */}
-      <BrandKeywordExplorer />
-
-      {/* Google Search Trends */}
-      <SearchTrends />
-
-      {/* Share of Voice & Product Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ShareOfVoice />
-        <ProductBreakdown />
-      </div>
-
-      {/* Competitor Battlecard - Full Width */}
+      {/* Competitor Battlecard - Key Competitive View */}
       <CompetitorBattlecard />
 
-      {/* Purchase Intent & Competitor Comparison */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <PurchaseIntentSignals />
-        <CompetitorComparison />
+      {/* Footer - Navigation Hints */}
+      <div className="flex items-center justify-center gap-6 py-4 border-t border-[#E2E8F0]">
+        <p className="text-[12px] text-[#64748B]" style={{ fontFamily: 'Roboto, sans-serif' }}>
+          <span className="font-medium text-[#1E293B]">Trending</span> for keyword analysis
+        </p>
+        <span className="text-[#E2E8F0]">•</span>
+        <p className="text-[12px] text-[#64748B]" style={{ fontFamily: 'Roboto, sans-serif' }}>
+          <span className="font-medium text-[#1E293B]">Mentions</span> for detailed posts & purchase signals
+        </p>
       </div>
-
-      {/* Media Mentions */}
-      <MediaMentions />
-
-      {/* Web Mentions (Scraped Sources) */}
-      <WebMentions />
     </div>
   );
 }

@@ -181,10 +181,10 @@ export function SpikeAlerts() {
 
   if (activeAlerts.length === 0) {
     return (
-      <div className="bg-white rounded-lg p-5 shadow-sm">
+      <div className="bg-white rounded-lg p-5 shadow-sm border border-[#E2E8F0]" style={{ fontFamily: 'Roboto, sans-serif' }}>
         <div className="flex items-center gap-2 mb-4">
-          <AlertTriangle className="w-4 h-4 text-[#0EA5E9]" />
-          <h2 className="text-sm font-medium text-[#0F172A]">Spike Alerts</h2>
+          <AlertTriangle className="w-4 h-4 text-[#1E293B]" />
+          <h2 className="text-sm font-medium text-[#1E293B]">Spike Alerts</h2>
         </div>
         <div className="text-center py-8 text-[#64748B]">
           <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-30" />
@@ -196,18 +196,18 @@ export function SpikeAlerts() {
   }
 
   return (
-    <div className="bg-white rounded-lg p-5 shadow-sm">
+    <div className="bg-white rounded-lg p-5 shadow-sm border border-[#E2E8F0]" style={{ fontFamily: 'Roboto, sans-serif' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="relative">
-            <AlertTriangle className="w-4 h-4 text-[#0EA5E9]" />
+            <AlertTriangle className="w-4 h-4 text-[#1E293B]" />
             {highPriorityCount > 0 && (
               <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
             )}
           </div>
           <div>
-            <h2 className="text-sm font-medium text-[#0F172A]">Spike Alerts</h2>
+            <h2 className="text-sm font-medium text-[#1E293B]">Spike Alerts</h2>
             <p className="text-[10px] text-[#64748B]">
               {activeAlerts.length} active alert{activeAlerts.length !== 1 ? 's' : ''} for {brandName}
             </p>
