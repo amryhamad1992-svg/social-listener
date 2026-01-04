@@ -70,8 +70,8 @@ export function SentimentChart({ data }: SentimentChartProps) {
                 fontFamily: 'Roboto, sans-serif',
                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
               }}
-              formatter={(value: number, name: string) => {
-                if (name === 'mentions') return [value.toLocaleString(), 'Mentions'];
+              formatter={(value, name) => {
+                if (name === 'mentions' && typeof value === 'number') return [value.toLocaleString(), 'Mentions'];
                 return [value, name];
               }}
               labelFormatter={formatDate}

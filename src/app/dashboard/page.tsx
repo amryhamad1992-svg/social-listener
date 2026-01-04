@@ -160,30 +160,38 @@ export default function DashboardPage() {
       {/* Spike Alerts - Full Width for Priority */}
       <SpikeAlerts />
 
-      {/* KPI Cards with Benchmarks */}
+      {/* KPI Cards with Sparklines */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           title="Total Mentions"
           value={data.kpis.totalMentions}
           change={data.kpis.mentionsChange}
-          benchmark="Avg: 1,850"
+          sparklineData={data.sentimentTrend.map(d => d.mentions)}
+          priorSparklineData={data.sentimentTrend.map(d => Math.round(d.mentions * 0.85))}
         />
         <KPICard
           title="Avg. Sentiment"
           value={data.kpis.avgSentiment}
           change={data.kpis.sentimentChange}
           format="sentiment"
-          benchmark="Industry: 0.62"
+          sparklineData={data.sentimentTrend.map(d => d.sentiment)}
+          priorSparklineData={data.sentimentTrend.map(d => d.sentiment - 0.08)}
         />
         <KPICard
-          title="Trending Topics"
-          value={data.kpis.trendingTopicsCount}
-          benchmark="vs Last Period: 4"
+          title="Share of Voice"
+          value="38%"
+          change={2.4}
+          format="percent"
+          sparklineData={[32, 34, 33, 35, 36, 37, 38]}
+          priorSparklineData={[28, 29, 30, 31, 30, 32, 33]}
         />
         <KPICard
-          title="Top Source"
-          value={data.kpis.topSource}
-          benchmark="42% of mentions"
+          title="Engagement Rate"
+          value="4.2%"
+          change={0.8}
+          format="percent"
+          sparklineData={[3.2, 3.5, 3.4, 3.8, 4.0, 3.9, 4.2]}
+          priorSparklineData={[2.8, 2.9, 3.1, 3.0, 3.2, 3.3, 3.4]}
         />
       </div>
 
