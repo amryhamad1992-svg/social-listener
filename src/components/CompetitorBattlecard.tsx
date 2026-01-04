@@ -90,7 +90,11 @@ function ChangeIndicator({ value, suffix = '%' }: { value: number; suffix?: stri
   );
 }
 
-export function CompetitorBattlecard() {
+interface CompetitorBattlecardProps {
+  days?: number;
+}
+
+export function CompetitorBattlecard({ days = 30 }: CompetitorBattlecardProps) {
   const { settings } = useSettings();
   const data = useMemo(() => getBattlecardData(), []);
 
@@ -110,7 +114,7 @@ export function CompetitorBattlecard() {
           <div>
             <h2 className="text-sm font-medium text-[#1E293B]">Competitor Battlecard</h2>
             <p className="text-[10px] text-[#64748B]">
-              Head-to-head brand comparison • Last 30 days
+              Head-to-head brand comparison • Last {days} days
             </p>
           </div>
         </div>

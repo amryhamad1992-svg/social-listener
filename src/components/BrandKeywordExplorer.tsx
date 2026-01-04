@@ -79,7 +79,11 @@ const SENTIMENT = {
   negative: { bg: '#FEE2E2', text: '#991B1B', label: 'Negative' },
 };
 
-export function BrandKeywordExplorer() {
+interface BrandKeywordExplorerProps {
+  days?: number;
+}
+
+export function BrandKeywordExplorer({ days = 7 }: BrandKeywordExplorerProps) {
   const [selectedBrand, setSelectedBrand] = useState('Revlon');
   const [compareBrand, setCompareBrand] = useState<string | null>(null);
   const [view, setView] = useState<'chart' | 'table'>('chart');

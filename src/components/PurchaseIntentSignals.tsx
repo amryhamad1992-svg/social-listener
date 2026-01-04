@@ -185,7 +185,11 @@ const intentStyles: Record<string, { bg: string; text: string; label: string }> 
   research: { bg: 'bg-[#64748B]/10', text: 'text-[#64748B]', label: 'RESEARCHING' },
 };
 
-export function PurchaseIntentSignals() {
+interface PurchaseIntentSignalsProps {
+  days?: number;
+}
+
+export function PurchaseIntentSignals({ days = 7 }: PurchaseIntentSignalsProps) {
   const { getBrandName } = useSettings();
   const brandName = getBrandName();
 
@@ -280,7 +284,7 @@ export function PurchaseIntentSignals() {
         <p className="text-[10px] text-[#64748B] flex items-center gap-1">
           <TrendingUp className="w-3 h-3 text-[#0EA5E9]" />
           <span className="font-medium text-[#0EA5E9]">{intentCounts.purchase || 0} confirmed purchases</span>
-          <span>detected in last 24 hours</span>
+          <span>detected in last {days} days</span>
         </p>
         <button className="text-[10px] text-[#0EA5E9] hover:underline">
           View all signals →

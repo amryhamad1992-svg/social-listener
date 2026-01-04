@@ -167,7 +167,11 @@ const typeIcons = {
   crisis: AlertTriangle,
 };
 
-export function SpikeAlerts() {
+interface SpikeAlertsProps {
+  days?: number;
+}
+
+export function SpikeAlerts({ days = 7 }: SpikeAlertsProps) {
   const { getBrandName } = useSettings();
   const brandName = getBrandName();
   const [alerts, setAlerts] = useState(() => getAlerts(brandName));

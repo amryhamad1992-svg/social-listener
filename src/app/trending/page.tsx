@@ -318,7 +318,7 @@ export default function TrendingPage() {
           </div>
 
           {/* Brand Keyword Explorer */}
-          <BrandKeywordExplorer />
+          <BrandKeywordExplorer days={days} />
 
           {/* Word Cloud View */}
           {viewMode === 'cloud' && !loading && data.length > 0 && (

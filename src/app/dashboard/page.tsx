@@ -155,10 +155,10 @@ export default function DashboardPage() {
       <QuickStatsBar />
 
       {/* Executive Summary - AI Insights */}
-      <ExecutiveSummary />
+      <ExecutiveSummary days={days} />
 
       {/* Spike Alerts - Full Width for Priority */}
-      <SpikeAlerts />
+      <SpikeAlerts days={days} />
 
       {/* KPI Cards with Sparklines */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -224,7 +224,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Competitor Battlecard - Key Competitive View */}
-      <CompetitorBattlecard />
+      <CompetitorBattlecard days={days} />
 
       {/* Footer - Navigation Hints */}
       <div className="flex items-center justify-center gap-6 py-4 border-t border-[#E2E8F0]">

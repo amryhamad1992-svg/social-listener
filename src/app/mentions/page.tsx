@@ -253,7 +253,7 @@ export default function MentionsPage() {
           </div>
 
           {/* Purchase Intent Signals - Moved from Dashboard */}
-          <PurchaseIntentSignals />
+          <PurchaseIntentSignals days={days} />
 
           {/* Summary Stats Bar */}
           <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">

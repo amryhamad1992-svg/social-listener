@@ -96,9 +96,12 @@ function generateInsights(brand: string, days: number): Insight[] {
   return brandInsights[brand]?.[days] || brandInsights[brand]?.[90] || brandInsights['Revlon'][7];
 }
 
-export function ExecutiveSummary() {
+interface ExecutiveSummaryProps {
+  days?: number;
+}
+
+export function ExecutiveSummary({ days = 7 }: ExecutiveSummaryProps) {
   const { settings, getBrandName } = useSettings();
-  const [days, setDays] = useState(7);
   const [insights, setInsights] = useState<Insight[]>([]);
 
   useEffect(() => {
@@ -131,16 +134,6 @@ export function ExecutiveSummary() {
             <p className="text-[10px] text-[#64748B]">AI-powered insights for {getBrandName()}</p>
           </div>
         </div>
-        <select
-          value={days}
-          onChange={(e) => setDays(parseInt(e.target.value, 10))}
-          className="px-2 py-1 text-[11px] border border-[#E2E8F0] rounded bg-white text-[#0F172A] focus:outline-none focus:border-[#0EA5E9]"
-        >
-          <option value={7}>Last 7 days</option>
-          <option value={14}>Last 14 days</option>
-          <option value={30}>Last 30 days</option>
-          <option value={90}>Last 90 days</option>
-        </select>
       </div>
 
       {/* Insights Grid */}
