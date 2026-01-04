@@ -177,8 +177,16 @@ export default function MentionsPage() {
 
   // Filter and sort mentions
   const enabledSourceIds = sources.filter(s => s.enabled).map(s => s.id);
+  const now = new Date();
+  const daysInMs = days * 24 * 60 * 60 * 1000;
+
   let filteredMentions = mentions.filter(m => {
+    // Filter by date range
+    const mentionDate = new Date(m.createdAt);
+    if (now.getTime() - mentionDate.getTime() > daysInMs) return false;
+    // Filter by source
     if (!enabledSourceIds.includes(getSourceId(m.source))) return false;
+    // Filter by sentiment
     if (sentiment && m.sentiment !== sentiment) return false;
     return true;
   });
