@@ -16,6 +16,9 @@ import { ShareOfVoice } from '@/components/ShareOfVoice';
 import { ProductBreakdown } from '@/components/ProductBreakdown';
 import { CompetitorBattlecard } from '@/components/CompetitorBattlecard';
 import { PurchaseIntentSignals } from '@/components/PurchaseIntentSignals';
+import { SpikeAlerts } from '@/components/SpikeAlerts';
+import { TopVoices } from '@/components/TopVoices';
+import { QuickStatsBar } from '@/components/QuickStatsBar';
 import { useSettings } from '@/lib/SettingsContext';
 
 interface DashboardData {
@@ -142,8 +145,17 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Quick Stats Bar - Live Metrics */}
+      <QuickStatsBar />
+
       {/* Executive Summary */}
       <ExecutiveSummary />
+
+      {/* Spike Alerts & Top Voices */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <SpikeAlerts />
+        <TopVoices />
+      </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
