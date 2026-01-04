@@ -1,186 +1,188 @@
-# Social Listener - Beauty Brand Monitoring
+# Social Listener - Brand Monitoring Dashboard
 
-A social listening dashboard for monitoring beauty brand mentions across YouTube, News, and Reddit. Built for tracking brands like Revlon, e.l.f., and Maybelline.
+A Stackline-style social listening and brand monitoring dashboard for beauty brands. Built for VP-level presentations and executive reporting.
 
-**Live Demo:** https://social-listener-production.up.railway.app
+**Live Demo**: https://social-listener-production.up.railway.app
 
----
+## Overview
+
+Social Listener provides real-time brand monitoring, sentiment analysis, and competitive intelligence for beauty brands (Revlon, e.l.f., Maybelline). The dashboard follows Stackline's design language with clean typography, minimal charts, and professional color schemes.
 
 ## Features
 
 ### Dashboard
-- **KPI Cards** - Total mentions, sentiment score, trending topics
-- **Sentiment Trend Chart** - 7/14/30/90 day sentiment analysis
-- **Google Search Trends** - Brand interest over time with top searches
-- **Brand Keyword Analysis** - Compare brands on generic terms (affordable, drugstore, viral, TikTok, etc.)
-
-### Mentions Page
-- **Multi-source aggregation** - YouTube, News, Reddit
-- **Brand filtering** - Filter by Revlon, e.l.f., Maybelline
-- **Source filtering** - Toggle individual sources on/off
-- **Sentiment badges** - AI-powered sentiment analysis (Positive/Neutral/Negative)
-- **Engagement indicators** - Views, likes, comments, "Hot" badges for viral content
+- **Global Date Range**: Single date picker controls all components (7, 14, 30, 90 days)
+- **Quick Stats Bar**: Live metrics with brand indicator
+- **Executive Summary**: AI-powered insights that update based on selected time period
+- **Spike Alerts**: Real-time alerts for mention spikes, sentiment shifts, and trending topics
+- **KPI Cards with Sparklines**: Stackline-style inline charts showing current vs prior period
+  - Total Mentions
+  - Avg. Sentiment
+  - Share of Voice
+  - Engagement Rate
+- **Mentions by Day Chart**: Grouped bar chart (navy for current, gray for prior period)
+- **Sentiment Distribution**: Donut chart with Stackline color palette
+- **Competitor Battlecard**: Head-to-head brand comparison with SWOT summary
 
 ### Trending Page
-- **Trending topics table** - Sortable by mentions, sentiment, change %
-- **Date range filters** - 7, 14, 30, 90 days
-- **Brand-specific trends** - Filter by individual brand or all brands
+- **Trending Topics Table**: Keywords ranked by mentions with sparklines
+- **Word Cloud View**: Visual topic exploration by category
+- **Brand Keyword Explorer**: Cross-brand keyword comparison chart
+- **Velocity Indicators**: Rising, steady, or cooling trends
 
----
+### Mentions Page
+- **Purchase Intent Signals**: Real-time buying signals categorized as:
+  - Purchase (confirmed buys)
+  - Consideration (thinking about buying)
+  - Research (price/availability queries)
+- **Multi-Source Filtering**: YouTube, Reddit, News, MakeupAlley, Temptalia
+- **Sentiment Filtering**: Positive, Neutral, Negative
+- **Sort Options**: Most Recent, Most Engaged, Highest Reach
+- **Card & Compact Views**: Toggle between detailed cards and compact list
+
+## Design System
+
+### Stackline Color Palette
+| Color | Hex | Usage |
+|-------|-----|-------|
+| Navy | #1E293B | Primary text, current period bars |
+| Gray | #CBD5E1 | Prior period bars, secondary elements |
+| Muted | #64748B | Labels, descriptions |
+| Teal | #14B8A6 | Accent color, neutral sentiment |
+| Gold | #FBBF24 | Warning, consideration intent |
+| Sky | #0EA5E9 | Links, positive highlights |
+
+### Typography
+- **Font**: Roboto (Google Fonts)
+- **Headings**: 11px uppercase, tracking-wider
+- **Values**: 32px font-medium for KPIs
+- **Body**: 12-13px for content
+
+### Chart Styles
+- **Sparklines**: Dual-line (navy current, gray prior), no axes
+- **Bar Charts**: Grouped bars with rounded tops, 2px gap
+- **Legends**: Positioned at top, horizontal layout
+- **Tooltips**: White background, subtle shadow, 8px border radius
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| **Frontend** | Next.js 16, TypeScript, Tailwind CSS |
-| **Charts** | Recharts |
-| **Backend** | Next.js API Routes |
-| **Database** | PostgreSQL (Prisma ORM) |
-| **Deployment** | Railway |
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Charts**: Recharts
+- **Icons**: Lucide React
+- **Database**: PostgreSQL (Prisma ORM)
+- **Deployment**: Railway
 
----
+## Project Structure
+
+\`\`\`
+src/
+├── app/
+│   ├── dashboard/page.tsx    # Main dashboard
+│   ├── trending/page.tsx     # Trending topics
+│   ├── mentions/page.tsx     # Brand mentions
+│   ├── settings/page.tsx     # User settings
+│   └── api/                   # API routes
+├── components/
+│   ├── KPICard.tsx           # KPI cards with sparklines
+│   ├── SentimentChart.tsx    # Bar chart + pie chart
+│   ├── ExecutiveSummary.tsx  # AI insights
+│   ├── SpikeAlerts.tsx       # Alert notifications
+│   ├── CompetitorBattlecard.tsx
+│   ├── PurchaseIntentSignals.tsx
+│   ├── BrandKeywordExplorer.tsx
+│   ├── QuickStatsBar.tsx
+│   └── Sidebar.tsx
+├── lib/
+│   └── SettingsContext.tsx   # Global settings (brand, days)
+└── prisma/
+    └── schema.prisma         # Database schema
+\`\`\`
+
+## Key Components
+
+### KPICard
+\`\`\`tsx
+<KPICard
+  title="Share of Voice"
+  value={38}
+  change={2.4}
+  format="percent"
+  sparklineData={[32, 34, 33, 35, 36, 37, 38]}
+  priorSparklineData={[28, 29, 30, 31, 30, 32, 33]}
+/>
+\`\`\`
+
+### Global Date Range
+All components accept a \`days\` prop from the parent page:
+\`\`\`tsx
+<ExecutiveSummary days={days} />
+<SpikeAlerts days={days} />
+<CompetitorBattlecard days={days} />
+<PurchaseIntentSignals days={days} />
+\`\`\`
 
 ## Data Sources
 
-### Working (Real Data)
-
-| Source | Method | Status |
-|--------|--------|--------|
-| **YouTube** | YouTube Data API v3 | Real videos with views, likes, working URLs |
-| **News** | NewsAPI | Real articles from news sources |
-| **Sentiment** | OpenAI GPT-4o-mini | AI-powered sentiment analysis |
-
-### In Development
-
-| Source | Method | Status |
-|--------|--------|--------|
-| **Reddit** | Cheerio web scraping (old.reddit.com) | Enabled but needs debugging |
-| **MakeupAlley** | Web scraping | Disabled (DNS issues) |
-| **Temptalia** | Web scraping | Disabled (needs HTML updates) |
-| **Allure** | Web scraping | Disabled (needs HTML updates) |
-| **Into The Gloss** | Web scraping | Disabled (needs HTML updates) |
-
----
+Currently using mock data for demonstration. Designed to integrate with:
+- YouTube Data API
+- Reddit API
+- News APIs (NewsAPI, Bing News)
+- Beauty review sites (MakeupAlley, Temptalia)
 
 ## Environment Variables
 
-Create a `.env.local` file (never commit this):
+\`\`\`env
+DATABASE_URL=postgresql://...
+\`\`\`
 
-```env
-# Required for real data
-YOUTUBE_API_KEY=your_youtube_api_key
-NEWS_API_KEY=your_newsapi_key
-OPENAI_API_KEY=your_openai_key
+## Development
 
-# Optional
-DATABASE_URL=your_postgresql_url
-JWT_SECRET=your_jwt_secret
-```
-
-### Getting API Keys
-
-| API | Where to get it |
-|-----|-----------------|
-| YouTube | [Google Cloud Console](https://console.cloud.google.com/) - APIs & Services - YouTube Data API v3 |
-| NewsAPI | [newsapi.org](https://newsapi.org/) - Free tier available |
-| OpenAI | [platform.openai.com](https://platform.openai.com/) - API Keys |
-
----
-
-## Local Development
-
-```bash
+\`\`\`bash
 # Install dependencies
 npm install
 
 # Run development server
 npm run dev
 
-# Open http://localhost:3000
-```
+# Build for production
+npm run build
 
----
-
-## Project Structure
-
-```
-src/
-├── app/
-│   ├── dashboard/       # Main dashboard page
-│   ├── mentions/        # Brand mentions feed
-│   ├── trending/        # Trending topics table
-│   ├── api/
-│   │   ├── youtube/     # YouTube API integration
-│   │   ├── news/        # NewsAPI integration
-│   │   └── scrape/      # Web scraper orchestration
-│   └── login/           # Authentication
-├── components/
-│   ├── Sidebar.tsx      # Navigation sidebar
-│   ├── DataTable.tsx    # Reusable data table
-│   ├── SearchTrends.tsx # Google trends chart
-│   └── BrandKeywordExplorer.tsx  # Keyword comparison
-└── lib/
-    ├── scrapers/        # Web scrapers (Reddit, blogs)
-    ├── youtube.ts       # YouTube API client
-    ├── newsApi.ts       # NewsAPI client
-    └── sentiment.ts     # OpenAI sentiment analysis
-```
-
----
-
-## Brand Keyword Analysis
-
-The keyword analysis compares brands on **generic beauty terms** that apply to all brands:
-
-| Keyword | What it measures |
-|---------|------------------|
-| affordable | Price perception |
-| drugstore | Channel association |
-| long-lasting | Product performance |
-| full coverage | Product attributes |
-| lipstick | Category strength |
-| foundation | Category strength |
-| mascara | Category strength |
-| dupe | Value/alternative perception |
-| viral | Social media buzz |
-| TikTok | Platform presence |
-
-This allows meaningful cross-brand comparison (e.g., "e.l.f. dominates TikTok mentions while Revlon leads in lipstick").
-
----
+# Start production server
+npm start
+\`\`\`
 
 ## Deployment
 
-### Railway
+Deployed on Railway with automatic deployments from the \`main\` branch.
 
-1. Connect GitHub repository to Railway
-2. Set environment variables in Railway dashboard:
-   - `YOUTUBE_API_KEY`
-   - `NEWS_API_KEY`
-   - `OPENAI_API_KEY`
-3. Railway auto-deploys on push to main
+\`\`\`bash
+# Push to deploy
+git push origin main
+\`\`\`
+
+## Brand Configuration
+
+Switch between brands in Settings or via the sidebar:
+- **Revlon** - Hair tools, lipsticks, foundation
+- **e.l.f.** - Viral products, dupes, affordable luxury
+- **Maybelline** - Mascara, foundation, lip products
+
+## Recent Updates
+
+- Global date range controls all components
+- Stackline-style sparklines in KPI cards
+- Grouped bar chart for mentions (current vs prior period)
+- Stackline color palette (navy, teal, gold)
+- Purchase Intent Signals vary by date range
+- Date filtering on Mentions page
+- Roboto font throughout
+
+## Credits
+
+Built for Stackline VP presentation demo. Design inspired by Stackline Atlas dashboard.
 
 ---
 
-## Security
-
-- API keys are stored in environment variables (not in code)
-- `.env*` files are gitignored
-- No secrets are committed to the repository
-
----
-
-## Roadmap
-
-- [ ] Fix Reddit scraper (old.reddit.com HTML parsing)
-- [ ] Add more beauty blog scrapers
-- [ ] Real-time notifications for trending topics
-- [ ] Export data to CSV
-- [ ] Email digest reports
-- [ ] Multi-category support (beyond Beauty)
-
----
-
-## License
-
-Private project for Stackline.
+**Repository**: https://github.com/amryhamad1992-svg/social-listener
