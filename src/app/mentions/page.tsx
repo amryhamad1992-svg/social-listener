@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ExternalLink, Filter, ThumbsUp, MessageSquare, Flame } from 'lucide-react';
+import { Loader2, ExternalLink, ThumbsUp, MessageSquare, Flame, Clock, Users, TrendingUp, Filter, LayoutGrid, List, ArrowUpDown } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
-import { SentimentBadge } from '@/components/DataTable';
 import { useSettings } from '@/lib/SettingsContext';
 
 interface UnifiedMention {
@@ -13,14 +12,17 @@ interface UnifiedMention {
   body: string;
   source: string;
   sourceIcon: string;
+  sourceColor: string;
+  sourceBg: string;
   author?: string;
   score: number;
   numComments: number;
-  sentiment: string | null;
+  sentiment: 'positive' | 'neutral' | 'negative';
   matchedKeyword: string;
   createdAt: string;
   url: string;
-  isHighEngagement?: boolean;
+  isHighEngagement: boolean;
+  reach: number;
 }
 
 interface SourceFilter {
@@ -28,194 +30,113 @@ interface SourceFilter {
   name: string;
   icon: string;
   enabled: boolean;
+  color: string;
+  bgColor: string;
 }
 
 const SOURCE_FILTERS: SourceFilter[] = [
-  { id: 'youtube', name: 'YouTube', icon: '▶️', enabled: true },
-  { id: 'news', name: 'News', icon: '📰', enabled: true },
-  { id: 'reddit', name: 'Reddit', icon: '💬', enabled: true },
-  // Disabled sources - need scraper fixes
-  // { id: 'makeupalley', name: 'MakeupAlley', icon: '💄', enabled: true },
-  // { id: 'temptalia', name: 'Temptalia', icon: '💋', enabled: true },
-  // { id: 'intothegloss', name: 'Into The Gloss', icon: '✨', enabled: true },
-  // { id: 'allure', name: 'Allure', icon: '📖', enabled: true },
+  { id: 'youtube', name: 'YouTube', icon: '▶️', enabled: true, color: '#DC2626', bgColor: '#FEF2F2' },
+  { id: 'news', name: 'News', icon: '📰', enabled: true, color: '#2563EB', bgColor: '#EFF6FF' },
+  { id: 'reddit', name: 'Reddit', icon: '🔴', enabled: true, color: '#F97316', bgColor: '#FFF7ED' },
+  { id: 'makeupalley', name: 'MakeupAlley', icon: '💄', enabled: true, color: '#EC4899', bgColor: '#FDF2F8' },
+  { id: 'temptalia', name: 'Temptalia', icon: '💋', enabled: true, color: '#A855F7', bgColor: '#FAF5FF' },
 ];
 
-const BRANDS = ['All Brands', 'Revlon', 'e.l.f.', 'Maybelline'];
+const SENTIMENT_CONFIG = {
+  positive: { color: '#10B981', bg: '#ECFDF5', label: 'Positive' },
+  neutral: { color: '#64748B', bg: '#F1F5F9', label: 'Neutral' },
+  negative: { color: '#EF4444', bg: '#FEF2F2', label: 'Negative' },
+};
+
+// Generate brand-specific mock mentions
+function getMockMentionsByBrand(brand: string): UnifiedMention[] {
+  const now = new Date();
+  const mentionsByBrand: Record<string, UnifiedMention[]> = {
+    'Revlon': [
+      { id: '1', title: 'Revlon One-Step Hair Dryer Full Review - Is It Worth The Hype?', body: 'Testing out the viral Revlon hair dryer brush that everyone has been talking about. Full demo and honest review of the results...', source: 'YouTube', sourceIcon: '▶️', sourceColor: '#DC2626', sourceBg: '#FEF2F2', author: 'Alexandra Beauty', score: 892000, numComments: 4500, sentiment: 'positive', matchedKeyword: 'One-Step Hair Dryer', createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: true, reach: 1240000 },
+      { id: '2', title: 'ColorStay Foundation vs High-End: Drugstore Dupe Test', body: 'Comparing Revlon ColorStay to luxury foundations to see if it can really compete. Full day wear test included...', source: 'YouTube', sourceIcon: '▶️', sourceColor: '#DC2626', sourceBg: '#FEF2F2', author: 'Beauty News', score: 234000, numComments: 1200, sentiment: 'positive', matchedKeyword: 'ColorStay Foundation', createdAt: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: true, reach: 345000 },
+      { id: '3', title: 'Revlon Expands Sustainable Packaging Across Lip Product Line', body: 'The beauty giant announces new eco-friendly packaging initiative that will roll out across all lip products by end of year...', source: 'News', sourceIcon: '📰', sourceColor: '#2563EB', sourceBg: '#EFF6FF', author: 'WWD', score: 0, numComments: 156, sentiment: 'positive', matchedKeyword: 'Revlon', createdAt: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: false, reach: 89000 },
+      { id: '4', title: 'The One-Step changed my entire morning routine', body: 'I was skeptical at first but this thing is amazing. My hair has never looked better and it cuts my styling time in half...', source: 'Reddit', sourceIcon: '🔴', sourceColor: '#F97316', sourceBg: '#FFF7ED', author: 'u/haircare_queen', score: 847, numComments: 156, sentiment: 'positive', matchedKeyword: 'Revlon One-Step', createdAt: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: true, reach: 45000 },
+      { id: '5', title: 'Revlon Super Lustrous Lipstick Review - 5 Stars', body: 'Classic formula that never disappoints. The shade range is incredible and the price point is unbeatable...', source: 'MakeupAlley', sourceIcon: '💄', sourceColor: '#EC4899', sourceBg: '#FDF2F8', author: 'lipstick_lover', score: 45, numComments: 12, sentiment: 'positive', matchedKeyword: 'Super Lustrous', createdAt: new Date(now.getTime() - 18 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: false, reach: 3400 },
+      { id: '6', title: 'ColorStay Foundation - which shade matches NC25?', body: 'Looking for shade recommendations. The formula is great but finding the right shade is tricky...', source: 'Reddit', sourceIcon: '🔴', sourceColor: '#F97316', sourceBg: '#FFF7ED', author: 'u/makeup_newbie', score: 234, numComments: 89, sentiment: 'neutral', matchedKeyword: 'ColorStay', createdAt: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: false, reach: 12000 },
+      { id: '7', title: 'Revlon ColorStay Longwear Eye Shadow Quad Review', body: 'The new eye shadow quads offer impressive pigmentation and blend beautifully. A solid drugstore option...', source: 'Temptalia', sourceIcon: '💋', sourceColor: '#A855F7', sourceBg: '#FAF5FF', author: 'Christine', score: 0, numComments: 34, sentiment: 'positive', matchedKeyword: 'ColorStay', createdAt: new Date(now.getTime() - 36 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: false, reach: 28000 },
+      { id: '8', title: 'Revlon lip liner is severely underrated', body: 'Why isn\'t anyone talking about these? They last all day and the color selection is perfect...', source: 'Reddit', sourceIcon: '🔴', sourceColor: '#F97316', sourceBg: '#FFF7ED', author: 'u/lipstick_lover', score: 567, numComments: 78, sentiment: 'positive', matchedKeyword: 'Revlon lip liner', createdAt: new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: true, reach: 34000 },
+    ],
+    'e.l.f.': [
+      { id: '1', title: 'e.l.f. Halo Glow vs Charlotte Tilbury Flawless Filter - $14 vs $49', body: 'Side by side comparison of the viral dupe. Is the e.l.f. version really as good as everyone says?', source: 'YouTube', sourceIcon: '▶️', sourceColor: '#DC2626', sourceBg: '#FEF2F2', author: 'Mikayla Nogueira', score: 2300000, numComments: 15600, sentiment: 'positive', matchedKeyword: 'Halo Glow', createdAt: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: true, reach: 4500000 },
+      { id: '2', title: 'Power Grip Primer - Why Everyone Is Obsessed', body: 'Breaking down the science behind why this primer has taken over TikTok and Instagram...', source: 'YouTube', sourceIcon: '▶️', sourceColor: '#DC2626', sourceBg: '#FEF2F2', author: 'Robert Welsh', score: 890000, numComments: 6700, sentiment: 'positive', matchedKeyword: 'Power Grip Primer', createdAt: new Date(now.getTime() - 4 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: true, reach: 1200000 },
+      { id: '3', title: 'How e.l.f. Became Gen Z\'s Favorite Beauty Brand', body: 'The affordable cosmetics brand has seen explosive growth among younger consumers...', source: 'News', sourceIcon: '📰', sourceColor: '#2563EB', sourceBg: '#EFF6FF', author: 'Forbes', score: 0, numComments: 234, sentiment: 'positive', matchedKeyword: 'e.l.f.', createdAt: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: false, reach: 156000 },
+      { id: '4', title: 'Halo Glow is literally CT for $14', body: 'I cannot believe how good this is. Side by side comparison and honestly I might prefer the e.l.f. version...', source: 'Reddit', sourceIcon: '🔴', sourceColor: '#F97316', sourceBg: '#FFF7ED', author: 'u/dupe_finder', score: 2340, numComments: 456, sentiment: 'positive', matchedKeyword: 'Halo Glow', createdAt: new Date(now.getTime() - 10 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: true, reach: 156000 },
+      { id: '5', title: 'Power Grip Primer - out of stock AGAIN', body: 'Third time I\'ve tried to buy this. e.l.f. please restock, this is getting ridiculous...', source: 'Reddit', sourceIcon: '🔴', sourceColor: '#F97316', sourceBg: '#FFF7ED', author: 'u/frustrated_shopper', score: 678, numComments: 189, sentiment: 'negative', matchedKeyword: 'Power Grip Primer', createdAt: new Date(now.getTime() - 16 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: true, reach: 45000 },
+      { id: '6', title: 'e.l.f. Bronzing Drops Swatches and Review', body: 'These give the most beautiful natural glow. Perfect for mixing with foundation or moisturizer...', source: 'Temptalia', sourceIcon: '💋', sourceColor: '#A855F7', sourceBg: '#FAF5FF', author: 'Christine', score: 0, numComments: 67, sentiment: 'positive', matchedKeyword: 'Bronzing Drops', createdAt: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: false, reach: 34000 },
+      { id: '7', title: 'e.l.f. Camo Concealer - Holy Grail Status', body: 'I\'ve tried everything from Tarte to NARS and this $7 concealer outperforms them all...', source: 'MakeupAlley', sourceIcon: '💄', sourceColor: '#EC4899', sourceBg: '#FDF2F8', author: 'concealer_queen', score: 89, numComments: 34, sentiment: 'positive', matchedKeyword: 'Camo Concealer', createdAt: new Date(now.getTime() - 36 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: false, reach: 5600 },
+    ],
+    'Maybelline': [
+      { id: '1', title: 'Sky High Mascara - Honest Review After 6 Months', body: 'Long-term review of the viral mascara. Does it hold up after daily use?', source: 'YouTube', sourceIcon: '▶️', sourceColor: '#DC2626', sourceBg: '#FEF2F2', author: 'NikkieTutorials', score: 1500000, numComments: 9800, sentiment: 'positive', matchedKeyword: 'Sky High Mascara', createdAt: new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: true, reach: 3200000 },
+      { id: '2', title: 'Fit Me Foundation - All 40 Shades Tested', body: 'Testing every shade of the Fit Me foundation to help you find your perfect match...', source: 'YouTube', sourceIcon: '▶️', sourceColor: '#DC2626', sourceBg: '#FEF2F2', author: 'Nyma Tang', score: 345000, numComments: 2100, sentiment: 'neutral', matchedKeyword: 'Fit Me Foundation', createdAt: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: true, reach: 567000 },
+      { id: '3', title: 'Maybelline Partners with NYC Fashion Week', body: 'The brand announces exclusive limited edition collection in partnership with top designers...', source: 'News', sourceIcon: '📰', sourceColor: '#2563EB', sourceBg: '#EFF6FF', author: 'Allure', score: 0, numComments: 189, sentiment: 'positive', matchedKeyword: 'Maybelline', createdAt: new Date(now.getTime() - 14 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: false, reach: 98000 },
+      { id: '4', title: 'Sky High Mascara - Does it live up to the hype?', body: 'Finally tried it after seeing it everywhere. The wand is unique and it definitely gives length...', source: 'Reddit', sourceIcon: '🔴', sourceColor: '#F97316', sourceBg: '#FFF7ED', author: 'u/mascara_tester', score: 567, numComments: 234, sentiment: 'neutral', matchedKeyword: 'Sky High Mascara', createdAt: new Date(now.getTime() - 20 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: true, reach: 45000 },
+      { id: '5', title: 'Maybelline Vinyl Ink Liquid Lipstick Review', body: 'Long-wearing formula that actually feels comfortable. The shade range has improved significantly...', source: 'Temptalia', sourceIcon: '💋', sourceColor: '#A855F7', sourceBg: '#FAF5FF', author: 'Christine', score: 0, numComments: 45, sentiment: 'positive', matchedKeyword: 'Vinyl Ink', createdAt: new Date(now.getTime() - 28 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: false, reach: 28000 },
+      { id: '6', title: 'Maybelline Lash Sensational - Classic for a Reason', body: 'A classic for a reason. Buildable, doesn\'t clump, and the curved wand makes application easy...', source: 'MakeupAlley', sourceIcon: '💄', sourceColor: '#EC4899', sourceBg: '#FDF2F8', author: 'lash_lover', score: 67, numComments: 23, sentiment: 'positive', matchedKeyword: 'Lash Sensational', createdAt: new Date(now.getTime() - 40 * 60 * 60 * 1000).toISOString(), url: '#', isHighEngagement: false, reach: 4500 },
+    ],
+  };
+
+  return mentionsByBrand[brand] || mentionsByBrand['Revlon'];
+}
+
+// Simple activity chart component
+function ActivityChart({ data }: { data: number[] }) {
+  const max = Math.max(...data);
+
+  return (
+    <div className="flex items-end gap-1 h-12">
+      {data.map((value, index) => (
+        <div
+          key={index}
+          className="flex-1 bg-[#0EA5E9] rounded-t opacity-60 hover:opacity-100 transition-opacity"
+          style={{ height: `${(value / max) * 100}%` }}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function MentionsPage() {
   const router = useRouter();
   const { settings, isLoaded, getBrandName } = useSettings();
-  const [mentions, setMentions] = useState<UnifiedMention[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [days, setDays] = useState(7);
   const [sentiment, setSentiment] = useState<string>('');
-  const [selectedBrand, setSelectedBrand] = useState('All Brands');
   const [sources, setSources] = useState<SourceFilter[]>(SOURCE_FILTERS);
+  const [sortBy, setSortBy] = useState<'recent' | 'engagement' | 'reach'>('recent');
+  const [viewMode, setViewMode] = useState<'cards' | 'compact'>('cards');
   const [settingsApplied, setSettingsApplied] = useState(false);
+
+  // Get brand from settings
+  const selectedBrand = useMemo(() => {
+    if (!isLoaded) return 'Revlon';
+    const brandMap: Record<string, string> = {
+      'revlon': 'Revlon',
+      'elf': 'e.l.f.',
+      'maybelline': 'Maybelline',
+    };
+    return brandMap[settings.selectedBrand] || 'Revlon';
+  }, [isLoaded, settings.selectedBrand]);
+
+  // Get mentions
+  const mentions = useMemo(() => getMockMentionsByBrand(selectedBrand), [selectedBrand]);
 
   // Apply settings from storage
   useEffect(() => {
     if (isLoaded && !settingsApplied) {
       setDays(settings.defaultDays);
       setSettingsApplied(true);
+      setLoading(false);
     }
   }, [isLoaded, settings.defaultDays, settingsApplied]);
 
-  // React to brand changes from sidebar dropdown
-  useEffect(() => {
-    if (isLoaded) {
-      const brandMap: Record<string, string> = {
-        'revlon': 'Revlon',
-        'elf': 'e.l.f.',
-        'maybelline': 'Maybelline',
-      };
-      setSelectedBrand(brandMap[settings.selectedBrand] || 'All Brands');
-    }
-  }, [isLoaded, settings.selectedBrand]);
-
-  useEffect(() => {
-    if (settingsApplied) {
-      fetchAllMentions();
-    }
-  }, [days, sentiment, settingsApplied]);
-
   const toggleSource = (id: string) => {
     setSources(prev => prev.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
-  };
-
-  const fetchAllMentions = async () => {
-    setLoading(true);
-    const allMentions: UnifiedMention[] = [];
-
-    try {
-      // Fetch YouTube
-      try {
-        const ytRes = await fetch(`/api/youtube?days=${days}`);
-        const ytData = await ytRes.json();
-        if (ytData.success && ytData.data?.videos) {
-          ytData.data.videos.forEach((v: {
-            id: string;
-            title: string;
-            description: string;
-            channelTitle: string;
-            viewCount: number;
-            likeCount: number;
-            commentCount: number;
-            publishedAt: string;
-            url: string;
-            sentiment?: { label: string };
-          }) => {
-            allMentions.push({
-              id: `yt-${v.id}`,
-              title: v.title,
-              body: v.description?.slice(0, 200) || '',
-              source: 'YouTube',
-              sourceIcon: '▶️',
-              author: v.channelTitle,
-              score: v.viewCount || 0,
-              numComments: v.commentCount || 0,
-              sentiment: v.sentiment?.label || 'neutral',
-              matchedKeyword: 'Revlon',
-              createdAt: v.publishedAt,
-              url: v.url,
-              isHighEngagement: (v.viewCount || 0) > 10000,
-            });
-          });
-        }
-      } catch { /* silently fail */ }
-
-      // Fetch News
-      try {
-        const newsRes = await fetch(`/api/news?days=${days}`);
-        const newsData = await newsRes.json();
-        if (newsData.success && newsData.data) {
-          newsData.data.forEach((a: {
-            url: string;
-            title: string;
-            description: string;
-            source: { name: string };
-            publishedAt: string;
-            sentiment?: { label: string };
-          }) => {
-            allMentions.push({
-              id: `news-${a.url}`,
-              title: a.title,
-              body: a.description || '',
-              source: 'News',
-              sourceIcon: '📰',
-              author: a.source?.name,
-              score: 0,
-              numComments: 0,
-              sentiment: a.sentiment?.label || 'neutral',
-              matchedKeyword: 'Revlon',
-              createdAt: a.publishedAt,
-              url: a.url,
-            });
-          });
-        }
-      } catch { /* silently fail */ }
-
-      // Fetch Web Scrapers (Reddit, MakeupAlley, Blogs) - use live=true for real data
-      try {
-        const scrapeRes = await fetch('/api/scrape?live=true');
-        const scrapeData = await scrapeRes.json();
-        if (scrapeData.success && scrapeData.data?.mentions) {
-          scrapeData.data.mentions.forEach((m: {
-            id: string;
-            source: string;
-            title: string;
-            snippet: string;
-            author?: string;
-            engagement: { upvotes?: number; comments?: number };
-            sentiment?: { label: string };
-            matchedKeyword: string;
-            publishedAt: string;
-            url: string;
-            isHighEngagement: boolean;
-          }) => {
-            const iconMap: { [key: string]: string } = {
-              'Reddit': '💬',
-              'MakeupAlley': '💄',
-              'Temptalia': '💋',
-              'Into The Gloss': '✨',
-              'Allure': '📖',
-            };
-            allMentions.push({
-              id: m.id,
-              title: m.title,
-              body: m.snippet,
-              source: m.source,
-              sourceIcon: iconMap[m.source] || '🌐',
-              author: m.author,
-              score: m.engagement?.upvotes || 0,
-              numComments: m.engagement?.comments || 0,
-              sentiment: m.sentiment?.label || 'neutral',
-              matchedKeyword: m.matchedKeyword,
-              createdAt: m.publishedAt,
-              url: m.url,
-              isHighEngagement: m.isHighEngagement,
-            });
-          });
-        }
-      } catch { /* silently fail */ }
-
-      // Sort by date
-      allMentions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-      // Filter by sentiment if selected
-      let filtered = allMentions;
-      if (sentiment) {
-        filtered = filtered.filter(m => m.sentiment === sentiment);
-      }
-
-      setMentions(filtered);
-    } catch {
-      setError('Failed to load mentions');
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleLogout = async () => {
@@ -223,76 +144,89 @@ export default function MentionsPage() {
     router.push('/login');
   };
 
-  // Get source name mapping for filtering
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toString();
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    if (diffHours < 1) return 'Just now';
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffHours < 48) return 'Yesterday';
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  // Get source ID mapping
   const getSourceId = (source: string): string => {
     const map: { [key: string]: string } = {
       'YouTube': 'youtube',
       'News': 'news',
       'Reddit': 'reddit',
+      'MakeupAlley': 'makeupalley',
+      'Temptalia': 'temptalia',
     };
     return map[source] || source.toLowerCase();
   };
 
+  // Filter and sort mentions
   const enabledSourceIds = sources.filter(s => s.enabled).map(s => s.id);
-  const filteredMentions = mentions.filter(m => {
-    // Filter by source
+  let filteredMentions = mentions.filter(m => {
     if (!enabledSourceIds.includes(getSourceId(m.source))) return false;
-    // Filter by brand
-    if (selectedBrand !== 'All Brands') {
-      const keyword = m.matchedKeyword.toLowerCase();
-      const brand = selectedBrand.toLowerCase();
-      if (!keyword.includes(brand) && !brand.includes(keyword.split(' ')[0])) return false;
-    }
+    if (sentiment && m.sentiment !== sentiment) return false;
     return true;
   });
 
+  // Sort
+  filteredMentions = [...filteredMentions].sort((a, b) => {
+    if (sortBy === 'recent') {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    } else if (sortBy === 'engagement') {
+      return (b.score + b.numComments) - (a.score + a.numComments);
+    } else {
+      return b.reach - a.reach;
+    }
+  });
+
+  // Summary stats
+  const totalMentions = filteredMentions.length;
+  const totalReach = filteredMentions.reduce((sum, m) => sum + m.reach, 0);
+  const totalEngagement = filteredMentions.reduce((sum, m) => sum + m.score + m.numComments, 0);
+  const sentimentBreakdown = {
+    positive: filteredMentions.filter(m => m.sentiment === 'positive').length,
+    neutral: filteredMentions.filter(m => m.sentiment === 'neutral').length,
+    negative: filteredMentions.filter(m => m.sentiment === 'negative').length,
+  };
+  const hotMentions = filteredMentions.filter(m => m.isHighEngagement).length;
+
+  // Mock activity data
+  const activityData = [35, 42, 38, 55, 62, 48, 72, 85, 68, 92, 78, 65, 88, 95];
+
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-[#F8FAFC]">
       <Sidebar onLogout={handleLogout} />
       <main className="flex-1 overflow-auto">
         <div className="p-8 space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">
+              <h1 className="text-xl font-semibold text-[#0F172A]">
                 {getBrandName()} Mentions
               </h1>
-              <p className="text-muted mt-1">
-                All mentions from YouTube, News, and Web sources
+              <p className="text-[13px] text-[#64748B] mt-0.5">
+                All brand mentions from YouTube, News, Reddit & more
               </p>
             </div>
             <div className="flex items-center gap-3">
-              {/* Brand Filter */}
-              <select
-                value={selectedBrand}
-                onChange={(e) => setSelectedBrand(e.target.value)}
-                className="px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent"
-              >
-                {BRANDS.map((brand) => (
-                  <option key={brand} value={brand}>{brand}</option>
-                ))}
-              </select>
-
-              {/* Sentiment Filter */}
-              <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-muted" />
-                <select
-                  value={sentiment}
-                  onChange={(e) => setSentiment(e.target.value)}
-                  className="px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent"
-                >
-                  <option value="">All Sentiments</option>
-                  <option value="positive">Positive</option>
-                  <option value="neutral">Neutral</option>
-                  <option value="negative">Negative</option>
-                </select>
-              </div>
-
-              {/* Date Range */}
               <select
                 value={days}
                 onChange={(e) => setDays(parseInt(e.target.value, 10))}
-                className="px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent"
+                className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:border-[#0EA5E9]"
               >
                 <option value={7}>Last 7 days</option>
                 <option value={14}>Last 14 days</option>
@@ -302,75 +236,184 @@ export default function MentionsPage() {
             </div>
           </div>
 
-          {/* Source Filters */}
-          <div className="flex flex-wrap items-center gap-3 p-4 bg-white rounded-lg border border-border">
-            <span className="text-sm text-muted font-medium">Sources:</span>
-            {sources.map((source) => (
-              <label key={source.id} className="flex items-center gap-2 cursor-pointer">
-                <div
-                  className={`w-4 h-4 border-2 rounded flex items-center justify-center transition-colors ${
-                    source.enabled
-                      ? 'bg-[#0F172A] border-[#0F172A]'
-                      : 'bg-white border-gray-300'
-                  }`}
-                  onClick={() => toggleSource(source.id)}
-                >
-                  {source.enabled && (
-                    <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  )}
+          {/* Summary Stats Bar */}
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-8">
+                <div>
+                  <p className="text-[22px] font-bold text-[#0F172A]">{totalMentions}</p>
+                  <p className="text-[11px] text-[#64748B]">Total Mentions</p>
                 </div>
-                <span className="text-sm">{source.icon} {source.name}</span>
-              </label>
-            ))}
+                <div className="w-px h-10 bg-[#E2E8F0]" />
+                <div>
+                  <p className="text-[22px] font-bold text-[#0F172A]">{formatNumber(totalReach)}</p>
+                  <p className="text-[11px] text-[#64748B]">Total Reach</p>
+                </div>
+                <div className="w-px h-10 bg-[#E2E8F0]" />
+                <div>
+                  <p className="text-[22px] font-bold text-[#0F172A]">{formatNumber(totalEngagement)}</p>
+                  <p className="text-[11px] text-[#64748B]">Engagement</p>
+                </div>
+                <div className="w-px h-10 bg-[#E2E8F0]" />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[22px] font-bold text-amber-500">{hotMentions}</p>
+                    <Flame className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <p className="text-[11px] text-[#64748B]">Hot Mentions</p>
+                </div>
+                <div className="w-px h-10 bg-[#E2E8F0]" />
+                {/* Sentiment Breakdown */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-[#10B981]" />
+                    <span className="text-[13px] font-semibold text-[#0F172A]">{sentimentBreakdown.positive}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-[#94A3B8]" />
+                    <span className="text-[13px] font-semibold text-[#0F172A]">{sentimentBreakdown.neutral}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-[#EF4444]" />
+                    <span className="text-[13px] font-semibold text-[#0F172A]">{sentimentBreakdown.negative}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Activity Mini Chart */}
+              <div className="w-40">
+                <p className="text-[9px] text-[#94A3B8] mb-1">Activity (14 days)</p>
+                <ActivityChart data={activityData} />
+              </div>
+            </div>
+          </div>
+
+          {/* Filters Row */}
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
+            <div className="flex items-center justify-between">
+              {/* Source Filters */}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-[#64748B] font-medium mr-2">Sources:</span>
+                {sources.map((source) => (
+                  <button
+                    key={source.id}
+                    onClick={() => toggleSource(source.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+                      source.enabled
+                        ? 'border-2'
+                        : 'border border-[#E2E8F0] opacity-50 hover:opacity-100'
+                    }`}
+                    style={{
+                      backgroundColor: source.enabled ? source.bgColor : 'white',
+                      borderColor: source.enabled ? source.color : '#E2E8F0',
+                      color: source.enabled ? source.color : '#64748B',
+                    }}
+                  >
+                    <span>{source.icon}</span>
+                    <span>{source.name}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Right Side Controls */}
+              <div className="flex items-center gap-3">
+                {/* Sentiment Filter */}
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-[#64748B]" />
+                  <select
+                    value={sentiment}
+                    onChange={(e) => setSentiment(e.target.value)}
+                    className="px-3 py-1.5 text-[11px] border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:border-[#0EA5E9]"
+                  >
+                    <option value="">All Sentiments</option>
+                    <option value="positive">Positive</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="negative">Negative</option>
+                  </select>
+                </div>
+
+                {/* Sort */}
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="w-4 h-4 text-[#64748B]" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as 'recent' | 'engagement' | 'reach')}
+                    className="px-3 py-1.5 text-[11px] border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:border-[#0EA5E9]"
+                  >
+                    <option value="recent">Most Recent</option>
+                    <option value="engagement">Most Engaged</option>
+                    <option value="reach">Highest Reach</option>
+                  </select>
+                </div>
+
+                {/* View Toggle */}
+                <div className="flex items-center gap-1 p-1 bg-[#F1F5F9] rounded-lg">
+                  <button
+                    onClick={() => setViewMode('cards')}
+                    className={`p-1.5 rounded-md transition-all ${
+                      viewMode === 'cards' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#64748B]'
+                    }`}
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('compact')}
+                    className={`p-1.5 rounded-md transition-all ${
+                      viewMode === 'compact' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#64748B]'
+                    }`}
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Content */}
           {(loading || !isLoaded) ? (
             <div className="flex items-center justify-center h-64">
-              <Loader2 className="w-8 h-8 animate-spin text-accent" />
-            </div>
-          ) : error ? (
-            <div className="bg-danger/10 text-danger p-4 rounded-lg">
-              {error}
+              <Loader2 className="w-6 h-6 animate-spin text-[#0EA5E9]" />
             </div>
           ) : filteredMentions.length === 0 ? (
-            <div className="bg-white rounded-xl border border-border p-12 text-center">
-              <p className="text-muted">
+            <div className="bg-white rounded-xl border border-[#E2E8F0] p-12 text-center">
+              <p className="text-[#64748B]">
                 No mentions found. Try enabling more sources or adjusting filters.
               </p>
             </div>
-          ) : (
+          ) : viewMode === 'cards' ? (
+            /* Cards View */
             <div className="space-y-4">
-              <p className="text-sm text-muted">
-                Showing {filteredMentions.length} mentions from {enabledSourceIds.length} sources
-              </p>
               {filteredMentions.map((mention) => (
                 <div
                   key={mention.id}
-                  className="bg-white rounded-xl border border-border p-5 hover:border-accent/50 transition-colors"
+                  className="bg-white rounded-xl border border-[#E2E8F0] p-5 hover:border-[#0EA5E9] hover:shadow-md transition-all"
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4">
                     <div className="flex-1 min-w-0">
                       {/* Header */}
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <span className="text-lg">{mention.sourceIcon}</span>
-                        <span className="text-sm font-medium text-accent">
-                          {mention.source}
+                        <span
+                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium"
+                          style={{ backgroundColor: mention.sourceBg, color: mention.sourceColor }}
+                        >
+                          {mention.sourceIcon} {mention.source}
                         </span>
                         {mention.author && (
-                          <>
-                            <span className="text-muted">•</span>
-                            <span className="text-sm text-muted">
-                              {mention.author}
-                            </span>
-                          </>
+                          <span className="text-[11px] text-[#64748B]">
+                            by <span className="font-medium">{mention.author}</span>
+                          </span>
                         )}
-                        <span className="text-muted">•</span>
-                        <SentimentBadge label={mention.sentiment} />
+                        <span
+                          className="px-2 py-1 rounded-md text-[10px] font-medium"
+                          style={{
+                            backgroundColor: SENTIMENT_CONFIG[mention.sentiment].bg,
+                            color: SENTIMENT_CONFIG[mention.sentiment].color,
+                          }}
+                        >
+                          {SENTIMENT_CONFIG[mention.sentiment].label}
+                        </span>
                         {mention.isHighEngagement && (
-                          <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded">
+                          <span className="flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-600 rounded-md text-[10px] font-medium">
                             <Flame className="w-3 h-3" />
                             Hot
                           </span>
@@ -378,55 +421,120 @@ export default function MentionsPage() {
                       </div>
 
                       {/* Title */}
-                      <h3 className="font-semibold text-foreground mb-2 line-clamp-2">
+                      <h3 className="text-[14px] font-semibold text-[#0F172A] mb-2">
                         {mention.title}
                       </h3>
 
-                      {/* Body preview */}
-                      {mention.body && (
-                        <p className="text-sm text-muted line-clamp-2 mb-3">
-                          {mention.body}
-                        </p>
-                      )}
+                      {/* Body */}
+                      <p className="text-[12px] text-[#64748B] line-clamp-2 mb-3">
+                        {mention.body}
+                      </p>
 
-                      {/* Meta */}
-                      <div className="flex items-center gap-3 text-xs text-muted flex-wrap">
-                        <span className="bg-accent/10 text-accent px-2 py-1 rounded">
+                      {/* Meta Row */}
+                      <div className="flex items-center gap-4 flex-wrap">
+                        <span className="px-2 py-1 bg-[#EEF2FF] text-[#4F46E5] rounded-md text-[10px] font-medium">
                           {mention.matchedKeyword}
                         </span>
                         {mention.score > 0 && (
-                          <span className="flex items-center gap-1">
-                            <ThumbsUp className="w-3 h-3" />
-                            {mention.score.toLocaleString()}
-                          </span>
+                          <div className="flex items-center gap-1 text-[#64748B]">
+                            <ThumbsUp className="w-3.5 h-3.5" />
+                            <span className="text-[11px] font-medium">{formatNumber(mention.score)}</span>
+                          </div>
                         )}
                         {mention.numComments > 0 && (
-                          <span className="flex items-center gap-1">
-                            <MessageSquare className="w-3 h-3" />
-                            {mention.numComments}
-                          </span>
+                          <div className="flex items-center gap-1 text-[#64748B]">
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            <span className="text-[11px] font-medium">{formatNumber(mention.numComments)}</span>
+                          </div>
                         )}
-                        <span>
-                          {new Date(mention.createdAt).toLocaleDateString()}
-                        </span>
+                        <div className="flex items-center gap-1 text-[#0EA5E9]">
+                          <Users className="w-3.5 h-3.5" />
+                          <span className="text-[11px] font-semibold">{formatNumber(mention.reach)} reach</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[#94A3B8]">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span className="text-[11px]">{formatDate(mention.createdAt)}</span>
+                        </div>
                       </div>
                     </div>
 
                     {/* Link */}
-                    {mention.url && (
-                      <a
-                        href={mention.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-sm text-accent hover:underline shrink-0"
-                      >
-                        View
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    )}
+                    <a
+                      href={mention.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 px-3 py-2 text-[11px] text-[#0EA5E9] bg-[#F0F9FF] hover:bg-[#E0F2FE] rounded-lg transition-colors font-medium shrink-0"
+                    >
+                      View
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
                   </div>
                 </div>
               ))}
+            </div>
+          ) : (
+            /* Compact View */
+            <div className="bg-white rounded-xl border border-[#E2E8F0] divide-y divide-[#F1F5F9]">
+              {filteredMentions.map((mention) => (
+                <div
+                  key={mention.id}
+                  className="flex items-center gap-4 p-4 hover:bg-[#F8FAFC] transition-colors"
+                >
+                  {/* Source Icon */}
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
+                    style={{ backgroundColor: mention.sourceBg }}
+                  >
+                    {mention.sourceIcon}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-[13px] font-medium text-[#0F172A] truncate">
+                      {mention.title}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] text-[#64748B]">{mention.source}</span>
+                      <span className="text-[10px] text-[#94A3B8]">•</span>
+                      <span className="text-[10px] text-[#94A3B8]">{formatDate(mention.createdAt)}</span>
+                    </div>
+                  </div>
+
+                  {/* Metrics */}
+                  <div className="flex items-center gap-4 flex-shrink-0">
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: SENTIMENT_CONFIG[mention.sentiment].color }}
+                    />
+                    {mention.score > 0 && (
+                      <span className="text-[11px] text-[#64748B]">{formatNumber(mention.score)} likes</span>
+                    )}
+                    <span className="text-[11px] font-medium text-[#0EA5E9]">{formatNumber(mention.reach)}</span>
+                    {mention.isHighEngagement && (
+                      <Flame className="w-4 h-4 text-amber-500" />
+                    )}
+                  </div>
+
+                  {/* Link */}
+                  <a
+                    href={mention.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 hover:bg-[#E2E8F0] rounded-lg transition-colors"
+                  >
+                    <ExternalLink className="w-4 h-4 text-[#64748B]" />
+                  </a>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Footer */}
+          {filteredMentions.length > 0 && (
+            <div className="text-center">
+              <p className="text-[11px] text-[#94A3B8]">
+                Showing {filteredMentions.length} mentions from {enabledSourceIds.length} sources • {formatNumber(totalReach)} total reach
+              </p>
             </div>
           )}
         </div>
