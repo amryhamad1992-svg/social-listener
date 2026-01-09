@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2, TrendingUp, TrendingDown, Minus, Flame, Zap, BarChart3, Hash, ArrowUpRight, ArrowDownRight, Activity, Download, Calendar } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { BrandKeywordExplorer } from '@/components/BrandKeywordExplorer';
+import { SearchTrends } from '@/components/SearchTrends';
 import { useSettings } from '@/lib/SettingsContext';
 
 interface TrendingItem {
@@ -316,6 +317,9 @@ export default function TrendingPage() {
               </div>
             </div>
           </div>
+
+          {/* Google Search Trends */}
+          <SearchTrends />
 
           {/* Brand Keyword Explorer */}
           <BrandKeywordExplorer days={days} />
