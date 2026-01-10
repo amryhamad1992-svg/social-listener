@@ -1,7 +1,6 @@
-// Beauty Blog Scrapers
-// Temptalia, Into The Gloss, and other beauty blogs
+// Beauty Blog Scrapers via Google Custom Search
+// Uses Google Custom Search to find content from Temptalia, MakeupAlley, etc.
 
-import * as cheerio from 'cheerio';
 import {
   BaseScraper,
   ScraperConfig,
@@ -10,394 +9,227 @@ import {
   ScrapedMention,
   generateMentionId,
   generateContentHash,
-  extractSnippet,
-  isHighEngagement,
 } from './types';
 
+const GOOGLE_API_KEY = process.env.YOUTUBE_API_KEY;
+const SEARCH_ENGINE_ID = process.env.GOOGLE_SEARCH_ENGINE_ID;
+
+interface GoogleSearchResult {
+  title: string;
+  link: string;
+  snippet: string;
+}
+
+interface GoogleSearchResponse {
+  items?: GoogleSearchResult[];
+  error?: { message: string };
+}
+
+// Base class for Google Custom Search scrapers
+abstract class GoogleSearchScraper implements BaseScraper {
+  abstract config: ScraperConfig;
+  abstract siteFilter: string;
+  abstract sourceIcon: string;
+  abstract category: string;
+
+  async scrape(options: ScraperOptions): Promise<ScraperResult> {
+    const startTime = Date.now();
+    const mentions: ScrapedMention[] = [];
+    const errors: string[] = [];
+
+    const { keywords, brands, maxResults = 15 } = options;
+    const searchTerms = [...brands, ...keywords.slice(0, 2)];
+
+    if (!GOOGLE_API_KEY || !SEARCH_ENGINE_ID) {
+      return {
+        source: this.config.name,
+        success: false,
+        mentions: [],
+        error: 'Google Custom Search not configured',
+        scrapedAt: new Date().toISOString(),
+        duration: Date.now() - startTime,
+      };
+    }
+
+    try {
+      // Search for first 2 terms to conserve quota
+      for (const term of searchTerms.slice(0, 2)) {
+        try {
+          const results = await this.searchGoogle(term, Math.min(10, maxResults));
+
+          for (const result of results) {
+            const mention = this.parseResult(result, term);
+            if (mention) {
+              mentions.push(mention);
+            }
+          }
+
+          await this.delay(200);
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          errors.push(`Search "${term}": ${errorMsg}`);
+        }
+      }
+
+      const uniqueMentions = this.deduplicateMentions(mentions);
+
+      return {
+        source: this.config.name,
+        success: uniqueMentions.length > 0,
+        mentions: uniqueMentions.slice(0, maxResults),
+        scrapedAt: new Date().toISOString(),
+        duration: Date.now() - startTime,
+        error: errors.length > 0 ? errors.join('; ') : undefined,
+      };
+    } catch (error) {
+      return {
+        source: this.config.name,
+        success: false,
+        mentions: [],
+        error: String(error),
+        scrapedAt: new Date().toISOString(),
+        duration: Date.now() - startTime,
+      };
+    }
+  }
+
+  private async searchGoogle(query: string, numResults: number): Promise<GoogleSearchResult[]> {
+    // Add site filter to query
+    const fullQuery = `${query} site:${this.siteFilter}`;
+
+    const url = new URL('https://www.googleapis.com/customsearch/v1');
+    url.searchParams.set('key', GOOGLE_API_KEY!);
+    url.searchParams.set('cx', SEARCH_ENGINE_ID!);
+    url.searchParams.set('q', fullQuery);
+    url.searchParams.set('num', Math.min(10, numResults).toString());
+
+    const response = await fetch(url.toString());
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+    }
+
+    const data: GoogleSearchResponse = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error.message);
+    }
+
+    return data.items || [];
+  }
+
+  private parseResult(result: GoogleSearchResult, keyword: string): ScrapedMention | null {
+    const { title, link, snippet } = result;
+
+    // Clean up title (remove site name suffix)
+    const cleanTitle = title
+      .replace(/\s*[-–|]\s*(Temptalia|MakeupAlley|Into The Gloss|Allure).*$/i, '')
+      .trim();
+
+    const fullText = `${cleanTitle} ${snippet}`;
+
+    return {
+      id: generateMentionId(link, keyword),
+      source: this.config.name,
+      sourceType: 'blog',
+      url: link,
+      title: cleanTitle || title,
+      snippet: snippet,
+      fullText: fullText.slice(0, 2000),
+      matchedKeyword: keyword,
+      publishedAt: new Date().toISOString(),
+      scrapedAt: new Date().toISOString(),
+      engagement: {
+        comments: 0,
+      },
+      category: this.category,
+      isHighEngagement: false,
+      contentHash: generateContentHash(fullText),
+    };
+  }
+
+  private deduplicateMentions(mentions: ScrapedMention[]): ScrapedMention[] {
+    const seen = new Map<string, ScrapedMention>();
+    for (const mention of mentions) {
+      if (!seen.has(mention.url)) {
+        seen.set(mention.url, mention);
+      }
+    }
+    return Array.from(seen.values());
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
 // Temptalia - Detailed makeup reviews and swatches
-export class TemptaliaScraper implements BaseScraper {
+export class TemptaliaScraper extends GoogleSearchScraper {
   config: ScraperConfig = {
     name: 'Temptalia',
     baseUrl: 'https://www.temptalia.com',
     sourceType: 'blog',
-    rateLimit: 15,
+    rateLimit: 100,
     requiresJs: false,
-    enabled: false, // Disabled - needs HTML parsing updates
+    enabled: true,
   };
 
-  private userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+  siteFilter = 'temptalia.com';
+  sourceIcon = '💋';
+  category = 'Beauty Review';
+}
 
-  async scrape(options: ScraperOptions): Promise<ScraperResult> {
-    const startTime = Date.now();
-    const mentions: ScrapedMention[] = [];
-    const errors: string[] = [];
+// MakeupAlley - Reviews and forum discussions
+export class MakeupAlleyScraper extends GoogleSearchScraper {
+  config: ScraperConfig = {
+    name: 'MakeupAlley',
+    baseUrl: 'https://www.makeupalley.com',
+    sourceType: 'review',
+    rateLimit: 100,
+    requiresJs: false,
+    enabled: true,
+  };
 
-    const { keywords, brands, maxResults = 20 } = options;
-    const searchTerms = [...brands, ...keywords.slice(0, 3)];
-
-    try {
-      for (const term of searchTerms) {
-        if (mentions.length >= maxResults) break;
-
-        try {
-          const results = await this.search(term);
-          mentions.push(...results);
-          await this.delay(3000);
-        } catch (err) {
-          errors.push(`Temptalia error for "${term}": ${err}`);
-        }
-      }
-
-      return {
-        source: this.config.name,
-        success: true,
-        mentions: this.deduplicate(mentions).slice(0, maxResults),
-        scrapedAt: new Date().toISOString(),
-        duration: Date.now() - startTime,
-        error: errors.length > 0 ? errors.join('; ') : undefined,
-      };
-    } catch (error) {
-      return {
-        source: this.config.name,
-        success: false,
-        mentions: [],
-        error: String(error),
-        scrapedAt: new Date().toISOString(),
-        duration: Date.now() - startTime,
-      };
-    }
-  }
-
-  private async search(keyword: string): Promise<ScrapedMention[]> {
-    const mentions: ScrapedMention[] = [];
-    const searchUrl = `${this.config.baseUrl}/?s=${encodeURIComponent(keyword)}`;
-
-    try {
-      const response = await fetch(searchUrl, {
-        headers: { 'User-Agent': this.userAgent },
-      });
-
-      if (!response.ok) return mentions;
-
-      const html = await response.text();
-      const $ = cheerio.load(html);
-
-      // Parse search results
-      $('article, .post, .search-result').each((_, element) => {
-        const $el = $(element);
-
-        const titleEl = $el.find('h2 a, h3 a, .entry-title a').first();
-        const title = titleEl.text().trim();
-        const url = titleEl.attr('href') || '';
-
-        if (!title || !url) return;
-
-        const excerpt = $el.find('.entry-summary, .excerpt, p').first().text().trim();
-        const dateText = $el.find('time, .date, .published').first().attr('datetime') ||
-                         $el.find('time, .date, .published').first().text().trim();
-        const commentCountText = $el.find('.comments-link, .comment-count').text().trim();
-        const commentCount = parseInt(commentCountText.replace(/\D/g, '')) || 0;
-
-        const fullText = `${title} ${excerpt}`.trim();
-        const engagement = { comments: commentCount };
-
-        const mention: ScrapedMention = {
-          id: generateMentionId(url, keyword),
-          source: 'Temptalia',
-          sourceType: 'blog',
-          url,
-          title,
-          snippet: extractSnippet(fullText, keyword),
-          matchedKeyword: keyword,
-          publishedAt: this.parseDate(dateText),
-          scrapedAt: new Date().toISOString(),
-          engagement,
-          category: 'Beauty Review',
-          isHighEngagement: isHighEngagement('blog', engagement),
-          contentHash: generateContentHash(fullText),
-        };
-
-        mentions.push(mention);
-      });
-    } catch (err) {
-      console.error('Temptalia search error:', err);
-    }
-
-    return mentions;
-  }
-
-  private parseDate(dateText: string): string {
-    if (!dateText) return new Date().toISOString();
-    const date = new Date(dateText);
-    return isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
-  }
-
-  private deduplicate(mentions: ScrapedMention[]): ScrapedMention[] {
-    const seen = new Map<string, ScrapedMention>();
-    for (const m of mentions) {
-      if (!seen.has(m.contentHash)) seen.set(m.contentHash, m);
-    }
-    return Array.from(seen.values());
-  }
-
-  private delay(ms: number): Promise<void> {
-    return new Promise(r => setTimeout(r, ms));
-  }
+  siteFilter = 'makeupalley.com';
+  sourceIcon = '💄';
+  category = 'Product Review';
 }
 
 // Into The Gloss - Glossier's beauty blog
-export class IntoTheGlossScraper implements BaseScraper {
+export class IntoTheGlossScraper extends GoogleSearchScraper {
   config: ScraperConfig = {
     name: 'Into The Gloss',
     baseUrl: 'https://intothegloss.com',
     sourceType: 'blog',
-    rateLimit: 15,
+    rateLimit: 100,
     requiresJs: false,
-    enabled: false, // Disabled - needs HTML parsing updates
+    enabled: true,
   };
 
-  private userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
-
-  async scrape(options: ScraperOptions): Promise<ScraperResult> {
-    const startTime = Date.now();
-    const mentions: ScrapedMention[] = [];
-    const errors: string[] = [];
-
-    const { keywords, brands, maxResults = 15 } = options;
-    const searchTerms = [...brands, ...keywords.slice(0, 3)];
-
-    try {
-      for (const term of searchTerms) {
-        if (mentions.length >= maxResults) break;
-
-        try {
-          const results = await this.search(term);
-          mentions.push(...results);
-          await this.delay(3000);
-        } catch (err) {
-          errors.push(`Into The Gloss error for "${term}": ${err}`);
-        }
-      }
-
-      return {
-        source: this.config.name,
-        success: true,
-        mentions: this.deduplicate(mentions).slice(0, maxResults),
-        scrapedAt: new Date().toISOString(),
-        duration: Date.now() - startTime,
-        error: errors.length > 0 ? errors.join('; ') : undefined,
-      };
-    } catch (error) {
-      return {
-        source: this.config.name,
-        success: false,
-        mentions: [],
-        error: String(error),
-        scrapedAt: new Date().toISOString(),
-        duration: Date.now() - startTime,
-      };
-    }
-  }
-
-  private async search(keyword: string): Promise<ScrapedMention[]> {
-    const mentions: ScrapedMention[] = [];
-    const searchUrl = `${this.config.baseUrl}/?s=${encodeURIComponent(keyword)}`;
-
-    try {
-      const response = await fetch(searchUrl, {
-        headers: { 'User-Agent': this.userAgent },
-      });
-
-      if (!response.ok) return mentions;
-
-      const html = await response.text();
-      const $ = cheerio.load(html);
-
-      // Parse articles
-      $('article, .post-card, .article-item').each((_, element) => {
-        const $el = $(element);
-
-        const titleEl = $el.find('h2 a, h3 a, .title a').first();
-        const title = titleEl.text().trim();
-        const url = titleEl.attr('href') || '';
-
-        if (!title || !url) return;
-
-        const fullUrl = url.startsWith('http') ? url : `${this.config.baseUrl}${url}`;
-        const excerpt = $el.find('.excerpt, .summary, p').first().text().trim();
-        const author = $el.find('.author, .byline').text().trim();
-        const dateText = $el.find('time, .date').first().attr('datetime') ||
-                         $el.find('time, .date').first().text().trim();
-
-        const fullText = `${title} ${excerpt}`.trim();
-
-        const mention: ScrapedMention = {
-          id: generateMentionId(fullUrl, keyword),
-          source: 'Into The Gloss',
-          sourceType: 'blog',
-          url: fullUrl,
-          title,
-          snippet: extractSnippet(fullText, keyword),
-          matchedKeyword: keyword,
-          publishedAt: this.parseDate(dateText),
-          scrapedAt: new Date().toISOString(),
-          engagement: {},
-          author: author || undefined,
-          category: 'Beauty Editorial',
-          isHighEngagement: false,
-          contentHash: generateContentHash(fullText),
-        };
-
-        mentions.push(mention);
-      });
-    } catch (err) {
-      console.error('Into The Gloss search error:', err);
-    }
-
-    return mentions;
-  }
-
-  private parseDate(dateText: string): string {
-    if (!dateText) return new Date().toISOString();
-    const date = new Date(dateText);
-    return isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
-  }
-
-  private deduplicate(mentions: ScrapedMention[]): ScrapedMention[] {
-    const seen = new Map<string, ScrapedMention>();
-    for (const m of mentions) {
-      if (!seen.has(m.contentHash)) seen.set(m.contentHash, m);
-    }
-    return Array.from(seen.values());
-  }
-
-  private delay(ms: number): Promise<void> {
-    return new Promise(r => setTimeout(r, ms));
-  }
+  siteFilter = 'intothegloss.com';
+  sourceIcon = '✨';
+  category = 'Beauty Editorial';
 }
 
 // Allure - Major beauty magazine
-export class AllureScraper implements BaseScraper {
+export class AllureScraper extends GoogleSearchScraper {
   config: ScraperConfig = {
     name: 'Allure',
     baseUrl: 'https://www.allure.com',
     sourceType: 'blog',
-    rateLimit: 15,
+    rateLimit: 100,
     requiresJs: false,
-    enabled: false, // Disabled - needs HTML parsing updates
+    enabled: true,
   };
 
-  private userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
-
-  async scrape(options: ScraperOptions): Promise<ScraperResult> {
-    const startTime = Date.now();
-    const mentions: ScrapedMention[] = [];
-    const errors: string[] = [];
-
-    const { keywords, brands, maxResults = 15 } = options;
-    const searchTerms = [...brands, ...keywords.slice(0, 3)];
-
-    try {
-      for (const term of searchTerms) {
-        if (mentions.length >= maxResults) break;
-
-        try {
-          const results = await this.search(term);
-          mentions.push(...results);
-          await this.delay(3000);
-        } catch (err) {
-          errors.push(`Allure error for "${term}": ${err}`);
-        }
-      }
-
-      return {
-        source: this.config.name,
-        success: true,
-        mentions: this.deduplicate(mentions).slice(0, maxResults),
-        scrapedAt: new Date().toISOString(),
-        duration: Date.now() - startTime,
-        error: errors.length > 0 ? errors.join('; ') : undefined,
-      };
-    } catch (error) {
-      return {
-        source: this.config.name,
-        success: false,
-        mentions: [],
-        error: String(error),
-        scrapedAt: new Date().toISOString(),
-        duration: Date.now() - startTime,
-      };
-    }
-  }
-
-  private async search(keyword: string): Promise<ScrapedMention[]> {
-    const mentions: ScrapedMention[] = [];
-    const searchUrl = `${this.config.baseUrl}/search?q=${encodeURIComponent(keyword)}`;
-
-    try {
-      const response = await fetch(searchUrl, {
-        headers: { 'User-Agent': this.userAgent },
-      });
-
-      if (!response.ok) return mentions;
-
-      const html = await response.text();
-      const $ = cheerio.load(html);
-
-      // Parse search results
-      $('[class*="summary-item"], article, .search-result').each((_, element) => {
-        const $el = $(element);
-
-        const titleEl = $el.find('h2 a, h3 a, [class*="hed"] a').first();
-        const title = titleEl.text().trim();
-        const url = titleEl.attr('href') || '';
-
-        if (!title || !url) return;
-
-        const fullUrl = url.startsWith('http') ? url : `${this.config.baseUrl}${url}`;
-        const excerpt = $el.find('[class*="dek"], .summary, p').first().text().trim();
-
-        const fullText = `${title} ${excerpt}`.trim();
-
-        const mention: ScrapedMention = {
-          id: generateMentionId(fullUrl, keyword),
-          source: 'Allure',
-          sourceType: 'blog',
-          url: fullUrl,
-          title,
-          snippet: extractSnippet(fullText, keyword),
-          matchedKeyword: keyword,
-          publishedAt: new Date().toISOString(),
-          scrapedAt: new Date().toISOString(),
-          engagement: {},
-          category: 'Beauty Magazine',
-          isHighEngagement: false,
-          contentHash: generateContentHash(fullText),
-        };
-
-        mentions.push(mention);
-      });
-    } catch (err) {
-      console.error('Allure search error:', err);
-    }
-
-    return mentions;
-  }
-
-  private deduplicate(mentions: ScrapedMention[]): ScrapedMention[] {
-    const seen = new Map<string, ScrapedMention>();
-    for (const m of mentions) {
-      if (!seen.has(m.contentHash)) seen.set(m.contentHash, m);
-    }
-    return Array.from(seen.values());
-  }
-
-  private delay(ms: number): Promise<void> {
-    return new Promise(r => setTimeout(r, ms));
-  }
+  siteFilter = 'allure.com';
+  sourceIcon = '📰';
+  category = 'Beauty Magazine';
 }
 
 // Export instances
 export const temptaliaScraper = new TemptaliaScraper();
+export const makeupAlleyScraper = new MakeupAlleyScraper();
 export const intoTheGlossScraper = new IntoTheGlossScraper();
 export const allureScraper = new AllureScraper();

@@ -12,7 +12,7 @@ interface UnifiedMention {
   title: string;
   body: string;
   source: string;
-  sourceType: 'youtube' | 'news' | 'reddit' | 'mock';
+  sourceType: 'youtube' | 'news' | 'reddit' | 'temptalia' | 'makeupalley' | 'mock';
   sourceIcon: string;
   sourceColor: string;
   sourceBg: string;
@@ -74,6 +74,8 @@ const SOURCE_STYLING: Record<string, { color: string; bg: string; icon: string }
   youtube: { color: '#DC2626', bg: '#FEF2F2', icon: '▶️' },
   news: { color: '#2563EB', bg: '#EFF6FF', icon: '📰' },
   reddit: { color: '#F97316', bg: '#FFF7ED', icon: '🔴' },
+  temptalia: { color: '#A855F7', bg: '#FAF5FF', icon: '💋' },
+  makeupalley: { color: '#EC4899', bg: '#FDF2F8', icon: '💄' },
   mock: { color: '#64748B', bg: '#F1F5F9', icon: '🔧' },
 };
 

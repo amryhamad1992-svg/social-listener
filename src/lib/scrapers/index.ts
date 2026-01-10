@@ -3,8 +3,7 @@
 // v2: Reddit now uses Google Custom Search to bypass IP blocking
 
 import { redditScraper } from './reddit';
-import { makeupAlleyScraper } from './makeupalley';
-import { temptaliaScraper, intoTheGlossScraper, allureScraper } from './blogs';
+import { temptaliaScraper, makeupAlleyScraper, intoTheGlossScraper, allureScraper } from './blogs';
 import {
   BaseScraper,
   ScraperResult,

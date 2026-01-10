@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { searchBrandVideos } from '@/lib/youtube';
 import { searchBrandNews } from '@/lib/newsApi';
 import { redditScraper } from '@/lib/scrapers/reddit';
+import { temptaliaScraper, makeupAlleyScraper } from '@/lib/scrapers/blogs';
 import { generateMockPosts } from '@/lib/mockData';
 
 interface Mention {
@@ -9,7 +10,7 @@ interface Mention {
   title: string;
   body: string;
   source: string;
-  sourceType: 'youtube' | 'news' | 'reddit' | 'mock';
+  sourceType: 'youtube' | 'news' | 'reddit' | 'temptalia' | 'makeupalley' | 'mock';
   sourceIcon: string;
   author: string;
   score: number;
@@ -149,6 +150,90 @@ export async function GET(request: NextRequest) {
         }
       } catch (err) {
         console.error('Reddit fetch error:', err);
+      }
+    }
+
+    // Fetch from Temptalia (beauty blog)
+    if (!source || source === 'all' || source === 'temptalia') {
+      try {
+        const temptaliaResult = await temptaliaScraper.scrape({
+          keywords: [brand],
+          brands: [],
+          maxResults: 15,
+          daysBack: days,
+        });
+
+        if (temptaliaResult.success && temptaliaResult.mentions.length > 0) {
+          sources.push('temptalia');
+
+          temptaliaResult.mentions.forEach((post) => {
+            mentions.push({
+              id: `temptalia_${post.id}`,
+              title: post.title,
+              body: post.snippet || post.fullText?.substring(0, 200) || '',
+              source: 'Temptalia',
+              sourceType: 'temptalia',
+              sourceIcon: '💋',
+              author: 'Temptalia',
+              score: 0,
+              numComments: post.engagement.comments || 0,
+              sentiment: 'neutral',
+              sentimentScore: 0,
+              matchedKeyword: post.matchedKeyword,
+              createdAt: post.publishedAt,
+              url: post.url,
+              thumbnailUrl: undefined,
+            });
+          });
+        }
+
+        if (temptaliaResult.error) {
+          console.warn('Temptalia fetch warning:', temptaliaResult.error);
+        }
+      } catch (err) {
+        console.error('Temptalia fetch error:', err);
+      }
+    }
+
+    // Fetch from MakeupAlley (reviews)
+    if (!source || source === 'all' || source === 'makeupalley') {
+      try {
+        const makeupAlleyResult = await makeupAlleyScraper.scrape({
+          keywords: [brand],
+          brands: [],
+          maxResults: 15,
+          daysBack: days,
+        });
+
+        if (makeupAlleyResult.success && makeupAlleyResult.mentions.length > 0) {
+          sources.push('makeupalley');
+
+          makeupAlleyResult.mentions.forEach((post) => {
+            mentions.push({
+              id: `makeupalley_${post.id}`,
+              title: post.title,
+              body: post.snippet || post.fullText?.substring(0, 200) || '',
+              source: 'MakeupAlley',
+              sourceType: 'makeupalley',
+              sourceIcon: '💄',
+              author: post.author || 'MakeupAlley User',
+              score: post.engagement.upvotes || 0,
+              numComments: post.engagement.comments || 0,
+              sentiment: 'neutral',
+              sentimentScore: 0,
+              matchedKeyword: post.matchedKeyword,
+              createdAt: post.publishedAt,
+              url: post.url,
+              thumbnailUrl: undefined,
+            });
+          });
+        }
+
+        if (makeupAlleyResult.error) {
+          console.warn('MakeupAlley fetch warning:', makeupAlleyResult.error);
+        }
+      } catch (err) {
+        console.error('MakeupAlley fetch error:', err);
       }
     }
 
