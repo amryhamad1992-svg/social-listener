@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchBrandVideos } from '@/lib/youtube';
 import { searchBrandNews } from '@/lib/newsApi';
+import { redditScraper } from '@/lib/scrapers/reddit';
 import { generateMockPosts } from '@/lib/mockData';
 
 interface Mention {
@@ -105,6 +106,48 @@ export async function GET(request: NextRequest) {
         });
       } catch (err) {
         console.error('News fetch error:', err);
+      }
+    }
+
+    // Fetch from Reddit (no API key required - uses public JSON API)
+    if (!source || source === 'all' || source === 'reddit') {
+      try {
+        const redditResult = await redditScraper.scrape({
+          keywords: keywords,
+          brands: [brand],
+          maxResults: 25,
+          daysBack: days,
+        });
+
+        if (redditResult.success && redditResult.mentions.length > 0) {
+          sources.push('reddit');
+
+          redditResult.mentions.forEach((post) => {
+            mentions.push({
+              id: `reddit_${post.id}`,
+              title: post.title,
+              body: post.snippet || post.fullText?.substring(0, 200) || '',
+              source: `r/${post.subreddit}`,
+              sourceType: 'reddit',
+              sourceIcon: '🔴',
+              author: post.author || 'Unknown',
+              score: post.engagement.upvotes || 0,
+              numComments: post.engagement.comments || 0,
+              sentiment: 'neutral', // TODO: Add sentiment analysis
+              sentimentScore: 0,
+              matchedKeyword: post.matchedKeyword,
+              createdAt: post.publishedAt,
+              url: post.url,
+              thumbnailUrl: undefined,
+            });
+          });
+        }
+
+        if (redditResult.error) {
+          console.warn('Reddit fetch warning:', redditResult.error);
+        }
+      } catch (err) {
+        console.error('Reddit fetch error:', err);
       }
     }
 
