@@ -120,7 +120,7 @@ export function PurchaseIntentSignals({ days = 7 }: PurchaseIntentSignalsProps) 
           <div>
             <h2 className="text-sm font-medium text-[#1E293B]">Purchase Intent Signals</h2>
             <p className="text-[10px] text-[#64748B]">
-              Real-time buying signals for {brandName}
+              Sample buying signals for {brandName}
             </p>
           </div>
         </div>
@@ -176,12 +176,23 @@ export function PurchaseIntentSignals({ days = 7 }: PurchaseIntentSignalsProps) 
                 </div>
 
                 {/* Action */}
-                <a
-                  href={signal.url}
-                  className="text-[#0EA5E9] hover:text-[#0284C7] transition-colors flex-shrink-0"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </a>
+                {signal.url && signal.url !== '#' ? (
+                  <a
+                    href={signal.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#0EA5E9] hover:text-[#0284C7] transition-colors flex-shrink-0"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                ) : (
+                  <span
+                    className="text-[9px] text-[#94A3B8] bg-[#F1F5F9] px-1.5 py-0.5 rounded flex-shrink-0"
+                    title="Sample data"
+                  >
+                    Demo
+                  </span>
+                )}
               </div>
             </div>
           );
