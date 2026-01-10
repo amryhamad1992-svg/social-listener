@@ -18,20 +18,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Create tables using raw SQL
-    await prisma.$executeRawUnsafe(`
-      -- Users table
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password_hash VARCHAR(255) NOT NULL,
-        name VARCHAR(255),
-        selected_brand_id INTEGER,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+    const results: string[] = [];
 
-      -- Brands table
+    // Create brands table first (no dependencies)
+    await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS brands (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
@@ -40,9 +30,26 @@ export async function GET(request: NextRequest) {
         is_active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+      )
+    `);
+    results.push('brands table created');
 
-      -- Reddit posts table
+    // Create users table
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        name VARCHAR(255),
+        selected_brand_id INTEGER REFERENCES brands(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    results.push('users table created');
+
+    // Create reddit_posts table
+    await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS reddit_posts (
         id SERIAL PRIMARY KEY,
         reddit_id VARCHAR(255) UNIQUE NOT NULL,
@@ -56,9 +63,12 @@ export async function GET(request: NextRequest) {
         permalink TEXT,
         created_utc TIMESTAMP NOT NULL,
         fetched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+      )
+    `);
+    results.push('reddit_posts table created');
 
-      -- Brand mentions table
+    // Create brand_mentions table
+    await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS brand_mentions (
         id SERIAL PRIMARY KEY,
         brand_id INTEGER NOT NULL REFERENCES brands(id) ON DELETE CASCADE,
@@ -70,9 +80,12 @@ export async function GET(request: NextRequest) {
         snippet TEXT,
         analyzed_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+      )
+    `);
+    results.push('brand_mentions table created');
 
-      -- Trending terms table
+    // Create trending_terms table
+    await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS trending_terms (
         id SERIAL PRIMARY KEY,
         brand_id INTEGER NOT NULL REFERENCES brands(id) ON DELETE CASCADE,
@@ -81,9 +94,12 @@ export async function GET(request: NextRequest) {
         avg_sentiment FLOAT,
         date DATE NOT NULL,
         UNIQUE(brand_id, term, date)
-      );
+      )
+    `);
+    results.push('trending_terms table created');
 
-      -- Fetch logs table
+    // Create fetch_logs table
+    await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS fetch_logs (
         id SERIAL PRIMARY KEY,
         subreddit VARCHAR(255) NOT NULL,
@@ -91,34 +107,23 @@ export async function GET(request: NextRequest) {
         fetched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         success BOOLEAN DEFAULT true,
         error_message TEXT
-      );
-
-      -- Add foreign key to users after brands exists
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM information_schema.table_constraints
-          WHERE constraint_name = 'users_selected_brand_id_fkey'
-        ) THEN
-          ALTER TABLE users
-          ADD CONSTRAINT users_selected_brand_id_fkey
-          FOREIGN KEY (selected_brand_id) REFERENCES brands(id);
-        END IF;
-      END $$;
-
-      -- Create indexes
-      CREATE INDEX IF NOT EXISTS idx_reddit_posts_subreddit ON reddit_posts(subreddit);
-      CREATE INDEX IF NOT EXISTS idx_reddit_posts_created_utc ON reddit_posts(created_utc);
-      CREATE INDEX IF NOT EXISTS idx_brand_mentions_brand_id ON brand_mentions(brand_id);
-      CREATE INDEX IF NOT EXISTS idx_brand_mentions_created_at ON brand_mentions(created_at);
-      CREATE INDEX IF NOT EXISTS idx_brand_mentions_sentiment ON brand_mentions(sentiment_label);
-      CREATE INDEX IF NOT EXISTS idx_trending_terms_date ON trending_terms(date);
-      CREATE INDEX IF NOT EXISTS idx_fetch_logs_fetched_at ON fetch_logs(fetched_at);
+      )
     `);
+    results.push('fetch_logs table created');
+
+    // Create indexes
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS idx_reddit_posts_subreddit ON reddit_posts(subreddit)`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS idx_reddit_posts_created_utc ON reddit_posts(created_utc)`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS idx_brand_mentions_brand_id ON brand_mentions(brand_id)`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS idx_brand_mentions_created_at ON brand_mentions(created_at)`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS idx_trending_terms_date ON trending_terms(date)`);
+    await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS idx_fetch_logs_fetched_at ON fetch_logs(fetched_at)`);
+    results.push('indexes created');
 
     return NextResponse.json({
       success: true,
       message: 'Database tables created successfully',
+      results,
     });
   } catch (error: any) {
     console.error('Setup error:', error);
