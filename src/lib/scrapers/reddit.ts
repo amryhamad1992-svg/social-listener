@@ -197,3 +197,4 @@ export class RedditScraper implements BaseScraper {
 
 // Export singleton instance
 export const redditScraper = new RedditScraper();
+// Redeploy trigger 10 Jan 2026 23:12:22
