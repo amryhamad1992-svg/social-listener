@@ -502,9 +502,20 @@ export default function MentionsPage() {
                       </div>
 
                       {/* Title */}
-                      <h3 className="text-[14px] font-semibold text-[#0F172A] mb-2">
-                        {mention.title}
-                      </h3>
+                      {mention.sourceType !== 'mock' && mention.url && !mention.url.startsWith('#') ? (
+                        <a
+                          href={mention.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[14px] font-semibold text-[#0F172A] mb-2 hover:text-[#0EA5E9] hover:underline transition-colors block"
+                        >
+                          {mention.title}
+                        </a>
+                      ) : (
+                        <h3 className="text-[14px] font-semibold text-[#0F172A] mb-2">
+                          {mention.title}
+                        </h3>
+                      )}
 
                       {/* Body */}
                       <p className="text-[12px] text-[#64748B] line-clamp-2 mb-3">
@@ -582,9 +593,20 @@ export default function MentionsPage() {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-[13px] font-medium text-[#0F172A] truncate">
-                      {mention.title}
-                    </h3>
+                    {mention.sourceType !== 'mock' && mention.url && !mention.url.startsWith('#') ? (
+                      <a
+                        href={mention.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[13px] font-medium text-[#0F172A] truncate hover:text-[#0EA5E9] hover:underline transition-colors block"
+                      >
+                        {mention.title}
+                      </a>
+                    ) : (
+                      <h3 className="text-[13px] font-medium text-[#0F172A] truncate">
+                        {mention.title}
+                      </h3>
+                    )}
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-[10px] text-[#64748B]">{mention.source}</span>
                       <span className="text-[10px] text-[#94A3B8]">•</span>
