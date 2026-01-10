@@ -13,16 +13,12 @@ import {
   isHighEngagement,
 } from './types';
 
-// Target beauty subreddits
+// Target beauty subreddits (limited to 4 for faster response)
 const BEAUTY_SUBREDDITS = [
   'MakeupAddiction',
   'drugstoreMUA',
   'BeautyGuruChatter',
-  'SkincareAddiction',
   'Sephora',
-  'PanPorn',
-  'AsianBeauty',
-  'MakeupRehab',
 ];
 
 // Reddit JSON API response types
@@ -84,8 +80,8 @@ export class RedditScraper implements BaseScraper {
             mentions.push(...results);
 
             // Rate limiting - Reddit JSON API allows ~60 requests/minute for unauthenticated
-            // Be conservative with 1.5s delay between requests
-            await this.delay(1500);
+            // Use 1s delay to stay under limit while being faster
+            await this.delay(1000);
           } catch (err) {
             const errorMsg = err instanceof Error ? err.message : String(err);
             errors.push(`r/${subreddit} "${term}": ${errorMsg}`);

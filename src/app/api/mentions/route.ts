@@ -110,12 +110,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch from Reddit (no API key required - uses public JSON API)
+    // Use only the brand name to keep searches fast (avoids timeout)
     if (!source || source === 'all' || source === 'reddit') {
       try {
         const redditResult = await redditScraper.scrape({
-          keywords: keywords,
-          brands: [brand],
-          maxResults: 25,
+          keywords: [brand], // Just use brand name for faster search
+          brands: [],
+          maxResults: 20,
           daysBack: days,
         });
 
