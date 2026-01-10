@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ExternalLink, ThumbsUp, MessageSquare, Flame, Clock, Users, TrendingUp, Filter, LayoutGrid, List, ArrowUpDown, Download, Calendar } from 'lucide-react';
+import { Loader2, ExternalLink, ThumbsUp, MessageSquare, Flame, Clock, Users, TrendingUp, Filter, LayoutGrid, List, ArrowUpDown, Download, Calendar, Wifi, WifiOff } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { PurchaseIntentSignals } from '@/components/PurchaseIntentSignals';
 import { useSettings } from '@/lib/SettingsContext';
@@ -12,6 +12,7 @@ interface UnifiedMention {
   title: string;
   body: string;
   source: string;
+  sourceType: 'youtube' | 'news' | 'reddit' | 'mock';
   sourceIcon: string;
   sourceColor: string;
   sourceBg: string;
@@ -22,6 +23,7 @@ interface UnifiedMention {
   matchedKeyword: string;
   createdAt: string;
   url: string;
+  thumbnailUrl?: string;
   isHighEngagement: boolean;
   reach: number;
 }
@@ -102,6 +104,14 @@ function ActivityChart({ data }: { data: number[] }) {
   );
 }
 
+// Source styling mapping
+const SOURCE_STYLING: Record<string, { color: string; bg: string; icon: string }> = {
+  youtube: { color: '#DC2626', bg: '#FEF2F2', icon: '▶️' },
+  news: { color: '#2563EB', bg: '#EFF6FF', icon: '📰' },
+  reddit: { color: '#F97316', bg: '#FFF7ED', icon: '🔴' },
+  mock: { color: '#64748B', bg: '#F1F5F9', icon: '🔧' },
+};
+
 export default function MentionsPage() {
   const router = useRouter();
   const { settings, isLoaded, getBrandName } = useSettings();
@@ -112,6 +122,10 @@ export default function MentionsPage() {
   const [sortBy, setSortBy] = useState<'recent' | 'engagement' | 'reach'>('recent');
   const [viewMode, setViewMode] = useState<'cards' | 'compact'>('cards');
   const [settingsApplied, setSettingsApplied] = useState(false);
+  const [mentions, setMentions] = useState<UnifiedMention[]>([]);
+  const [isLiveData, setIsLiveData] = useState(false);
+  const [dataSources, setDataSources] = useState<string[]>([]);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Get brand from settings
   const selectedBrand = useMemo(() => {
@@ -124,17 +138,65 @@ export default function MentionsPage() {
     return brandMap[settings.selectedBrand] || 'Revlon';
   }, [isLoaded, settings.selectedBrand]);
 
-  // Get mentions
-  const mentions = useMemo(() => getMockMentionsByBrand(selectedBrand), [selectedBrand]);
+  // Fetch mentions from API
+  const fetchMentions = useCallback(async () => {
+    if (!isLoaded) return;
 
-  // Apply settings from storage
+    setLoading(true);
+    setFetchError(null);
+
+    try {
+      const params = new URLSearchParams({
+        brand: selectedBrand,
+        days: days.toString(),
+        limit: '50',
+      });
+
+      const response = await fetch(`/api/mentions?${params}`);
+      const data = await response.json();
+
+      if (data.success) {
+        // Transform API data to match our interface
+        const transformedMentions: UnifiedMention[] = data.data.mentions.map((m: any) => {
+          const styling = SOURCE_STYLING[m.sourceType] || SOURCE_STYLING.mock;
+          return {
+            ...m,
+            sourceColor: styling.color,
+            sourceBg: styling.bg,
+            sourceIcon: m.sourceIcon || styling.icon,
+            isHighEngagement: m.score > 1000 || m.numComments > 100,
+            reach: m.score || 0,
+          };
+        });
+
+        setMentions(transformedMentions);
+        setIsLiveData(data.isLiveData);
+        setDataSources(data.sources || []);
+      } else {
+        setFetchError(data.error || 'Failed to fetch mentions');
+      }
+    } catch (error) {
+      console.error('Error fetching mentions:', error);
+      setFetchError('Failed to connect to API');
+    } finally {
+      setLoading(false);
+    }
+  }, [isLoaded, selectedBrand, days]);
+
+  // Apply settings from storage and fetch data
   useEffect(() => {
     if (isLoaded && !settingsApplied) {
       setDays(settings.defaultDays);
       setSettingsApplied(true);
-      setLoading(false);
     }
   }, [isLoaded, settings.defaultDays, settingsApplied]);
+
+  // Fetch when dependencies change
+  useEffect(() => {
+    if (settingsApplied) {
+      fetchMentions();
+    }
+  }, [settingsApplied, selectedBrand, days, fetchMentions]);
 
   const toggleSource = (id: string) => {
     setSources(prev => prev.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
@@ -163,18 +225,6 @@ export default function MentionsPage() {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  // Get source ID mapping
-  const getSourceId = (source: string): string => {
-    const map: { [key: string]: string } = {
-      'YouTube': 'youtube',
-      'News': 'news',
-      'Reddit': 'reddit',
-      'MakeupAlley': 'makeupalley',
-      'Temptalia': 'temptalia',
-    };
-    return map[source] || source.toLowerCase();
-  };
-
   // Filter and sort mentions
   const enabledSourceIds = sources.filter(s => s.enabled).map(s => s.id);
   const now = new Date();
@@ -184,8 +234,10 @@ export default function MentionsPage() {
     // Filter by date range
     const mentionDate = new Date(m.createdAt);
     if (now.getTime() - mentionDate.getTime() > daysInMs) return false;
-    // Filter by source
-    if (!enabledSourceIds.includes(getSourceId(m.source))) return false;
+    // Filter by source type (youtube, news, reddit, mock)
+    // Map sourceType to filter IDs (mock maps to all since it's demo data)
+    const sourceId = m.sourceType === 'mock' ? 'youtube' : m.sourceType; // mock data shows as various sources
+    if (!enabledSourceIds.includes(sourceId)) return false;
     // Filter by sentiment
     if (sentiment && m.sentiment !== sentiment) return false;
     return true;
@@ -224,11 +276,37 @@ export default function MentionsPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-medium text-[#1E293B]" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                {getBrandName()} Mentions
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-xl font-medium text-[#1E293B]" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                  {getBrandName()} Mentions
+                </h1>
+                {/* Live/Mock Data Indicator */}
+                {!loading && (
+                  <div
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${
+                      isLiveData
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border border-amber-200'
+                    }`}
+                  >
+                    {isLiveData ? (
+                      <>
+                        <Wifi className="w-3 h-3" />
+                        Live Data
+                      </>
+                    ) : (
+                      <>
+                        <WifiOff className="w-3 h-3" />
+                        Demo Data
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
               <p className="text-[13px] text-[#64748B] mt-0.5" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                All brand mentions & purchase intent signals
+                {isLiveData && dataSources.length > 0
+                  ? `Real-time data from ${dataSources.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}`
+                  : 'All brand mentions & purchase intent signals'}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -396,6 +474,17 @@ export default function MentionsPage() {
             </div>
           </div>
 
+          {/* Error Display */}
+          {fetchError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+              <WifiOff className="w-5 h-5 text-red-500" />
+              <div>
+                <p className="text-red-700 font-medium text-sm">Failed to fetch live data</p>
+                <p className="text-red-600 text-xs">{fetchError} - Showing demo data instead</p>
+              </div>
+            </div>
+          )}
+
           {/* Content */}
           {(loading || !isLoaded) ? (
             <div className="flex items-center justify-center h-64">
@@ -485,16 +574,27 @@ export default function MentionsPage() {
                       </div>
                     </div>
 
-                    {/* Link */}
-                    <a
-                      href={mention.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 px-3 py-2 text-[11px] text-[#0EA5E9] bg-[#F0F9FF] hover:bg-[#E0F2FE] rounded-lg transition-colors font-medium shrink-0"
-                    >
-                      View
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
+                    {/* Link - shows different styling for real vs mock */}
+                    {mention.sourceType !== 'mock' && mention.url && !mention.url.startsWith('#') ? (
+                      <a
+                        href={mention.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-4 py-2 text-[11px] text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors font-medium shrink-0 shadow-sm"
+                      >
+                        <Wifi className="w-3 h-3" />
+                        View Source
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    ) : (
+                      <div
+                        className="flex items-center gap-1 px-3 py-2 text-[11px] text-gray-400 bg-gray-100 rounded-lg font-medium shrink-0 cursor-not-allowed"
+                        title="Demo data - no source link available"
+                      >
+                        Demo
+                        <WifiOff className="w-3.5 h-3.5" />
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -542,15 +642,25 @@ export default function MentionsPage() {
                     )}
                   </div>
 
-                  {/* Link */}
-                  <a
-                    href={mention.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 hover:bg-[#E2E8F0] rounded-lg transition-colors"
-                  >
-                    <ExternalLink className="w-4 h-4 text-[#64748B]" />
-                  </a>
+                  {/* Link - shows different styling for real vs mock */}
+                  {mention.sourceType !== 'mock' && mention.url && !mention.url.startsWith('#') ? (
+                    <a
+                      href={mention.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 bg-emerald-100 hover:bg-emerald-200 rounded-lg transition-colors"
+                      title="View real source"
+                    >
+                      <ExternalLink className="w-4 h-4 text-emerald-600" />
+                    </a>
+                  ) : (
+                    <div
+                      className="p-2 bg-gray-50 rounded-lg cursor-not-allowed"
+                      title="Demo data - no source link"
+                    >
+                      <WifiOff className="w-4 h-4 text-gray-300" />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
