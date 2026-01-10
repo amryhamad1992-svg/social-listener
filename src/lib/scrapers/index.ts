@@ -1,5 +1,6 @@
 // Unified Scraper Service
 // Orchestrates all scrapers and handles de-duplication + sentiment analysis
+// v2: Reddit now uses Google Custom Search to bypass IP blocking
 
 import { redditScraper } from './reddit';
 import { makeupAlleyScraper } from './makeupalley';
