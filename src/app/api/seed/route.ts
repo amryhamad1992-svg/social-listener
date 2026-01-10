@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 
 // One-time seed endpoint - creates initial brands and demo user
 // Call this once after database is set up: GET /api/seed?key=setup2024
+// v2 - fixed deployment
 
 const SEED_KEY = 'setup2024';
 
