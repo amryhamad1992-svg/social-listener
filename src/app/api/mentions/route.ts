@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     // Fetch from YouTube if API key is configured
     if (process.env.YOUTUBE_API_KEY && (!source || source === 'all' || source === 'youtube')) {
       try {
-        const videos = await searchBrandVideos(keywords[0], days);
+        const videos = await searchBrandVideos(keywords, days);
         sources.push('youtube');
 
         videos.forEach((video: any) => {
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     // Fetch from News API if API key is configured
     if (process.env.NEWS_API_KEY && (!source || source === 'all' || source === 'news')) {
       try {
-        const articles = await searchBrandNews(brand, days);
+        const articles = await searchBrandNews(keywords, days);
         sources.push('news');
 
         articles.forEach((article: any) => {
