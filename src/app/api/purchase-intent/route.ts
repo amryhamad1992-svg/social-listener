@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { searchBrandVideos } from '@/lib/youtube';
 import { searchBrandNews } from '@/lib/newsApi';
 import { redditScraper } from '@/lib/scrapers/reddit';
+import { getCacheKey, getCache, getStaleCache, setCache } from '@/lib/cache';
+
+// Cache TTL: 2 hours
+const CACHE_TTL = 2 * 60 * 60 * 1000;
 
 interface PurchaseIntentSignal {
   id: string;
@@ -103,6 +107,25 @@ export async function GET(request: NextRequest) {
     const days = parseInt(searchParams.get('days') || '7', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
 
+    // Check cache first
+    const cacheKey = getCacheKey('purchase-intent', brand);
+    const cachedData = getCache<{ signals: PurchaseIntentSignal[]; intentCounts: any }>(cacheKey);
+
+    if (cachedData) {
+      const limitedSignals = cachedData.signals.slice(0, limit);
+      return NextResponse.json({
+        success: true,
+        signals: limitedSignals,
+        intentCounts: {
+          purchase: limitedSignals.filter(s => s.intentType === 'purchase').length,
+          consideration: limitedSignals.filter(s => s.intentType === 'consideration').length,
+          research: limitedSignals.filter(s => s.intentType === 'research').length,
+        },
+        total: cachedData.signals.length,
+        cached: true,
+      });
+    }
+
     const signals: PurchaseIntentSignal[] = [];
     const keywords = BRAND_KEYWORDS[brand] || BRAND_KEYWORDS['Revlon'];
 
@@ -195,6 +218,11 @@ export async function GET(request: NextRequest) {
     const intentPriority = { purchase: 0, consideration: 1, research: 2 };
     signals.sort((a, b) => intentPriority[a.intentType] - intentPriority[b.intentType]);
 
+    // Cache the results if we got any
+    if (signals.length > 0) {
+      setCache(cacheKey, { signals, intentCounts: {} }, CACHE_TTL);
+    }
+
     // Limit results
     const limitedSignals = signals.slice(0, limit);
 
@@ -210,9 +238,32 @@ export async function GET(request: NextRequest) {
       signals: limitedSignals,
       intentCounts,
       total: signals.length,
+      cached: false,
     });
   } catch (error) {
     console.error('Purchase intent error:', error);
+
+    // Try stale cache on error
+    const cacheKey = getCacheKey('purchase-intent', request.nextUrl.searchParams.get('brand') || 'Revlon');
+    const staleData = getStaleCache<{ signals: PurchaseIntentSignal[]; intentCounts: any }>(cacheKey);
+
+    if (staleData) {
+      const limit = parseInt(request.nextUrl.searchParams.get('limit') || '10', 10);
+      const limitedSignals = staleData.signals.slice(0, limit);
+      return NextResponse.json({
+        success: true,
+        signals: limitedSignals,
+        intentCounts: {
+          purchase: limitedSignals.filter(s => s.intentType === 'purchase').length,
+          consideration: limitedSignals.filter(s => s.intentType === 'consideration').length,
+          research: limitedSignals.filter(s => s.intentType === 'research').length,
+        },
+        total: staleData.signals.length,
+        cached: true,
+        stale: true,
+      });
+    }
+
     return NextResponse.json(
       { success: false, error: 'Failed to fetch purchase intent signals', signals: [] },
       { status: 500 }
