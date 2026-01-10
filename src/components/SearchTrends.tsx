@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { TrendingUp, TrendingDown, Search, ExternalLink } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { TrendingUp, TrendingDown, Search, ExternalLink, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -11,241 +11,47 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-interface TrendTerm {
-  term: string;
-  interest: number;
-  change: number;
-  type: 'branded' | 'generic';
+interface TrendDataPoint {
+  date: string;
+  value: number;
+  formattedDate: string;
 }
 
-// Generate chart data based on days, brand, and country
-function generateChartData(days: number, brand: string, country: string): Array<{ date: string; interest: number }> {
-  // Base interest varies by brand
-  const baseInterest: { [key: string]: number } = {
-    'Revlon': 65,
-    'e.l.f.': 78,
-    'Maybelline': 70,
-  };
-
-  // Country modifiers - different markets have different brand strengths
-  const countryModifiers: { [key: string]: { [key: string]: number } } = {
-    'US': { 'Revlon': 1.0, 'e.l.f.': 1.15, 'Maybelline': 1.0 },
-    'GB': { 'Revlon': 0.85, 'e.l.f.': 1.05, 'Maybelline': 1.1 },
-    'DE': { 'Revlon': 0.7, 'e.l.f.': 0.8, 'Maybelline': 1.25 },
-    'FR': { 'Revlon': 0.75, 'e.l.f.': 0.9, 'Maybelline': 1.2 },
-    'IT': { 'Revlon': 0.8, 'e.l.f.': 0.85, 'Maybelline': 1.15 },
-    'ES': { 'Revlon': 0.9, 'e.l.f.': 0.95, 'Maybelline': 1.1 },
-  };
-
-  const modifier = countryModifiers[country]?.[brand] || 1.0;
-  const base = Math.round((baseInterest[brand] || 65) * modifier);
-
-  // Use country code to create consistent but different patterns per country
-  const countrySeed = country.charCodeAt(0) + country.charCodeAt(1);
-
-  const data: Array<{ date: string; interest: number }> = [];
-  const now = new Date();
-
-  // Number of data points based on days
-  const points = days <= 7 ? 7 : days <= 14 ? 7 : days <= 30 ? 8 : 10;
-  const interval = Math.floor(days / points);
-
-  for (let i = points - 1; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - (i * interval));
-
-    // Add variation that's consistent for each country (using countrySeed)
-    const variation = Math.sin(i * 0.8 + countrySeed * 0.1) * 15 + ((countrySeed + i) % 10);
-    const interest = Math.min(100, Math.max(20, Math.round(base + variation)));
-
-    // Format date based on range
-    let dateStr: string;
-    if (days <= 7) {
-      dateStr = date.toLocaleDateString('en-US', { weekday: 'short' });
-    } else if (days <= 14) {
-      dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    } else {
-      dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }
-
-    data.push({ date: dateStr, interest });
-  }
-
-  return data;
+interface InterestOverTimeResult {
+  keyword: string;
+  data: TrendDataPoint[];
+  averageInterest: number;
 }
 
-// Generate trend terms based on days (different trends for different periods)
-function getBrandedTerms(brand: string, days: number): TrendTerm[] {
-  const allTerms: { [key: string]: { [key: number]: TrendTerm[] } } = {
-    'Revlon': {
-      7: [
-        { term: 'revlon colorstay', interest: 72, change: 8, type: 'branded' },
-        { term: 'revlon one step', interest: 85, change: 32, type: 'branded' },
-        { term: 'revlon lipstick', interest: 58, change: 12, type: 'branded' },
-        { term: 'revlon hair dryer', interest: 82, change: 25, type: 'branded' },
-        { term: 'revlon super lustrous', interest: 65, change: -3, type: 'branded' },
-        { term: 'revlon foundation', interest: 45, change: 5, type: 'branded' },
-      ],
-      14: [
-        { term: 'revlon one step', interest: 80, change: 28, type: 'branded' },
-        { term: 'revlon colorstay', interest: 68, change: 5, type: 'branded' },
-        { term: 'revlon hair dryer', interest: 78, change: 20, type: 'branded' },
-        { term: 'revlon lipstick', interest: 62, change: 15, type: 'branded' },
-        { term: 'revlon super lustrous', interest: 60, change: 2, type: 'branded' },
-        { term: 'revlon makeup', interest: 48, change: 8, type: 'branded' },
-      ],
-      30: [
-        { term: 'revlon one step hair dryer', interest: 75, change: 22, type: 'branded' },
-        { term: 'revlon colorstay foundation', interest: 65, change: 10, type: 'branded' },
-        { term: 'revlon super lustrous lipstick', interest: 58, change: 5, type: 'branded' },
-        { term: 'revlon hair dryer brush', interest: 72, change: 18, type: 'branded' },
-        { term: 'revlon lip liner', interest: 42, change: -2, type: 'branded' },
-        { term: 'revlon mascara', interest: 38, change: 3, type: 'branded' },
-      ],
-      90: [
-        { term: 'revlon colorstay', interest: 70, change: 15, type: 'branded' },
-        { term: 'revlon one step', interest: 78, change: 35, type: 'branded' },
-        { term: 'revlon super lustrous', interest: 55, change: 8, type: 'branded' },
-        { term: 'revlon hair tools', interest: 68, change: 42, type: 'branded' },
-        { term: 'revlon lipstick shades', interest: 52, change: 12, type: 'branded' },
-        { term: 'revlon foundation match', interest: 45, change: 6, type: 'branded' },
-      ],
-    },
-    'e.l.f.': {
-      7: [
-        { term: 'elf halo glow', interest: 92, change: 45, type: 'branded' },
-        { term: 'elf power grip primer', interest: 88, change: 22, type: 'branded' },
-        { term: 'elf camo concealer', interest: 82, change: 15, type: 'branded' },
-        { term: 'elf bronzing drops', interest: 78, change: 55, type: 'branded' },
-        { term: 'elf dupe', interest: 72, change: 28, type: 'branded' },
-        { term: 'elf makeup', interest: 68, change: 10, type: 'branded' },
-      ],
-      14: [
-        { term: 'elf power grip primer', interest: 90, change: 25, type: 'branded' },
-        { term: 'elf halo glow', interest: 88, change: 38, type: 'branded' },
-        { term: 'elf bronzing drops', interest: 75, change: 48, type: 'branded' },
-        { term: 'elf camo concealer', interest: 80, change: 12, type: 'branded' },
-        { term: 'elf lip oil', interest: 65, change: 35, type: 'branded' },
-        { term: 'elf dupe charlotte tilbury', interest: 70, change: 32, type: 'branded' },
-      ],
-      30: [
-        { term: 'elf power grip primer', interest: 85, change: 20, type: 'branded' },
-        { term: 'elf halo glow filter', interest: 82, change: 32, type: 'branded' },
-        { term: 'elf camo cc cream', interest: 72, change: 18, type: 'branded' },
-        { term: 'elf bronzing drops', interest: 70, change: 42, type: 'branded' },
-        { term: 'elf putty primer', interest: 65, change: 8, type: 'branded' },
-        { term: 'elf sephora', interest: 58, change: 15, type: 'branded' },
-      ],
-      90: [
-        { term: 'elf camo concealer', interest: 88, change: 25, type: 'branded' },
-        { term: 'elf power grip primer', interest: 92, change: 35, type: 'branded' },
-        { term: 'elf halo glow', interest: 85, change: 52, type: 'branded' },
-        { term: 'elf makeup', interest: 76, change: 18, type: 'branded' },
-        { term: 'elf dupe', interest: 68, change: 40, type: 'branded' },
-        { term: 'elf bronzing drops', interest: 72, change: 65, type: 'branded' },
-      ],
-    },
-    'Maybelline': {
-      7: [
-        { term: 'maybelline sky high mascara', interest: 88, change: 18, type: 'branded' },
-        { term: 'maybelline vinyl ink', interest: 78, change: 25, type: 'branded' },
-        { term: 'maybelline fit me', interest: 70, change: 8, type: 'branded' },
-        { term: 'maybelline superstay', interest: 65, change: 12, type: 'branded' },
-        { term: 'maybelline concealer', interest: 62, change: 5, type: 'branded' },
-        { term: 'maybelline lash sensational', interest: 58, change: -2, type: 'branded' },
-      ],
-      14: [
-        { term: 'maybelline sky high', interest: 85, change: 15, type: 'branded' },
-        { term: 'maybelline vinyl ink', interest: 75, change: 22, type: 'branded' },
-        { term: 'maybelline superstay lipstick', interest: 68, change: 10, type: 'branded' },
-        { term: 'maybelline fit me foundation', interest: 72, change: 6, type: 'branded' },
-        { term: 'maybelline instant age rewind', interest: 60, change: 8, type: 'branded' },
-        { term: 'maybelline falsies', interest: 55, change: 3, type: 'branded' },
-      ],
-      30: [
-        { term: 'maybelline sky high mascara', interest: 82, change: 12, type: 'branded' },
-        { term: 'maybelline fit me', interest: 70, change: 8, type: 'branded' },
-        { term: 'maybelline superstay', interest: 65, change: 5, type: 'branded' },
-        { term: 'maybelline vinyl ink lip', interest: 72, change: 18, type: 'branded' },
-        { term: 'maybelline age rewind', interest: 58, change: 10, type: 'branded' },
-        { term: 'maybelline matte lipstick', interest: 52, change: 2, type: 'branded' },
-      ],
-      90: [
-        { term: 'maybelline sky high mascara', interest: 85, change: 20, type: 'branded' },
-        { term: 'maybelline fit me', interest: 72, change: 12, type: 'branded' },
-        { term: 'maybelline superstay', interest: 68, change: 8, type: 'branded' },
-        { term: 'maybelline vinyl ink', interest: 75, change: 32, type: 'branded' },
-        { term: 'maybelline lash sensational', interest: 62, change: 10, type: 'branded' },
-        { term: 'maybelline concealer', interest: 58, change: 5, type: 'branded' },
-      ],
-    },
-  };
-
-  return allTerms[brand]?.[days] || allTerms[brand]?.[90] || [];
+interface RelatedQuery {
+  query: string;
+  value: number;
+  link: string;
+  type: 'top' | 'rising';
 }
 
-// Generic beauty category terms by time period
-function getGenericTerms(days: number): TrendTerm[] {
-  const allTerms: { [key: number]: TrendTerm[] } = {
-    7: [
-      { term: 'clean girl makeup', interest: 92, change: 35, type: 'generic' },
-      { term: 'lip combo', interest: 88, change: 48, type: 'generic' },
-      { term: 'viral mascara', interest: 95, change: 32, type: 'generic' },
-      { term: 'glass skin routine', interest: 82, change: 25, type: 'generic' },
-      { term: 'drugstore dupes', interest: 78, change: 18, type: 'generic' },
-      { term: 'makeup tutorial', interest: 90, change: 5, type: 'generic' },
-      { term: 'holiday makeup', interest: 85, change: 65, type: 'generic' },
-      { term: 'winter skincare', interest: 72, change: 42, type: 'generic' },
-    ],
-    14: [
-      { term: 'makeup tutorial', interest: 92, change: 8, type: 'generic' },
-      { term: 'clean girl aesthetic', interest: 88, change: 28, type: 'generic' },
-      { term: 'viral mascara tiktok', interest: 90, change: 35, type: 'generic' },
-      { term: 'lip combo ideas', interest: 82, change: 42, type: 'generic' },
-      { term: 'drugstore foundation', interest: 75, change: 15, type: 'generic' },
-      { term: 'glass skin', interest: 80, change: 20, type: 'generic' },
-      { term: 'affordable makeup', interest: 70, change: 12, type: 'generic' },
-      { term: 'sephora sale', interest: 68, change: 55, type: 'generic' },
-    ],
-    30: [
-      { term: 'makeup tutorial', interest: 95, change: 5, type: 'generic' },
-      { term: 'clean girl makeup', interest: 85, change: 25, type: 'generic' },
-      { term: 'drugstore dupes', interest: 80, change: 22, type: 'generic' },
-      { term: 'viral mascara', interest: 88, change: 28, type: 'generic' },
-      { term: 'glass skin', interest: 78, change: 18, type: 'generic' },
-      { term: 'best drugstore foundation', interest: 82, change: 15, type: 'generic' },
-      { term: 'lip combo', interest: 76, change: 38, type: 'generic' },
-      { term: 'affordable makeup', interest: 72, change: 12, type: 'generic' },
-    ],
-    90: [
-      { term: 'best drugstore foundation', interest: 82, change: 15, type: 'generic' },
-      { term: 'makeup tutorial', interest: 95, change: 5, type: 'generic' },
-      { term: 'clean girl makeup', interest: 88, change: 32, type: 'generic' },
-      { term: 'lip combo', interest: 76, change: 45, type: 'generic' },
-      { term: 'viral mascara', interest: 90, change: 28, type: 'generic' },
-      { term: 'glass skin', interest: 85, change: 18, type: 'generic' },
-      { term: 'drugstore dupes', interest: 78, change: 22, type: 'generic' },
-      { term: 'affordable makeup', interest: 72, change: 12, type: 'generic' },
-    ],
-  };
-
-  return allTerms[days] || allTerms[90];
+interface TrendsData {
+  interestOverTime: InterestOverTimeResult[];
+  relatedQueries: RelatedQuery[];
+  geo: string;
+  timeRange: string;
 }
 
-const BRANDS = ['Revlon', 'e.l.f.', 'Maybelline'];
+const BRANDS = ['Revlon', 'e.l.f. Cosmetics', 'Maybelline'];
 
 const COLORS = {
   primary: '#0F172A',
-  positive: '#86EFAC',
-  negative: '#FCA5A5',
+  secondary: '#64748B',
+  positive: '#10B981',
+  negative: '#EF4444',
   accent: '#0EA5E9',
 };
 
 const DAYS_OPTIONS = [
-  { value: 7, label: '7 days', trendsParam: 'now 7-d' },
-  { value: 14, label: '14 days', trendsParam: 'today 1-m' },
-  { value: 30, label: '30 days', trendsParam: 'today 1-m' },
-  { value: 90, label: '90 days', trendsParam: 'today 3-m' },
+  { value: '7d', label: '7 days', days: 7 },
+  { value: '30d', label: '30 days', days: 30 },
+  { value: '90d', label: '90 days', days: 90 },
+  { value: '12m', label: '12 months', days: 365 },
 ];
 
 const COUNTRIES = [
@@ -260,29 +66,75 @@ const COUNTRIES = [
 export function SearchTrends() {
   const [selectedBrand, setSelectedBrand] = useState('Revlon');
   const [view, setView] = useState<'branded' | 'generic'>('branded');
-  const [days, setDays] = useState(90);
+  const [timeRange, setTimeRange] = useState('90d');
   const [country, setCountry] = useState('US');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<TrendsData | null>(null);
+  const [source, setSource] = useState<string>('');
 
-  // Generate dynamic data based on selections (including country)
-  const chartData = useMemo(() => generateChartData(days, selectedBrand, country), [days, selectedBrand, country]);
-  const brandedTerms = useMemo(() => getBrandedTerms(selectedBrand, days), [selectedBrand, days]);
-  const genericTerms = useMemo(() => getGenericTerms(days), [days]);
+  const fetchTrends = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-  const displayTerms = view === 'branded' ? brandedTerms : genericTerms;
+    try {
+      const mode = view === 'branded' ? 'brand' : 'category';
+      const params = new URLSearchParams({
+        brand: selectedBrand,
+        geo: country,
+        timeRange,
+        mode,
+      });
 
-  const daysOption = DAYS_OPTIONS.find(d => d.value === days) || DAYS_OPTIONS[3];
+      const response = await fetch(`/api/trends?${params}`);
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch trends');
+      }
+
+      setData(result.data);
+      setSource(result.source || 'unknown');
+    } catch (err: any) {
+      console.error('Error fetching trends:', err);
+      setError(err.message || 'Failed to load trends data');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedBrand, country, timeRange, view]);
+
+  useEffect(() => {
+    fetchTrends();
+  }, [fetchTrends]);
+
   const selectedCountry = COUNTRIES.find(c => c.code === country) || COUNTRIES[0];
+  const daysOption = DAYS_OPTIONS.find(d => d.value === timeRange) || DAYS_OPTIONS[2];
+
+  // Prepare chart data from API response
+  const chartData = data?.interestOverTime?.[0]?.data?.map(point => ({
+    date: point.formattedDate,
+    interest: point.value,
+  })) || [];
+
+  // Get related queries - for branded view, use brand-specific; for generic, use category queries
+  const displayTerms = data?.relatedQueries || [];
+
   const googleTrendsUrl = view === 'branded'
-    ? `https://trends.google.com/trends/explore?q=${encodeURIComponent(selectedBrand)}&geo=${country}&cat=44&date=${encodeURIComponent(daysOption.trendsParam)}`
-    : `https://trends.google.com/trends/explore?q=drugstore%20makeup,makeup%20tutorial&geo=${country}&cat=44&date=${encodeURIComponent(daysOption.trendsParam)}`;
+    ? `https://trends.google.com/trends/explore?q=${encodeURIComponent(selectedBrand)}&geo=${country}&cat=44`
+    : `https://trends.google.com/trends/explore?q=makeup%20tutorial,skincare%20routine&geo=${country}&cat=44`;
 
   return (
-    <div className="bg-white rounded-lg p-5 shadow-sm">
+    <div className="bg-white rounded-xl border border-[#E2E8F0] p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Search className="w-4 h-4 text-[#4285F4]" />
           <h2 className="text-sm font-medium text-[#0F172A]">Google Search Trends</h2>
+          {source && source !== 'google-trends' && (
+            <span className="px-2 py-0.5 text-[9px] font-medium bg-amber-50 text-amber-700 rounded">
+              {source === 'cache' ? 'Cached' : 'Simulated'}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3">
           {/* View Toggle */}
@@ -295,7 +147,7 @@ export function SearchTrends() {
                   : 'text-[#64748B] hover:text-[#0F172A]'
               }`}
             >
-              Branded
+              Brand Interest
             </button>
             <button
               onClick={() => setView('generic')}
@@ -305,7 +157,7 @@ export function SearchTrends() {
                   : 'text-[#64748B] hover:text-[#0F172A]'
               }`}
             >
-              Category
+              Keywords
             </button>
           </div>
 
@@ -322,10 +174,10 @@ export function SearchTrends() {
             </select>
           )}
 
-          {/* Days Selector */}
+          {/* Time Range Selector */}
           <select
-            value={days}
-            onChange={(e) => setDays(parseInt(e.target.value, 10))}
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
             className="px-2 py-1 text-[11px] border border-[#E2E8F0] rounded bg-white focus:outline-none focus:border-[#0F172A]"
           >
             {DAYS_OPTIONS.map((opt) => (
@@ -344,113 +196,164 @@ export function SearchTrends() {
             ))}
           </select>
 
+          {/* Refresh Button */}
+          <button
+            onClick={fetchTrends}
+            disabled={loading}
+            className="p-1.5 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded transition-colors disabled:opacity-50"
+            title="Refresh data"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+
           <a
             href={googleTrendsUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 text-[10px] text-[#0EA5E9] hover:underline"
           >
-            <span>Google Trends</span>
+            <span>Open Trends</span>
             <ExternalLink className="w-3 h-3" />
           </a>
         </div>
       </div>
 
-      {/* Chart (only for branded view) */}
-      {view === 'branded' && (
-        <div className="h-[140px] mb-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 10, fill: '#64748B' }}
-                axisLine={{ stroke: '#E2E8F0' }}
-                tickLine={false}
-              />
-              <YAxis
-                domain={[0, 100]}
-                tick={{ fontSize: 10, fill: '#64748B' }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #E2E8F0',
-                  borderRadius: '6px',
-                  padding: '8px 12px',
-                  fontSize: '11px',
-                }}
-                formatter={(value) => [`${value}`, 'Search Interest']}
-              />
-              <Line
-                type="monotone"
-                dataKey="interest"
-                stroke={COLORS.primary}
-                strokeWidth={2}
-                dot={{ fill: COLORS.primary, strokeWidth: 0, r: 3 }}
-                activeDot={{ r: 5, fill: COLORS.accent }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center h-[200px]">
+          <Loader2 className="w-6 h-6 animate-spin text-[#0EA5E9]" />
         </div>
       )}
 
-      {/* Section Label */}
-      <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#E2E8F0]">
-        <span className="text-[10px] text-[#64748B] uppercase tracking-wide font-medium">
-          {view === 'branded' ? `Top ${selectedBrand} Searches` : 'Trending Beauty Terms'}
-        </span>
-        <span className="text-[9px] text-[#94A3B8] ml-auto">Last {days} days</span>
-      </div>
+      {/* Error State */}
+      {error && !loading && (
+        <div className="flex items-center justify-center h-[200px] text-[#EF4444]">
+          <AlertCircle className="w-5 h-5 mr-2" />
+          <span className="text-sm">{error}</span>
+        </div>
+      )}
 
-      {/* Terms Grid */}
-      <div className="grid grid-cols-2 gap-2">
-        {displayTerms.map((term) => (
-          <a
-            key={term.term}
-            href={`https://trends.google.com/trends/explore?q=${encodeURIComponent(term.term)}&geo=${country}&cat=44&date=${encodeURIComponent(daysOption.trendsParam)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between p-2.5 rounded-lg border border-[#E2E8F0] hover:border-[#0F172A] hover:bg-[#F8FAFC] transition-colors group"
-          >
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-medium text-[#0F172A] truncate group-hover:text-[#0EA5E9]">
-                {term.term}
-              </p>
-              <div className="flex items-center gap-2 mt-0.5">
-                <div className="flex items-center gap-1">
-                  <div className="w-12 h-1.5 bg-[#E2E8F0] rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${term.interest}%`,
-                        backgroundColor: term.interest > 70 ? COLORS.primary : '#94A3B8',
-                      }}
-                    />
-                  </div>
-                  <span className="text-[9px] text-[#64748B]">{term.interest}</span>
+      {/* Content */}
+      {!loading && !error && (
+        <>
+          {/* Chart (for branded view with data) */}
+          {view === 'branded' && chartData.length > 0 && (
+            <div className="h-[160px] mb-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 10, fill: '#64748B' }}
+                    axisLine={{ stroke: '#E2E8F0' }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    domain={[0, 100]}
+                    tick={{ fontSize: 10, fill: '#64748B' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#fff',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      fontSize: '11px',
+                    }}
+                    formatter={(value) => [`${value}`, 'Search Interest']}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="interest"
+                    stroke={COLORS.primary}
+                    strokeWidth={2}
+                    dot={{ fill: COLORS.primary, strokeWidth: 0, r: 3 }}
+                    activeDot={{ r: 5, fill: COLORS.accent }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+
+              {/* Average Interest Badge */}
+              {data?.interestOverTime?.[0]?.averageInterest && (
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <span className="text-[10px] text-[#64748B]">Avg. Interest:</span>
+                  <span className="text-[12px] font-semibold text-[#0F172A]">
+                    {data.interestOverTime[0].averageInterest}
+                  </span>
                 </div>
-              </div>
+              )}
             </div>
-            <div className={`flex items-center gap-0.5 text-[10px] font-medium ${
-              term.change > 0 ? 'text-[#166534]' : term.change < 0 ? 'text-[#991B1B]' : 'text-[#64748B]'
-            }`}>
-              {term.change > 0 ? (
-                <TrendingUp className="w-3 h-3" />
-              ) : term.change < 0 ? (
-                <TrendingDown className="w-3 h-3" />
-              ) : null}
-              <span>{term.change > 0 ? '+' : ''}{term.change}%</span>
-            </div>
-          </a>
-        ))}
-      </div>
+          )}
 
-      {/* Footer */}
-      <p className="text-[9px] text-[#94A3B8] text-center mt-3 pt-2 border-t border-[#E2E8F0]">
-        {selectedCountry.flag} {selectedCountry.name} • Search interest scores (0-100) • Data simulated from Google Trends patterns
-      </p>
+          {/* Section Label */}
+          <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#E2E8F0]">
+            <span className="text-[10px] text-[#64748B] uppercase tracking-wide font-medium">
+              {view === 'branded' ? `Related Searches for ${selectedBrand}` : 'Trending Beauty Keywords'}
+            </span>
+            <span className="text-[9px] text-[#94A3B8] ml-auto">
+              {displayTerms.length} {view === 'branded' ? 'related queries' : 'trending terms'}
+            </span>
+          </div>
+
+          {/* Terms Grid */}
+          {displayTerms.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2">
+              {displayTerms.slice(0, 12).map((term, index) => (
+                <a
+                  key={`${term.query}-${index}`}
+                  href={`https://trends.google.com/trends/explore?q=${encodeURIComponent(term.query)}&geo=${country}&cat=44`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-lg border border-[#E2E8F0] hover:border-[#0F172A] hover:bg-[#F8FAFC] transition-colors group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-[11px] font-medium text-[#0F172A] truncate group-hover:text-[#0EA5E9]">
+                        {term.query}
+                      </p>
+                      {term.type === 'rising' && (
+                        <span className="px-1.5 py-0.5 text-[8px] font-medium bg-green-50 text-green-700 rounded">
+                          Rising
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="w-14 h-1.5 bg-[#E2E8F0] rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: `${Math.min(100, term.value)}%`,
+                            backgroundColor: term.value > 70 ? COLORS.primary : '#94A3B8',
+                          }}
+                        />
+                      </div>
+                      <span className="text-[9px] text-[#64748B]">{Math.min(100, term.value)}</span>
+                    </div>
+                  </div>
+                  {term.type === 'rising' ? (
+                    <TrendingUp className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                  ) : (
+                    <div className="w-3.5 h-3.5" />
+                  )}
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-[#64748B]">
+              <p className="text-sm">No trending data available</p>
+              <p className="text-xs mt-1">Try a different market or time range</p>
+            </div>
+          )}
+
+          {/* Footer */}
+          <p className="text-[9px] text-[#94A3B8] text-center mt-4 pt-3 border-t border-[#E2E8F0]">
+            {selectedCountry.flag} {selectedCountry.name} • Last {daysOption.label} •
+            {source === 'google-trends' ? ' Live data from Google Trends' :
+             source === 'cache' ? ' Cached data' : ' Simulated data patterns'}
+          </p>
+        </>
+      )}
     </div>
   );
 }
