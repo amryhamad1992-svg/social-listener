@@ -111,10 +111,13 @@ export class RedditScraper implements BaseScraper {
   }
 
   private async searchGoogle(query: string, numResults: number): Promise<GoogleSearchResult[]> {
+    // Add site:reddit.com filter to search only Reddit
+    const fullQuery = `${query} site:reddit.com`;
+
     const url = new URL('https://www.googleapis.com/customsearch/v1');
     url.searchParams.set('key', GOOGLE_API_KEY!);
     url.searchParams.set('cx', SEARCH_ENGINE_ID!);
-    url.searchParams.set('q', query);
+    url.searchParams.set('q', fullQuery);
     url.searchParams.set('num', Math.min(10, numResults).toString()); // Max 10 per request
     url.searchParams.set('sort', 'date'); // Sort by date for recent posts
 
