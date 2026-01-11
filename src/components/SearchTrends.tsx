@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { useSettings } from '@/lib/SettingsContext';
 
 interface TrendDataPoint {
   date: string;
@@ -64,6 +65,18 @@ const COUNTRIES = [
 ];
 
 export function SearchTrends() {
+  const { settings, isLoaded } = useSettings();
+
+  // Map settings brand to display brand name
+  const getBrandFromSettings = () => {
+    const brandMap: Record<string, string> = {
+      'revlon': 'Revlon',
+      'elf': 'e.l.f. Cosmetics',
+      'maybelline': 'Maybelline',
+    };
+    return brandMap[settings.selectedBrand] || 'Revlon';
+  };
+
   const [selectedBrand, setSelectedBrand] = useState('Revlon');
   const [view, setView] = useState<'branded' | 'generic'>('branded');
   const [timeRange, setTimeRange] = useState('90d');
@@ -72,6 +85,13 @@ export function SearchTrends() {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<TrendsData | null>(null);
   const [source, setSource] = useState<string>('');
+
+  // Sync with settings when loaded
+  useEffect(() => {
+    if (isLoaded) {
+      setSelectedBrand(getBrandFromSettings());
+    }
+  }, [isLoaded, settings.selectedBrand]);
 
   const fetchTrends = useCallback(async () => {
     setLoading(true);

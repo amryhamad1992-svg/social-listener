@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, Minus, BarChart3 } from 'lucide-react';
+import { useSettings } from '@/lib/SettingsContext';
 import {
   BarChart,
   Bar,
@@ -84,9 +85,28 @@ interface BrandKeywordExplorerProps {
 }
 
 export function BrandKeywordExplorer({ days = 7 }: BrandKeywordExplorerProps) {
+  const { settings, isLoaded } = useSettings();
+
+  // Map settings brand to display brand name
+  const getBrandFromSettings = () => {
+    const brandMap: Record<string, string> = {
+      'revlon': 'Revlon',
+      'elf': 'e.l.f.',
+      'maybelline': 'Maybelline',
+    };
+    return brandMap[settings.selectedBrand] || 'Revlon';
+  };
+
   const [selectedBrand, setSelectedBrand] = useState('Revlon');
   const [compareBrand, setCompareBrand] = useState<string | null>(null);
   const [view, setView] = useState<'chart' | 'table'>('chart');
+
+  // Sync with settings when loaded
+  useEffect(() => {
+    if (isLoaded) {
+      setSelectedBrand(getBrandFromSettings());
+    }
+  }, [isLoaded, settings.selectedBrand]);
 
   const getSentiment = (score: number) => {
     if (score >= 0.6) return SENTIMENT.positive;
