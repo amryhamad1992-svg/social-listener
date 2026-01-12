@@ -41,6 +41,23 @@ export async function GET(request: NextRequest) {
     const timeRange = (searchParams.get('timeRange') || '90d') as TimeRangeKey;
     const mode = searchParams.get('mode') || 'brand'; // 'brand', 'compare', 'category'
     const useMock = searchParams.get('mock') === 'true';
+    const debug = searchParams.get('debug') === 'true';
+
+    // Debug mode - skip cache and return diagnostic info
+    if (debug) {
+      const result = await getBrandTrends(brand, geo, timeRange);
+      return NextResponse.json({
+        debug: true,
+        brand,
+        geo,
+        timeRange,
+        resultSource: (result as any).source,
+        hasInterestData: result.interestOverTime?.length > 0,
+        dataPointCount: result.interestOverTime?.[0]?.data?.length || 0,
+        relatedQueriesCount: result.relatedQueries?.length || 0,
+        fullResult: result,
+      });
+    }
 
     // Validate geo
     if (!SUPPORTED_GEOS[geo]) {
