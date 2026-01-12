@@ -11,25 +11,26 @@ import {
   TIME_RANGES,
 } from '@/lib/googleTrends';
 
-// Cache to avoid hitting rate limits
-const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+// Cache to avoid hitting rate limits and conserve API quota
+// SerpAPI has 100 free searches/month, so cache for 2 hours
+const cache = new Map<string, { data: any; timestamp: number; source: string }>();
+const CACHE_TTL = 2 * 60 * 60 * 1000; // 2 hours (was 5 minutes)
 
 function getCacheKey(params: Record<string, string>): string {
   return Object.entries(params).sort().map(([k, v]) => `${k}:${v}`).join('|');
 }
 
-function getFromCache(key: string): any | null {
+function getFromCache(key: string): { data: any; source: string } | null {
   const cached = cache.get(key);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.data;
+    return { data: cached.data, source: cached.source };
   }
   cache.delete(key);
   return null;
 }
 
-function setCache(key: string, data: any): void {
-  cache.set(key, { data, timestamp: Date.now() });
+function setCache(key: string, data: any, source: string): void {
+  cache.set(key, { data, timestamp: Date.now(), source });
 }
 
 export async function GET(request: NextRequest) {
@@ -59,12 +60,12 @@ export async function GET(request: NextRequest) {
 
     // Check cache first
     const cacheKey = getCacheKey({ brand, geo, timeRange, mode });
-    const cachedData = getFromCache(cacheKey);
-    if (cachedData) {
+    const cachedResult = getFromCache(cacheKey);
+    if (cachedResult) {
       return NextResponse.json({
         success: true,
-        data: cachedData,
-        source: 'cache',
+        data: cachedResult.data,
+        source: `cache (${cachedResult.source})`,
       });
     }
 
@@ -107,13 +108,23 @@ export async function GET(request: NextRequest) {
 
         case 'brand':
         default:
-          // Get brand-specific trends
-          data = await getBrandTrends(brand, geo, timeRange);
-          break;
+          // Get brand-specific trends (uses SerpAPI -> google-trends-api -> mock fallback)
+          const brandResult = await getBrandTrends(brand, geo, timeRange);
+          const { source: brandSource, ...brandData } = brandResult;
+          data = brandData;
+
+          // Cache successful results with source info
+          setCache(cacheKey, data, brandSource || 'unknown');
+
+          return NextResponse.json({
+            success: true,
+            data,
+            source: brandSource || 'google-trends',
+          });
       }
 
-      // Cache successful results
-      setCache(cacheKey, data);
+      // Cache successful results for compare/category modes
+      setCache(cacheKey, data, 'google-trends');
 
       return NextResponse.json({
         success: true,
@@ -128,7 +139,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: true,
         data: mockData,
-        source: 'mock-fallback',
+        source: 'mock',
         warning: 'Google Trends API unavailable, showing simulated data',
       });
     }

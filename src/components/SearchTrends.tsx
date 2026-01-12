@@ -150,9 +150,17 @@ export function SearchTrends() {
         <div className="flex items-center gap-2">
           <Search className="w-4 h-4 text-[#4285F4]" />
           <h2 className="text-sm font-medium text-[#0F172A]">Google Search Trends</h2>
-          {source && source !== 'google-trends' && (
-            <span className="px-2 py-0.5 text-[9px] font-medium bg-amber-50 text-amber-700 rounded">
-              {source === 'cache' ? 'Cached' : 'Simulated'}
+          {source && (
+            <span className={`px-2 py-0.5 text-[9px] font-medium rounded ${
+              source.includes('serpapi') || source === 'google-trends' || source === 'google-trends-api'
+                ? 'bg-green-50 text-green-700'
+                : source.includes('cache')
+                ? 'bg-blue-50 text-blue-700'
+                : 'bg-amber-50 text-amber-700'
+            }`}>
+              {source.includes('serpapi') ? 'Live' :
+               source === 'google-trends' || source === 'google-trends-api' ? 'Live' :
+               source.includes('cache') ? 'Cached' : 'Simulated'}
             </span>
           )}
         </div>
@@ -369,8 +377,11 @@ export function SearchTrends() {
           {/* Footer */}
           <p className="text-[9px] text-[#94A3B8] text-center mt-4 pt-3 border-t border-[#E2E8F0]">
             {selectedCountry.flag} {selectedCountry.name} • Last {daysOption.label} •
-            {source === 'google-trends' ? ' Live data from Google Trends' :
-             source === 'cache' ? ' Cached data' : ' Simulated data patterns'}
+            {source?.includes('serpapi') || source === 'google-trends' || source === 'google-trends-api'
+              ? ' Live data from Google Trends'
+              : source?.includes('cache')
+              ? ' Cached data'
+              : ' Simulated data patterns'}
           </p>
         </>
       )}

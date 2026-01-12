@@ -46,6 +46,14 @@ export const TIME_RANGES = {
   '12m': 'today 12-m',
 } as const;
 
+// SerpAPI time range mapping
+const SERPAPI_TIME_RANGES: Record<TimeRangeKey, string> = {
+  '7d': 'now 7-d',
+  '30d': 'today 1-m',
+  '90d': 'today 3-m',
+  '12m': 'today 12-m',
+};
+
 export type TimeRangeKey = keyof typeof TIME_RANGES;
 
 // Beauty brands to track
@@ -53,6 +61,128 @@ export const BEAUTY_BRANDS = ['Revlon', 'e.l.f. Cosmetics', 'Maybelline'];
 
 // Category ID for Beauty & Personal Care
 const BEAUTY_CATEGORY = 44;
+
+// SerpAPI key (free tier: 100 searches/month)
+const SERPAPI_KEY = process.env.SERPAPI_KEY;
+
+/**
+ * Fetch trends data from SerpAPI (reliable, works from cloud servers)
+ * Free tier: 100 searches/month
+ */
+async function fetchFromSerpAPI(
+  keyword: string,
+  geo: GeoCode,
+  timeRange: TimeRangeKey
+): Promise<{ interestOverTime: InterestOverTimeResult; relatedQueries: RelatedQuery[] } | null> {
+  console.log('[SerpAPI] Checking key:', SERPAPI_KEY ? 'Key exists' : 'NO KEY FOUND');
+
+  if (!SERPAPI_KEY) {
+    console.log('[SerpAPI] Key not configured, skipping SerpAPI');
+    return null;
+  }
+
+  try {
+    // Fetch interest over time
+    const interestUrl = new URL('https://serpapi.com/search.json');
+    interestUrl.searchParams.set('engine', 'google_trends');
+    interestUrl.searchParams.set('q', keyword);
+    interestUrl.searchParams.set('geo', geo);
+    interestUrl.searchParams.set('date', SERPAPI_TIME_RANGES[timeRange]);
+    interestUrl.searchParams.set('data_type', 'TIMESERIES');
+    interestUrl.searchParams.set('api_key', SERPAPI_KEY);
+
+    console.log('[SerpAPI] Fetching:', keyword, geo, timeRange);
+    const interestResponse = await fetch(interestUrl.toString());
+
+    if (!interestResponse.ok) {
+      const errorText = await interestResponse.text();
+      console.error('[SerpAPI] HTTP error:', interestResponse.status, errorText);
+      return null;
+    }
+
+    const interestData = await interestResponse.json();
+    console.log('[SerpAPI] Response keys:', Object.keys(interestData));
+
+    // Check for error in response
+    if (interestData.error) {
+      console.error('[SerpAPI] API error:', interestData.error);
+      return null;
+    }
+
+    // Parse interest over time data - try multiple possible paths
+    const timelineData = interestData.interest_over_time?.timeline_data ||
+                         interestData.timeline_data ||
+                         [];
+
+    console.log('[SerpAPI] Timeline data points:', timelineData.length);
+    if (timelineData.length > 0) {
+      console.log('[SerpAPI] First data point:', JSON.stringify(timelineData[0]));
+    }
+
+    const data: TrendDataPoint[] = timelineData.map((point: any) => ({
+      date: point.timestamp || point.date,
+      value: point.values?.[0]?.extracted_value ?? point.value ?? 0,
+      formattedDate: point.date || new Date(parseInt(point.timestamp) * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    }));
+
+    const averageInterest = data.length > 0
+      ? Math.round(data.reduce((sum, d) => sum + d.value, 0) / data.length)
+      : 0;
+
+    // Fetch related queries (separate API call)
+    const relatedUrl = new URL('https://serpapi.com/search.json');
+    relatedUrl.searchParams.set('engine', 'google_trends');
+    relatedUrl.searchParams.set('q', keyword);
+    relatedUrl.searchParams.set('geo', geo);
+    relatedUrl.searchParams.set('date', SERPAPI_TIME_RANGES[timeRange]);
+    relatedUrl.searchParams.set('cat', BEAUTY_CATEGORY.toString());
+    relatedUrl.searchParams.set('data_type', 'RELATED_QUERIES');
+    relatedUrl.searchParams.set('api_key', SERPAPI_KEY);
+
+    const relatedResponse = await fetch(relatedUrl.toString());
+    const relatedQueries: RelatedQuery[] = [];
+
+    if (relatedResponse.ok) {
+      const relatedData = await relatedResponse.json();
+
+      // Parse top queries
+      const topQueries = relatedData.related_queries?.top || [];
+      topQueries.slice(0, 8).forEach((item: any) => {
+        relatedQueries.push({
+          query: item.query,
+          value: item.value || item.extracted_value || 50,
+          link: item.link || `https://trends.google.com/trends/explore?q=${encodeURIComponent(item.query)}&geo=${geo}`,
+          type: 'top',
+        });
+      });
+
+      // Parse rising queries
+      const risingQueries = relatedData.related_queries?.rising || [];
+      risingQueries.slice(0, 8).forEach((item: any) => {
+        relatedQueries.push({
+          query: item.query,
+          value: item.value || item.extracted_value || 100,
+          link: item.link || `https://trends.google.com/trends/explore?q=${encodeURIComponent(item.query)}&geo=${geo}`,
+          type: 'rising',
+        });
+      });
+    }
+
+    console.log(`SerpAPI success: ${keyword} - ${data.length} data points, ${relatedQueries.length} related queries`);
+
+    return {
+      interestOverTime: {
+        keyword,
+        data,
+        averageInterest,
+      },
+      relatedQueries,
+    };
+  } catch (error) {
+    console.error('SerpAPI fetch error:', error);
+    return null;
+  }
+}
 
 /**
  * Fetch interest over time for given keywords
@@ -208,22 +338,51 @@ export async function getDailyTrends(geo: GeoCode = 'US'): Promise<Array<{ title
 
 /**
  * Comprehensive trends fetch for a brand - combines multiple data points
+ * Fallback chain: SerpAPI -> google-trends-api -> mock data
  */
 export async function getBrandTrends(
   brand: string,
   geo: GeoCode = 'US',
   timeRange: TimeRangeKey = '90d'
-): Promise<TrendsResult> {
-  const [interestData, relatedQueries] = await Promise.all([
-    getInterestOverTime([brand], geo, timeRange),
-    getRelatedQueries(brand, geo, timeRange),
-  ]);
+): Promise<TrendsResult & { source?: string }> {
+  // Try SerpAPI first (most reliable from cloud servers)
+  const serpApiResult = await fetchFromSerpAPI(brand, geo, timeRange);
+  if (serpApiResult && serpApiResult.interestOverTime.data.length > 0) {
+    return {
+      interestOverTime: [serpApiResult.interestOverTime],
+      relatedQueries: serpApiResult.relatedQueries,
+      geo,
+      timeRange,
+      source: 'serpapi',
+    };
+  }
 
+  // Fall back to google-trends-api (may fail from cloud IPs)
+  try {
+    console.log('SerpAPI unavailable, trying google-trends-api...');
+    const [interestData, relatedQueries] = await Promise.all([
+      getInterestOverTime([brand], geo, timeRange),
+      getRelatedQueries(brand, geo, timeRange),
+    ]);
+
+    if (interestData[0]?.data?.length > 0) {
+      return {
+        interestOverTime: interestData,
+        relatedQueries,
+        geo,
+        timeRange,
+        source: 'google-trends-api',
+      };
+    }
+  } catch (error) {
+    console.warn('google-trends-api failed:', error);
+  }
+
+  // Final fallback: mock data
+  console.log('All APIs failed, returning mock data');
   return {
-    interestOverTime: interestData,
-    relatedQueries,
-    geo,
-    timeRange,
+    ...getMockTrendsData(brand, geo, timeRange),
+    source: 'mock',
   };
 }
 
