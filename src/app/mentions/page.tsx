@@ -148,12 +148,11 @@ export default function MentionsPage() {
       if (data.success) {
         // Transform API data to match our interface
         const transformedMentions: UnifiedMention[] = data.data.mentions.map((m: any) => {
-          const styling = SOURCE_STYLING[m.sourceType] || SOURCE_STYLING.mock;
           return {
             ...m,
-            sourceColor: styling.color,
-            sourceBg: styling.bg,
-            sourceIcon: m.sourceIcon || styling.icon,
+            sourceColor: '#0F172A',
+            sourceBg: '#FFFFFF',
+            sourceIcon: m.source?.substring(0, 2).toUpperCase() || 'SR',
             isHighEngagement: m.score > 1000 || m.numComments > 100,
             reach: m.score || 0,
           };
