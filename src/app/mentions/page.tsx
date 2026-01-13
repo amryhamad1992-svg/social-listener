@@ -38,12 +38,12 @@ interface SourceFilter {
 }
 
 const SOURCE_FILTERS: SourceFilter[] = [
-  { id: 'youtube', name: 'YouTube', icon: '▶️', enabled: true, color: '#DC2626', bgColor: '#FEF2F2' },
-  { id: 'tiktok', name: 'TikTok', icon: '🎵', enabled: true, color: '#000000', bgColor: '#F5F5F5' },
-  { id: 'news', name: 'News', icon: '📰', enabled: true, color: '#2563EB', bgColor: '#EFF6FF' },
-  { id: 'reddit', name: 'Reddit', icon: '🔴', enabled: true, color: '#F97316', bgColor: '#FFF7ED' },
-  { id: 'makeupalley', name: 'MakeupAlley', icon: '💄', enabled: true, color: '#EC4899', bgColor: '#FDF2F8' },
-  { id: 'temptalia', name: 'Temptalia', icon: '💋', enabled: true, color: '#A855F7', bgColor: '#FAF5FF' },
+  { id: 'youtube', name: 'YouTube', icon: 'YT', enabled: true, color: '#FF0000', bgColor: '#0F172A' },
+  { id: 'tiktok', name: 'TikTok', icon: 'TT', enabled: true, color: '#00F2EA', bgColor: '#0F172A' },
+  { id: 'news', name: 'News', icon: 'NW', enabled: true, color: '#0EA5E9', bgColor: '#0F172A' },
+  { id: 'reddit', name: 'Reddit', icon: 'RD', enabled: true, color: '#FF4500', bgColor: '#0F172A' },
+  { id: 'makeupalley', name: 'MakeupAlley', icon: 'MA', enabled: true, color: '#F472B6', bgColor: '#0F172A' },
+  { id: 'temptalia', name: 'Temptalia', icon: 'TP', enabled: true, color: '#A78BFA', bgColor: '#0F172A' },
 ];
 
 const SENTIMENT_CONFIG = {
@@ -52,6 +52,17 @@ const SENTIMENT_CONFIG = {
   negative: { color: '#EF4444', bg: '#FEF2F2', label: 'Negative' },
 };
 
+
+// Source styling mapping - Stackline professional palette
+const SOURCE_STYLING: Record<string, { color: string; bg: string; icon: string; gradient?: string }> = {
+  youtube: { color: '#FF0000', bg: '#1E293B', icon: 'YT', gradient: 'linear-gradient(135deg, #FF0000 0%, #CC0000 100%)' },
+  tiktok: { color: '#00F2EA', bg: '#1E293B', icon: 'TT', gradient: 'linear-gradient(135deg, #00F2EA 0%, #FF0050 100%)' },
+  news: { color: '#0EA5E9', bg: '#1E293B', icon: 'NW', gradient: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)' },
+  reddit: { color: '#FF4500', bg: '#1E293B', icon: 'RD', gradient: 'linear-gradient(135deg, #FF4500 0%, #FF5722 100%)' },
+  temptalia: { color: '#A78BFA', bg: '#1E293B', icon: 'TP', gradient: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' },
+  makeupalley: { color: '#F472B6', bg: '#1E293B', icon: 'MA', gradient: 'linear-gradient(135deg, #F472B6 0%, #EC4899 100%)' },
+  mock: { color: '#64748B', bg: '#1E293B', icon: 'MK', gradient: 'linear-gradient(135deg, #64748B 0%, #475569 100%)' },
+};
 
 // Simple activity chart component
 function ActivityChart({ data }: { data: number[] }) {
@@ -70,16 +81,66 @@ function ActivityChart({ data }: { data: number[] }) {
   );
 }
 
-// Source styling mapping
-const SOURCE_STYLING: Record<string, { color: string; bg: string; icon: string }> = {
-  youtube: { color: '#DC2626', bg: '#FEF2F2', icon: '▶️' },
-  tiktok: { color: '#000000', bg: '#F5F5F5', icon: '🎵' },
-  news: { color: '#2563EB', bg: '#EFF6FF', icon: '📰' },
-  reddit: { color: '#F97316', bg: '#FFF7ED', icon: '🔴' },
-  temptalia: { color: '#A855F7', bg: '#FAF5FF', icon: '💋' },
-  makeupalley: { color: '#EC4899', bg: '#FDF2F8', icon: '💄' },
-  mock: { color: '#64748B', bg: '#F1F5F9', icon: '🔧' },
-};
+// Professional source badge component - Stackline style
+function SourceBadge({
+  sourceType,
+  sourceName,
+  size = 'default'
+}: {
+  sourceType: string;
+  sourceName: string;
+  size?: 'small' | 'default' | 'large';
+}) {
+  const styling = SOURCE_STYLING[sourceType] || SOURCE_STYLING['mock'];
+
+  const sizeClasses = {
+    small: 'w-6 h-6 text-[8px]',
+    default: 'w-8 h-8 text-[10px]',
+    large: 'w-10 h-10 text-[11px]',
+  };
+
+  return (
+    <div
+      className={`${sizeClasses[size]} rounded-lg flex items-center justify-center font-bold tracking-tight flex-shrink-0 shadow-sm`}
+      style={{
+        background: styling.gradient || styling.bg,
+        color: '#FFFFFF',
+        border: `1px solid ${styling.color}20`,
+      }}
+      title={sourceName}
+    >
+      {styling.icon}
+    </div>
+  );
+}
+
+// Professional source label component
+function SourceLabel({
+  sourceType,
+  sourceName
+}: {
+  sourceType: string;
+  sourceName: string;
+}) {
+  const styling = SOURCE_STYLING[sourceType] || SOURCE_STYLING['mock'];
+
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-semibold tracking-wide uppercase"
+      style={{
+        background: `${styling.color}15`,
+        color: styling.color,
+        border: `1px solid ${styling.color}30`,
+      }}
+    >
+      <span
+        className="w-1.5 h-1.5 rounded-full"
+        style={{ backgroundColor: styling.color }}
+      />
+      {sourceName}
+    </span>
+  );
+}
 
 export default function MentionsPage() {
   const router = useRouter();
@@ -368,25 +429,33 @@ export default function MentionsPage() {
               {/* Source Filters */}
               <div className="flex items-center gap-2">
                 <span className="text-[11px] text-[#64748B] font-medium mr-2">Sources:</span>
-                {sources.map((source) => (
-                  <button
-                    key={source.id}
-                    onClick={() => toggleSource(source.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
-                      source.enabled
-                        ? 'border-2'
-                        : 'border border-[#E2E8F0] opacity-50 hover:opacity-100'
-                    }`}
-                    style={{
-                      backgroundColor: source.enabled ? source.bgColor : 'white',
-                      borderColor: source.enabled ? source.color : '#E2E8F0',
-                      color: source.enabled ? source.color : '#64748B',
-                    }}
-                  >
-                    <span>{source.icon}</span>
-                    <span>{source.name}</span>
-                  </button>
-                ))}
+                {sources.map((source) => {
+                  const styling = SOURCE_STYLING[source.id] || SOURCE_STYLING['mock'];
+                  return (
+                    <button
+                      key={source.id}
+                      onClick={() => toggleSource(source.id)}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
+                        source.enabled
+                          ? 'shadow-sm'
+                          : 'opacity-40 hover:opacity-70'
+                      }`}
+                      style={{
+                        backgroundColor: source.enabled ? `${styling.color}15` : '#F8FAFC',
+                        border: `1.5px solid ${source.enabled ? styling.color : '#E2E8F0'}`,
+                        color: source.enabled ? styling.color : '#94A3B8',
+                      }}
+                    >
+                      <span
+                        className="w-5 h-5 rounded flex items-center justify-center text-[8px] font-bold text-white"
+                        style={{ background: styling.gradient || styling.bg }}
+                      >
+                        {styling.icon}
+                      </span>
+                      <span>{source.name}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Right Side Controls */}
@@ -477,12 +546,7 @@ export default function MentionsPage() {
                     <div className="flex-1 min-w-0">
                       {/* Header */}
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <span
-                          className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium"
-                          style={{ backgroundColor: mention.sourceBg, color: mention.sourceColor }}
-                        >
-                          {mention.sourceIcon} {mention.source}
-                        </span>
+                        <SourceLabel sourceType={mention.sourceType} sourceName={mention.source} />
                         {mention.author && (
                           <span className="text-[11px] text-[#64748B]">
                             by <span className="font-medium">{mention.author}</span>
@@ -588,12 +652,7 @@ export default function MentionsPage() {
                   className="flex items-center gap-4 p-4 hover:bg-[#F8FAFC] transition-colors"
                 >
                   {/* Source Icon */}
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
-                    style={{ backgroundColor: mention.sourceBg }}
-                  >
-                    {mention.sourceIcon}
-                  </div>
+                  <SourceBadge sourceType={mention.sourceType} sourceName={mention.source} />
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
