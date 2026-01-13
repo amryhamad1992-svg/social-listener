@@ -183,8 +183,7 @@ export class TikTokScraper implements BaseScraper {
         comments: 0,
       },
       author: username ? `@${username}` : undefined,
-      platform: 'tiktok',
-      isVideo,
+      category: isVideo ? 'video' : 'profile',
       isHighEngagement: false, // Can't determine from search results
       contentHash: generateContentHash(fullText),
     };
