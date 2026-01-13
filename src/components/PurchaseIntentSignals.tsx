@@ -21,13 +21,6 @@ const intentStyles: Record<string, { bg: string; text: string; label: string }> 
   research: { bg: 'bg-[#64748B]/10', text: 'text-[#64748B]', label: 'RESEARCHING' },
 };
 
-// Source styling - Stackline professional palette
-const SOURCE_STYLING: Record<string, { color: string; icon: string; gradient: string }> = {
-  YouTube: { color: '#FF0000', icon: 'YT', gradient: 'linear-gradient(135deg, #FF0000 0%, #CC0000 100%)' },
-  TikTok: { color: '#00F2EA', icon: 'TT', gradient: 'linear-gradient(135deg, #00F2EA 0%, #FF0050 100%)' },
-  News: { color: '#0EA5E9', icon: 'NW', gradient: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)' },
-  Reddit: { color: '#FF4500', icon: 'RD', gradient: 'linear-gradient(135deg, #FF4500 0%, #FF5722 100%)' },
-};
 
 interface PurchaseIntentSignalsProps {
   days?: number;
@@ -134,23 +127,16 @@ export function PurchaseIntentSignals({ days = 7 }: PurchaseIntentSignalsProps) 
         <div className="space-y-3">
           {signals.map((signal) => {
             const style = intentStyles[signal.intentType];
-            const sourceStyle = SOURCE_STYLING[signal.source] || { color: '#64748B', icon: 'SR', gradient: 'linear-gradient(135deg, #64748B 0%, #475569 100%)' };
             return (
               <div
                 key={signal.id}
-                className="p-3 rounded-lg border border-[#E2E8F0] hover:border-[#CBD5E1] transition-colors"
+                className="p-3 rounded-lg border border-[#E2E8F0] hover:border-[#0F172A] transition-colors"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     {/* Header */}
                     <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                      <span
-                        className="w-5 h-5 rounded flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0"
-                        style={{ background: sourceStyle.gradient }}
-                      >
-                        {sourceStyle.icon}
-                      </span>
-                      <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: sourceStyle.color }}>
+                      <span className="px-2 py-0.5 rounded border border-[#E2E8F0] bg-white text-[9px] font-medium text-[#0F172A]">
                         {signal.source}
                       </span>
                       <span className={`text-[8px] px-1.5 py-0.5 rounded font-medium ${style.bg} ${style.text}`}>

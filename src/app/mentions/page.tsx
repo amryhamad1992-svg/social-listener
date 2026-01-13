@@ -53,15 +53,15 @@ const SENTIMENT_CONFIG = {
 };
 
 
-// Source styling mapping - Stackline professional palette
-const SOURCE_STYLING: Record<string, { color: string; bg: string; icon: string; gradient?: string }> = {
-  youtube: { color: '#FF0000', bg: '#1E293B', icon: 'YT', gradient: 'linear-gradient(135deg, #FF0000 0%, #CC0000 100%)' },
-  tiktok: { color: '#00F2EA', bg: '#1E293B', icon: 'TT', gradient: 'linear-gradient(135deg, #00F2EA 0%, #FF0050 100%)' },
-  news: { color: '#0EA5E9', bg: '#1E293B', icon: 'NW', gradient: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)' },
-  reddit: { color: '#FF4500', bg: '#1E293B', icon: 'RD', gradient: 'linear-gradient(135deg, #FF4500 0%, #FF5722 100%)' },
-  temptalia: { color: '#A78BFA', bg: '#1E293B', icon: 'TP', gradient: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' },
-  makeupalley: { color: '#F472B6', bg: '#1E293B', icon: 'MA', gradient: 'linear-gradient(135deg, #F472B6 0%, #EC4899 100%)' },
-  mock: { color: '#64748B', bg: '#1E293B', icon: 'MK', gradient: 'linear-gradient(135deg, #64748B 0%, #475569 100%)' },
+// Source styling - Simple navy and white palette
+const SOURCE_STYLING: Record<string, { label: string }> = {
+  youtube: { label: 'YouTube' },
+  tiktok: { label: 'TikTok' },
+  news: { label: 'News' },
+  reddit: { label: 'Reddit' },
+  temptalia: { label: 'Temptalia' },
+  makeupalley: { label: 'MakeupAlley' },
+  mock: { label: 'Mock' },
 };
 
 // Simple activity chart component
@@ -81,62 +81,22 @@ function ActivityChart({ data }: { data: number[] }) {
   );
 }
 
-// Professional source badge component - Stackline style
-function SourceBadge({
-  sourceType,
-  sourceName,
-  size = 'default'
-}: {
-  sourceType: string;
-  sourceName: string;
-  size?: 'small' | 'default' | 'large';
-}) {
-  const styling = SOURCE_STYLING[sourceType] || SOURCE_STYLING['mock'];
-
-  const sizeClasses = {
-    small: 'w-6 h-6 text-[8px]',
-    default: 'w-8 h-8 text-[10px]',
-    large: 'w-10 h-10 text-[11px]',
-  };
-
+// Simple source badge - navy background, white text
+function SourceBadge({ sourceName }: { sourceName: string }) {
   return (
     <div
-      className={`${sizeClasses[size]} rounded-lg flex items-center justify-center font-bold tracking-tight flex-shrink-0 shadow-sm`}
-      style={{
-        background: styling.gradient || styling.bg,
-        color: '#FFFFFF',
-        border: `1px solid ${styling.color}20`,
-      }}
+      className="w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-semibold bg-[#0F172A] text-white flex-shrink-0"
       title={sourceName}
     >
-      {styling.icon}
+      {sourceName.substring(0, 2).toUpperCase()}
     </div>
   );
 }
 
-// Professional source label component
-function SourceLabel({
-  sourceType,
-  sourceName
-}: {
-  sourceType: string;
-  sourceName: string;
-}) {
-  const styling = SOURCE_STYLING[sourceType] || SOURCE_STYLING['mock'];
-
+// Simple source label - clean border style like related search terms
+function SourceLabel({ sourceName }: { sourceName: string }) {
   return (
-    <span
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-semibold tracking-wide uppercase"
-      style={{
-        background: `${styling.color}15`,
-        color: styling.color,
-        border: `1px solid ${styling.color}30`,
-      }}
-    >
-      <span
-        className="w-1.5 h-1.5 rounded-full"
-        style={{ backgroundColor: styling.color }}
-      />
+    <span className="inline-flex items-center px-2 py-1 rounded border border-[#E2E8F0] bg-white text-[10px] font-medium text-[#0F172A]">
       {sourceName}
     </span>
   );
@@ -425,89 +385,67 @@ export default function MentionsPage() {
 
           {/* Filters Row */}
           <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
-            <div className="flex items-center justify-between">
-              {/* Source Filters */}
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-[#64748B] font-medium mr-2">Sources:</span>
-                {sources.map((source) => {
-                  const styling = SOURCE_STYLING[source.id] || SOURCE_STYLING['mock'];
-                  return (
-                    <button
-                      key={source.id}
-                      onClick={() => toggleSource(source.id)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
-                        source.enabled
-                          ? 'shadow-sm'
-                          : 'opacity-40 hover:opacity-70'
-                      }`}
-                      style={{
-                        backgroundColor: source.enabled ? `${styling.color}15` : '#F8FAFC',
-                        border: `1.5px solid ${source.enabled ? styling.color : '#E2E8F0'}`,
-                        color: source.enabled ? styling.color : '#94A3B8',
-                      }}
-                    >
-                      <span
-                        className="w-5 h-5 rounded flex items-center justify-center text-[8px] font-bold text-white"
-                        style={{ background: styling.gradient || styling.bg }}
-                      >
-                        {styling.icon}
-                      </span>
-                      <span>{source.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
+            {/* Top row - Sources */}
+            <div className="flex items-center gap-2 flex-wrap mb-3">
+              <span className="text-[10px] text-[#64748B] font-medium">Sources:</span>
+              {sources.map((source) => (
+                <button
+                  key={source.id}
+                  onClick={() => toggleSource(source.id)}
+                  className={`px-2.5 py-1 rounded border text-[10px] font-medium transition-all ${
+                    source.enabled
+                      ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                      : 'bg-white text-[#94A3B8] border-[#E2E8F0] hover:border-[#0F172A] hover:text-[#0F172A]'
+                  }`}
+                >
+                  {source.name}
+                </button>
+              ))}
+            </div>
 
-              {/* Right Side Controls */}
-              <div className="flex items-center gap-3">
-                {/* Sentiment Filter */}
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-[#64748B]" />
-                  <select
-                    value={sentiment}
-                    onChange={(e) => setSentiment(e.target.value)}
-                    className="px-3 py-1.5 text-[11px] border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:border-[#0EA5E9]"
-                  >
-                    <option value="">All Sentiments</option>
-                    <option value="positive">Positive</option>
-                    <option value="neutral">Neutral</option>
-                    <option value="negative">Negative</option>
-                  </select>
-                </div>
+            {/* Bottom row - Filters and controls */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Sentiment Filter */}
+              <select
+                value={sentiment}
+                onChange={(e) => setSentiment(e.target.value)}
+                className="px-2.5 py-1 text-[10px] border border-[#E2E8F0] rounded bg-white focus:outline-none focus:border-[#0F172A]"
+              >
+                <option value="">All Sentiments</option>
+                <option value="positive">Positive</option>
+                <option value="neutral">Neutral</option>
+                <option value="negative">Negative</option>
+              </select>
 
-                {/* Sort */}
-                <div className="flex items-center gap-2">
-                  <ArrowUpDown className="w-4 h-4 text-[#64748B]" />
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as 'recent' | 'engagement' | 'reach')}
-                    className="px-3 py-1.5 text-[11px] border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:border-[#0EA5E9]"
-                  >
-                    <option value="recent">Most Recent</option>
-                    <option value="engagement">Most Engaged</option>
-                    <option value="reach">Highest Reach</option>
-                  </select>
-                </div>
+              {/* Sort */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'recent' | 'engagement' | 'reach')}
+                className="px-2.5 py-1 text-[10px] border border-[#E2E8F0] rounded bg-white focus:outline-none focus:border-[#0F172A]"
+              >
+                <option value="recent">Most Recent</option>
+                <option value="engagement">Most Engaged</option>
+                <option value="reach">Highest Reach</option>
+              </select>
 
-                {/* View Toggle */}
-                <div className="flex items-center gap-1 p-1 bg-[#F1F5F9] rounded-lg">
-                  <button
-                    onClick={() => setViewMode('cards')}
-                    className={`p-1.5 rounded-md transition-all ${
-                      viewMode === 'cards' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#64748B]'
-                    }`}
-                  >
-                    <LayoutGrid className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('compact')}
-                    className={`p-1.5 rounded-md transition-all ${
-                      viewMode === 'compact' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#64748B]'
-                    }`}
-                  >
-                    <List className="w-4 h-4" />
-                  </button>
-                </div>
+              {/* View Toggle */}
+              <div className="flex items-center gap-1 p-0.5 bg-[#F1F5F9] rounded ml-auto">
+                <button
+                  onClick={() => setViewMode('cards')}
+                  className={`p-1 rounded transition-all ${
+                    viewMode === 'cards' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#64748B]'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setViewMode('compact')}
+                  className={`p-1 rounded transition-all ${
+                    viewMode === 'compact' ? 'bg-white text-[#0F172A] shadow-sm' : 'text-[#64748B]'
+                  }`}
+                >
+                  <List className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           </div>
@@ -546,7 +484,7 @@ export default function MentionsPage() {
                     <div className="flex-1 min-w-0">
                       {/* Header */}
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <SourceLabel sourceType={mention.sourceType} sourceName={mention.source} />
+                        <SourceLabel sourceName={mention.source} />
                         {mention.author && (
                           <span className="text-[11px] text-[#64748B]">
                             by <span className="font-medium">{mention.author}</span>
@@ -652,7 +590,7 @@ export default function MentionsPage() {
                   className="flex items-center gap-4 p-4 hover:bg-[#F8FAFC] transition-colors"
                 >
                   {/* Source Icon */}
-                  <SourceBadge sourceType={mention.sourceType} sourceName={mention.source} />
+                  <SourceBadge sourceName={mention.source} />
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
