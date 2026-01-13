@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { searchBrandVideos } from '@/lib/youtube';
 import { searchBrandNews } from '@/lib/newsApi';
 import { redditScraper } from '@/lib/scrapers/reddit';
+import { tiktokScraper } from '@/lib/scrapers/tiktok';
 import { getCacheKey, getCache, getStaleCache, setCache } from '@/lib/cache';
 
 // Cache TTL: 2 hours
@@ -130,7 +131,7 @@ export async function GET(request: NextRequest) {
     const keywords = BRAND_KEYWORDS[brand] || BRAND_KEYWORDS['Revlon'];
 
     // Fetch from all sources in parallel
-    const [youtubeResults, newsResults, redditResults] = await Promise.allSettled([
+    const [youtubeResults, newsResults, redditResults, tiktokResults] = await Promise.allSettled([
       // YouTube
       process.env.YOUTUBE_API_KEY
         ? searchBrandVideos(keywords, days).catch(() => [])
@@ -141,6 +142,13 @@ export async function GET(request: NextRequest) {
         : Promise.resolve([]),
       // Reddit via Google Custom Search
       redditScraper.scrape({
+        keywords: [brand],
+        brands: [],
+        maxResults: 20,
+        daysBack: days,
+      }).catch(() => ({ mentions: [] })),
+      // TikTok via Google Custom Search
+      tiktokScraper.scrape({
         keywords: [brand],
         brands: [],
         maxResults: 20,
@@ -205,6 +213,30 @@ export async function GET(request: NextRequest) {
             text: (post.title || post.snippet)?.slice(0, 150) || '',
             source: 'Reddit',
             sourceIcon: '💬',
+            intentType,
+            product: extractProduct(text, brand),
+            timestamp: formatTimestamp(post.publishedAt),
+            url: post.url,
+          });
+        }
+      }
+    }
+
+    // Process TikTok results
+    if (tiktokResults.status === 'fulfilled') {
+      const result = tiktokResults.value as { mentions?: any[] };
+      const mentions = result.mentions || [];
+
+      for (const post of mentions) {
+        const text = `${post.title || ''} ${post.snippet || post.fullText || ''}`;
+        const intentType = detectIntentType(text);
+
+        if (intentType) {
+          signals.push({
+            id: `tiktok_${post.id}`,
+            text: (post.title || post.snippet)?.slice(0, 150) || '',
+            source: 'TikTok',
+            sourceIcon: '🎵',
             intentType,
             product: extractProduct(text, brand),
             timestamp: formatTimestamp(post.publishedAt),

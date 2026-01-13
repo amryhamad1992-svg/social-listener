@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { searchBrandVideos } from '@/lib/youtube';
 import { searchBrandNews } from '@/lib/newsApi';
 import { redditScraper } from '@/lib/scrapers/reddit';
+import { tiktokScraper } from '@/lib/scrapers/tiktok';
 import { temptaliaScraper, makeupAlleyScraper } from '@/lib/scrapers/blogs';
 import { generateMockPosts } from '@/lib/mockData';
 import { getCacheKey, getCache, getStaleCache, setCache } from '@/lib/cache';
@@ -11,7 +12,7 @@ interface Mention {
   title: string;
   body: string;
   source: string;
-  sourceType: 'youtube' | 'news' | 'reddit' | 'temptalia' | 'makeupalley' | 'mock';
+  sourceType: 'youtube' | 'news' | 'reddit' | 'tiktok' | 'temptalia' | 'makeupalley' | 'mock';
   sourceIcon: string;
   author: string;
   score: number;
@@ -195,6 +196,60 @@ export async function GET(request: NextRequest) {
       if (redditMentions && redditMentions.length > 0) {
         sources.push('reddit');
         mentions.push(...redditMentions);
+      }
+    }
+
+    // Fetch from TikTok via Google Custom Search
+    if (!source || source === 'all' || source === 'tiktok') {
+      const cacheKey = getCacheKey('tiktok', brand);
+      let tiktokMentions = getCache<Mention[]>(cacheKey);
+
+      if (!tiktokMentions) {
+        try {
+          const tiktokResult = await tiktokScraper.scrape({
+            keywords: [brand],
+            brands: [],
+            maxResults: 20,
+            daysBack: days,
+          });
+
+          if (tiktokResult.success && tiktokResult.mentions.length > 0) {
+            tiktokMentions = tiktokResult.mentions.map((post) => ({
+              id: `tiktok_${post.id}`,
+              title: post.title,
+              body: post.snippet || post.fullText?.substring(0, 200) || '',
+              source: 'TikTok',
+              sourceType: 'tiktok' as const,
+              sourceIcon: '🎵',
+              author: post.author || 'Unknown',
+              score: post.engagement.upvotes || 0,
+              numComments: post.engagement.comments || 0,
+              sentiment: 'neutral',
+              sentimentScore: 0,
+              matchedKeyword: post.matchedKeyword,
+              createdAt: post.publishedAt,
+              url: post.url,
+              thumbnailUrl: undefined,
+            }));
+            setCache(cacheKey, tiktokMentions, CACHE_TTL);
+          } else if (tiktokResult.error) {
+            console.warn('TikTok fetch warning:', tiktokResult.error);
+            // Try stale cache on error
+            tiktokMentions = getStaleCache<Mention[]>(cacheKey);
+            if (tiktokMentions) cachedSources.push('tiktok');
+          }
+        } catch (err) {
+          console.error('TikTok fetch error:', err);
+          tiktokMentions = getStaleCache<Mention[]>(cacheKey);
+          if (tiktokMentions) cachedSources.push('tiktok');
+        }
+      } else {
+        cachedSources.push('tiktok');
+      }
+
+      if (tiktokMentions && tiktokMentions.length > 0) {
+        sources.push('tiktok');
+        mentions.push(...tiktokMentions);
       }
     }
 

@@ -12,7 +12,7 @@ interface UnifiedMention {
   title: string;
   body: string;
   source: string;
-  sourceType: 'youtube' | 'news' | 'reddit' | 'temptalia' | 'makeupalley' | 'mock';
+  sourceType: 'youtube' | 'news' | 'reddit' | 'tiktok' | 'temptalia' | 'makeupalley' | 'mock';
   sourceIcon: string;
   sourceColor: string;
   sourceBg: string;
@@ -39,6 +39,7 @@ interface SourceFilter {
 
 const SOURCE_FILTERS: SourceFilter[] = [
   { id: 'youtube', name: 'YouTube', icon: '▶️', enabled: true, color: '#DC2626', bgColor: '#FEF2F2' },
+  { id: 'tiktok', name: 'TikTok', icon: '🎵', enabled: true, color: '#000000', bgColor: '#F5F5F5' },
   { id: 'news', name: 'News', icon: '📰', enabled: true, color: '#2563EB', bgColor: '#EFF6FF' },
   { id: 'reddit', name: 'Reddit', icon: '🔴', enabled: true, color: '#F97316', bgColor: '#FFF7ED' },
   { id: 'makeupalley', name: 'MakeupAlley', icon: '💄', enabled: true, color: '#EC4899', bgColor: '#FDF2F8' },
@@ -72,6 +73,7 @@ function ActivityChart({ data }: { data: number[] }) {
 // Source styling mapping
 const SOURCE_STYLING: Record<string, { color: string; bg: string; icon: string }> = {
   youtube: { color: '#DC2626', bg: '#FEF2F2', icon: '▶️' },
+  tiktok: { color: '#000000', bg: '#F5F5F5', icon: '🎵' },
   news: { color: '#2563EB', bg: '#EFF6FF', icon: '📰' },
   reddit: { color: '#F97316', bg: '#FFF7ED', icon: '🔴' },
   temptalia: { color: '#A855F7', bg: '#FAF5FF', icon: '💋' },
