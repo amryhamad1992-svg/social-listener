@@ -1,34 +1,76 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Stackline-inspired color palette */
-  --primary: #0F172A;
-  --primary-light: #1E293B;
-  --background: #F8FAFC;
-  --foreground: #1E293B;
-  --muted: #64748B;
-  --muted-light: #94A3B8;
-  --accent: #0EA5E9;
-  --accent-dark: #0284C7;
-  --success: #10B981;
-  --danger: #EF4444;
-  --warning: #F59E0B;
-  --border: #E2E8F0;
+  /* ========================================
+     STACKLINE OFFICIAL COLOR PALETTE
+     ======================================== */
+
+  /* Primary Colors */
+  --carbon-indigo: #031425;        /* Primary brand color - darkest navy */
+  --navy-dark: #2D3C4A;            /* Secondary dark */
+  --product-charts: #adbdcc;       /* Light blue-gray for prior period/secondary data */
+  --moonbeam: #E0E2E4;             /* Light gray for borders/dividers */
+  --product-header: #F6F7F8;       /* Very light gray backgrounds */
+  --slate: #4E596A;                /* Mid-tone text */
+
+  /* Accent Colors - Teal Family */
+  --teal-primary: #16949b;         /* Primary teal accent */
+  --teal-light: #9ee0d0;           /* Light teal for backgrounds */
+  --teal-dark: #185450;            /* Dark teal */
+  --mint: #71c184;                 /* Mint green */
+
+  /* Accent Colors - Blue Family */
+  --blue-bright: #46a8f6;          /* Bright blue */
+  --blue-light: #a5cfff;           /* Light blue */
+  --blue-muted: #7e8fa8;           /* Muted blue-gray */
+
+  /* Status Colors */
+  --success: #71c184;              /* Green - positive changes */
+  --success-dark: #185450;         /* Dark green */
+  --danger: #ff534a;               /* Coral red - negative changes */
+  --danger-dark: #bc3c19;          /* Dark rust red */
+  --warning: #ffbd32;              /* Gold/amber - warnings */
+  --warning-dark: #f0a202;         /* Dark amber */
+
+  /* Extended Palette */
+  --orange: #ed792f;
+  --lime: #99bd05;
+  --purple: #a21671;
+  --burgundy: #73171f;
+  --pink-light: #ffc5c5;
+
+  /* Neutral Grays */
+  --gray-700: #717B84;
+  --gray-600: #7D848C;
+  --gray-400: #dedede;
+  --gray-200: #f5f5f5;
+  --gray-100: #fafafa;
+
+  /* Semantic Mappings */
+  --primary: var(--carbon-indigo);
+  --primary-light: var(--navy-dark);
+  --background: var(--product-header);
+  --foreground: var(--carbon-indigo);
+  --muted: var(--slate);
+  --muted-light: var(--product-charts);
+  --accent: var(--teal-primary);
+  --accent-light: var(--teal-light);
+  --border: var(--moonbeam);
   --card: #FFFFFF;
-  --card-hover: #F1F5F9;
+  --card-hover: var(--gray-100);
 
-  /* Navy variations */
-  --navy-900: #0F172A;
-  --navy-800: #1E293B;
-  --navy-700: #334155;
-  --navy-600: #475569;
+  /* Chart Colors */
+  --chart-current: var(--carbon-indigo);
+  --chart-prior: var(--product-charts);
+  --chart-accent: var(--teal-primary);
+  --chart-comparison: var(--teal-light);
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  /* Shadows - Stackline uses very subtle shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.03);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.03);
 }
 
 @theme inline {
@@ -38,13 +80,16 @@
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
   --color-success: var(--success);
   --color-danger: var(--danger);
   --color-warning: var(--warning);
   --color-border: var(--border);
   --color-card: var(--card);
   --color-card-hover: var(--card-hover);
-  --font-sans: 'Roboto', system-ui, -apple-system, sans-serif;
+  --color-chart-current: var(--chart-current);
+  --color-chart-prior: var(--chart-prior);
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 * {
@@ -54,7 +99,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 14px;
@@ -189,7 +234,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Buttons - Stackline style */
 .btn-primary {
-  background: var(--navy-800);
+  background: var(--carbon-indigo);
   color: white;
   padding: 8px 16px;
   border-radius: 6px;
@@ -201,7 +246,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-primary:hover {
-  background: var(--navy-700);
+  background: var(--navy-dark);
 }
 
 .btn-secondary {
@@ -221,6 +266,47 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--muted-light);
 }
 
+/* Pill Badges - Stackline style (teal highlight badges) */
+.pill-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: var(--teal-light);
+  color: var(--teal-dark);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.pill-badge-success {
+  background: rgba(113, 193, 132, 0.15);
+  color: var(--success-dark);
+}
+
+.pill-badge-warning {
+  background: rgba(255, 189, 50, 0.15);
+  color: var(--warning-dark);
+}
+
+.pill-badge-danger {
+  background: rgba(255, 83, 74, 0.15);
+  color: var(--danger-dark);
+}
+
+/* Numbered Badge - Stackline style (dark navy circles with numbers) */
+.numbered-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--carbon-indigo);
+  color: white;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 /* Tabs - Stackline style */
 .tab {
   font-size: 13px;
@@ -238,7 +324,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .tab-active {
   color: var(--foreground);
-  border-bottom-color: var(--navy-800);
+  border-bottom-color: var(--carbon-indigo);
 }
 
 /* Cards - Stackline style */
@@ -258,21 +344,120 @@ h1, h2, h3, h4, h5, h6 {
 
 .progress-bar-fill {
   height: 100%;
-  background: var(--navy-800);
+  background: var(--carbon-indigo);
   border-radius: 4px;
   transition: width 0.3s ease;
 }
 
+/* Card Header - Stackline style (with three-dot menu) */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 24px 16px;
+}
+
+.card-header-content {
+  flex: 1;
+}
+
+.card-header h3 {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--foreground);
+  margin: 0 0 4px 0;
+}
+
+.card-header p {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.card-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.card-menu-btn:hover {
+  background: var(--card-hover);
+  color: var(--foreground);
+}
+
+/* Donut Chart Center - Stackline style */
+.donut-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.donut-value {
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--foreground);
+  line-height: 1;
+}
+
+.donut-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* Legend - Stackline style */
+.chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-legend-line {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.chart-legend-line.prior {
+  background: var(--product-charts);
+}
+
+.chart-legend-line.current {
+  background: var(--carbon-indigo);
+}
+
 /* Form inputs - Stackline style */
 input, select {
-  font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 13px;
 }
 
 input:focus, select:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+  border-color: var(--teal-primary);
+  box-shadow: 0 0 0 3px rgba(22, 148, 155, 0.1);
 }
 
 /* Dropdown - Stackline style */

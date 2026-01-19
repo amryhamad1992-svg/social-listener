@@ -1,8 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Sparkles, TrendingUp, TrendingDown, AlertTriangle, Zap } from 'lucide-react';
+import { Sparkles, TrendingUp, TrendingDown, AlertTriangle, Zap, MoreHorizontal } from 'lucide-react';
 import { useSettings } from '@/lib/SettingsContext';
+
+// Stackline Official Colors
+const COLORS = {
+  carbonIndigo: '#031425',
+  navyDark: '#2D3C4A',
+  productCharts: '#adbdcc',
+  slate: '#4E596A',
+  moonbeam: '#E0E2E4',
+  teal: '#16949b',
+  tealLight: '#9ee0d0',
+  success: '#71c184',
+  danger: '#ff534a',
+  warning: '#ffbd32',
+};
 
 interface Insight {
   type: 'positive' | 'negative' | 'neutral' | 'alert';
@@ -111,56 +125,62 @@ export function ExecutiveSummary({ days = 7 }: ExecutiveSummaryProps) {
   const getInsightStyles = (type: Insight['type']) => {
     switch (type) {
       case 'positive':
-        return 'bg-[#0EA5E9]/5 border-[#0EA5E9]/20 text-[#0EA5E9]';
+        return { bg: 'rgba(22, 148, 155, 0.08)', border: 'rgba(22, 148, 155, 0.2)', text: COLORS.teal };
       case 'negative':
-        return 'bg-[#64748B]/5 border-[#64748B]/20 text-[#64748B]';
+        return { bg: 'rgba(78, 89, 106, 0.08)', border: 'rgba(78, 89, 106, 0.2)', text: COLORS.slate };
       case 'alert':
-        return 'bg-[#F59E0B]/5 border-[#F59E0B]/20 text-[#F59E0B]';
+        return { bg: 'rgba(255, 189, 50, 0.08)', border: 'rgba(255, 189, 50, 0.2)', text: COLORS.warning };
       default:
-        return 'bg-[#0F172A]/5 border-[#0F172A]/20 text-[#0F172A]';
+        return { bg: 'rgba(3, 20, 37, 0.05)', border: 'rgba(3, 20, 37, 0.15)', text: COLORS.carbonIndigo };
     }
   };
 
   return (
-    <div className="bg-white rounded-lg p-5 shadow-sm border border-[#E2E8F0]" style={{ fontFamily: 'Roboto, sans-serif' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#1E293B]/10 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-[#1E293B]" />
-          </div>
-          <div>
-            <h2 className="text-sm font-medium text-[#1E293B]">Executive Summary</h2>
-            <p className="text-[10px] text-[#64748B]">AI-powered insights for {getBrandName()}</p>
-          </div>
+    <div className="bg-white rounded-lg shadow-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
+      {/* Card Header - Stackline style with three-dot menu */}
+      <div className="flex items-start justify-between p-5 pb-4">
+        <div>
+          <h3 className="text-base font-medium" style={{ color: COLORS.carbonIndigo }}>Executive Summary</h3>
+          <p className="text-[13px] mt-1" style={{ color: COLORS.slate }}>
+            AI-powered insights for {getBrandName()} • {days}-day analysis
+          </p>
         </div>
+        <button className="w-7 h-7 rounded flex items-center justify-center hover:bg-gray-100 transition-colors">
+          <MoreHorizontal className="w-4 h-4" style={{ color: COLORS.slate }} />
+        </button>
       </div>
 
       {/* Insights Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {insights.map((insight, index) => (
-          <div
-            key={index}
-            className={`flex items-start gap-3 p-3 rounded-lg border ${getInsightStyles(insight.type)}`}
-          >
-            <div className="flex-shrink-0 mt-0.5">
-              {insight.icon}
-            </div>
-            <p className="text-[12px] leading-relaxed text-[#334155]">
-              {insight.text}
-            </p>
-          </div>
-        ))}
-      </div>
+      <div className="px-5 pb-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {insights.map((insight, index) => {
+            const styles = getInsightStyles(insight.type);
+            return (
+              <div
+                key={index}
+                className="flex items-start gap-3 p-3 rounded-lg"
+                style={{
+                  backgroundColor: styles.bg,
+                  border: `1px solid ${styles.border}`,
+                }}
+              >
+                <div className="flex-shrink-0 mt-0.5" style={{ color: styles.text }}>
+                  {insight.icon}
+                </div>
+                <p className="text-[12px] leading-relaxed" style={{ color: COLORS.navyDark }}>
+                  {insight.text}
+                </p>
+              </div>
+            );
+          })}
+        </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#E2E8F0]">
-        <p className="text-[10px] text-[#64748B]">
-          Insights generated from {days}-day data analysis
-        </p>
-        <div className="flex items-center gap-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#0EA5E9] animate-pulse" />
-          <span className="text-[10px] text-[#64748B]">Updated just now</span>
+        {/* Footer */}
+        <div className="flex items-center justify-end mt-4 pt-3" style={{ borderTop: `1px solid ${COLORS.moonbeam}` }}>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: COLORS.teal }} />
+            <span className="text-[11px]" style={{ color: COLORS.slate }}>Updated just now</span>
+          </div>
         </div>
       </div>
     </div>

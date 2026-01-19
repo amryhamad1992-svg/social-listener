@@ -17,6 +17,20 @@ import {
   Legend,
 } from 'recharts';
 
+// Stackline Official Colors
+const COLORS = {
+  carbonIndigo: '#031425',
+  navyDark: '#2D3C4A',
+  productCharts: '#adbdcc',
+  slate: '#4E596A',
+  moonbeam: '#E0E2E4',
+  teal: '#16949b',
+  tealLight: '#9ee0d0',
+  success: '#71c184',
+  danger: '#ff534a',
+  warning: '#ffbd32',
+};
+
 interface SentimentTrendData {
   date: string;
   sentiment: number;
@@ -42,16 +56,16 @@ export function SentimentChart({ data }: SentimentChartProps) {
   }));
 
   return (
-    <div className="w-full" style={{ fontFamily: 'Roboto, sans-serif' }}>
+    <div className="w-full" style={{ fontFamily: 'Inter, sans-serif' }}>
       {/* Legend - Stackline style at top */}
       <div className="flex items-center gap-6 mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-[3px] bg-[#CBD5E1] rounded" />
-          <span className="text-[11px] text-[#64748B]">Prior Period</span>
+          <div className="w-8 h-[3px] rounded" style={{ backgroundColor: COLORS.productCharts }} />
+          <span className="text-[11px]" style={{ color: COLORS.slate }}>Prior Year</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-8 h-[3px] bg-[#1E293B] rounded" />
-          <span className="text-[11px] text-[#64748B]">Current Period</span>
+          <div className="w-8 h-[3px] rounded" style={{ backgroundColor: COLORS.carbonIndigo }} />
+          <span className="text-[11px]" style={{ color: COLORS.slate }}>Current Period</span>
         </div>
       </div>
 
@@ -62,12 +76,12 @@ export function SentimentChart({ data }: SentimentChartProps) {
             <XAxis
               dataKey="date"
               tickFormatter={formatDate}
-              tick={{ fontSize: 11, fill: '#64748B' }}
+              tick={{ fontSize: 11, fill: COLORS.slate }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fontSize: 11, fill: '#64748B' }}
+              tick={{ fontSize: 11, fill: COLORS.slate }}
               axisLine={false}
               tickLine={false}
               width={40}
@@ -76,25 +90,25 @@ export function SentimentChart({ data }: SentimentChartProps) {
               cursor={{ fill: 'transparent' }}
               contentStyle={{
                 backgroundColor: '#fff',
-                border: '1px solid #E2E8F0',
+                border: `1px solid ${COLORS.moonbeam}`,
                 borderRadius: '8px',
                 padding: '12px',
-                fontFamily: 'Roboto, sans-serif',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                fontFamily: 'Inter, sans-serif',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
               }}
               formatter={(value, name) => {
                 if (typeof value === 'number') {
-                  const label = name === 'priorMentions' ? 'Prior Period' : 'Current Period';
+                  const label = name === 'priorMentions' ? 'Prior Year' : 'Current Period';
                   return [value.toLocaleString(), label];
                 }
                 return [value, name];
               }}
               labelFormatter={formatDate}
             />
-            {/* Prior Period - Light Gray */}
-            <Bar dataKey="priorMentions" fill="#CBD5E1" radius={[2, 2, 0, 0]} maxBarSize={24} />
+            {/* Prior Year - Light Gray */}
+            <Bar dataKey="priorMentions" fill={COLORS.productCharts} radius={[2, 2, 0, 0]} maxBarSize={24} />
             {/* Current Period - Dark Navy */}
-            <Bar dataKey="mentions" fill="#1E293B" radius={[2, 2, 0, 0]} maxBarSize={24} />
+            <Bar dataKey="mentions" fill={COLORS.carbonIndigo} radius={[2, 2, 0, 0]} maxBarSize={24} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -121,33 +135,33 @@ export function TopicBubbleChart({ data }: TopicBubbleChartProps) {
   };
 
   const getBubbleColor = (sentiment: number) => {
-    if (sentiment > 0.2) return '#22c55e';
-    if (sentiment < -0.2) return '#ef4444';
-    return '#6b7280';
+    if (sentiment > 0.2) return COLORS.success;
+    if (sentiment < -0.2) return COLORS.danger;
+    return COLORS.slate;
   };
 
   return (
-    <div className="w-full h-[350px]">
+    <div className="w-full h-[350px]" style={{ fontFamily: 'Inter, sans-serif' }}>
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke={COLORS.moonbeam} />
           <XAxis
             type="number"
             dataKey="sentiment"
             domain={[-1, 1]}
             name="Sentiment"
             tickFormatter={formatSentiment}
-            tick={{ fontSize: 12, fill: '#6b7280' }}
-            axisLine={{ stroke: '#e5e7eb' }}
-            label={{ value: 'Sentiment', position: 'bottom', offset: 0, fill: '#6b7280', fontSize: 12 }}
+            tick={{ fontSize: 12, fill: COLORS.slate }}
+            axisLine={{ stroke: COLORS.moonbeam }}
+            label={{ value: 'Sentiment', position: 'bottom', offset: 0, fill: COLORS.slate, fontSize: 12 }}
           />
           <YAxis
             type="number"
             dataKey="mentions"
             name="Mentions"
-            tick={{ fontSize: 12, fill: '#6b7280' }}
-            axisLine={{ stroke: '#e5e7eb' }}
-            label={{ value: 'Mentions', angle: -90, position: 'insideLeft', fill: '#6b7280', fontSize: 12 }}
+            tick={{ fontSize: 12, fill: COLORS.slate }}
+            axisLine={{ stroke: COLORS.moonbeam }}
+            label={{ value: 'Mentions', angle: -90, position: 'insideLeft', fill: COLORS.slate, fontSize: 12 }}
           />
           <ZAxis
             type="number"
@@ -159,9 +173,10 @@ export function TopicBubbleChart({ data }: TopicBubbleChartProps) {
             cursor={{ strokeDasharray: '3 3' }}
             contentStyle={{
               backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
+              border: `1px solid ${COLORS.moonbeam}`,
               borderRadius: '8px',
               padding: '12px',
+              fontFamily: 'Inter, sans-serif',
             }}
             formatter={(value, name) => {
               if (name === 'Sentiment') return [formatSentiment(value as number), name];
@@ -196,16 +211,16 @@ export function TopicBubbleChart({ data }: TopicBubbleChartProps) {
       </ResponsiveContainer>
       <div className="flex justify-center gap-6 mt-2">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-[#22c55e]" />
-          <span className="text-xs text-[#64748B]">Positive</span>
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.success }} />
+          <span className="text-xs" style={{ color: COLORS.slate }}>Positive</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-[#6b7280]" />
-          <span className="text-xs text-[#64748B]">Neutral</span>
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.slate }} />
+          <span className="text-xs" style={{ color: COLORS.slate }}>Neutral</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-[#ef4444]" />
-          <span className="text-xs text-[#64748B]">Negative</span>
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS.danger }} />
+          <span className="text-xs" style={{ color: COLORS.slate }}>Negative</span>
         </div>
       </div>
     </div>
@@ -219,8 +234,8 @@ interface SentimentDistributionProps {
   negative: number;
 }
 
-// Stackline color palette (from Paid Spend by Keyword chart)
-const STACKLINE_COLORS = ['#1E293B', '#14B8A6', '#FBBF24'];
+// Stackline color palette for sentiment
+const SENTIMENT_COLORS = [COLORS.carbonIndigo, COLORS.teal, COLORS.warning];
 
 export function SentimentDistribution({
   positive,
@@ -235,7 +250,7 @@ export function SentimentDistribution({
   ];
 
   return (
-    <div className="flex flex-col items-center" style={{ fontFamily: 'Roboto, sans-serif' }}>
+    <div className="flex flex-col items-center" style={{ fontFamily: 'Inter, sans-serif' }}>
       {/* Pie Chart - Stackline style */}
       <div className="w-[180px] h-[180px] relative">
         <ResponsiveContainer width="100%" height="100%">
@@ -252,7 +267,7 @@ export function SentimentDistribution({
               strokeWidth={2}
             >
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={STACKLINE_COLORS[index]} />
+                <Cell key={`cell-${index}`} fill={SENTIMENT_COLORS[index]} />
               ))}
             </Pie>
           </PieChart>
@@ -260,8 +275,8 @@ export function SentimentDistribution({
         {/* Center total */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
-            <div className="text-[22px] font-semibold text-[#1E293B]">{total}</div>
-            <div className="text-[9px] text-[#64748B] uppercase tracking-wide">Total</div>
+            <div className="text-[22px] font-semibold" style={{ color: COLORS.carbonIndigo }}>{total}</div>
+            <div className="text-[9px] uppercase tracking-wide" style={{ color: COLORS.slate }}>Total</div>
           </div>
         </div>
       </div>
@@ -272,11 +287,11 @@ export function SentimentDistribution({
           <div key={item.name} className="flex items-center gap-2">
             <div
               className="w-3 h-3 rounded-sm"
-              style={{ backgroundColor: STACKLINE_COLORS[index] }}
+              style={{ backgroundColor: SENTIMENT_COLORS[index] }}
             />
             <div>
-              <span className="text-[11px] text-[#64748B]">{item.name}</span>
-              <span className="text-[11px] font-semibold text-[#1E293B] ml-1">
+              <span className="text-[11px]" style={{ color: COLORS.slate }}>{item.name}</span>
+              <span className="text-[11px] font-semibold ml-1" style={{ color: COLORS.carbonIndigo }}>
                 {item.percent.toFixed(0)}%
               </span>
             </div>

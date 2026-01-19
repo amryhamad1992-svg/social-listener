@@ -40,7 +40,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
   };
 
   return (
-    <div className="flex flex-col h-full w-56 bg-[#0F172A] text-white">
+    <div className="flex flex-col h-full w-56 bg-[#031425] text-white">
       {/* Logo */}
       <div className="flex items-center h-14 px-4 border-b border-white/10">
         <Image
@@ -67,7 +67,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
               style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right center', paddingRight: '16px' }}
             >
               {BRANDS.map((brand) => (
-                <option key={brand.id} value={brand.id} className="bg-[#0F172A] text-white">
+                <option key={brand.id} value={brand.id} className="bg-[#031425] text-white">
                   {brand.name}
                 </option>
               ))}
@@ -92,7 +92,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
               }`}
             >
               {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#0EA5E9] rounded-r" />
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#16949b] rounded-r" />
               )}
               <item.icon className="w-4 h-4" />
               <span>{item.name}</span>
@@ -112,7 +112,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
           }`}
         >
           {pathname === '/settings' && (
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#0EA5E9] rounded-r" />
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#16949b] rounded-r" />
           )}
           <Settings className="w-4 h-4" />
           <span>Settings</span>
