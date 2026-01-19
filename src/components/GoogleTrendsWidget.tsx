@@ -53,7 +53,7 @@ export function GoogleTrendsWidget({ keywords, geo = 'US' }: GoogleTrendsWidgetP
       <div className="flex items-center gap-2 mb-4">
         <TrendingUp className="w-4 h-4 text-[#0EA5E9]" />
         <h2 className="text-sm font-medium text-[#1E293B]">Google Search Trends</h2>
-        <span className="text-[10px] text-[#64748B] ml-auto">Last 90 days</span>
+        <span className="text-[10px] text-[#64748B] ml-auto">Last 30 days</span>
       </div>
 
       <div

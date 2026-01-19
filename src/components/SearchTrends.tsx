@@ -50,9 +50,8 @@ const COLORS = {
 
 const DAYS_OPTIONS = [
   { value: '7d', label: '7 days', days: 7 },
+  { value: '14d', label: '14 days', days: 14 },
   { value: '30d', label: '30 days', days: 30 },
-  { value: '90d', label: '90 days', days: 90 },
-  { value: '12m', label: '12 months', days: 365 },
 ];
 
 const COUNTRIES = [

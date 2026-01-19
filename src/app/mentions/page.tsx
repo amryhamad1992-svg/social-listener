@@ -12,7 +12,7 @@ interface UnifiedMention {
   title: string;
   body: string;
   source: string;
-  sourceType: 'youtube' | 'news' | 'reddit' | 'tiktok' | 'temptalia' | 'makeupalley' | 'mock';
+  sourceType: 'reddit' | 'instagram' | 'x' | 'meta' | 'social' | 'mock';
   sourceIcon: string;
   sourceColor: string;
   sourceBg: string;
@@ -37,31 +37,33 @@ interface SourceFilter {
   bgColor: string;
 }
 
+// Updated sources: Reddit, Instagram, X, Meta (using Stackline colors)
 const SOURCE_FILTERS: SourceFilter[] = [
-  { id: 'youtube', name: 'YouTube', icon: 'YT', enabled: true, color: '#FF0000', bgColor: '#0F172A' },
-  { id: 'tiktok', name: 'TikTok', icon: 'TT', enabled: true, color: '#00F2EA', bgColor: '#0F172A' },
-  { id: 'news', name: 'News', icon: 'NW', enabled: true, color: '#0EA5E9', bgColor: '#0F172A' },
-  { id: 'reddit', name: 'Reddit', icon: 'RD', enabled: true, color: '#FF4500', bgColor: '#0F172A' },
-  { id: 'makeupalley', name: 'MakeupAlley', icon: 'MA', enabled: true, color: '#F472B6', bgColor: '#0F172A' },
-  { id: 'temptalia', name: 'Temptalia', icon: 'TP', enabled: true, color: '#A78BFA', bgColor: '#0F172A' },
+  { id: 'reddit', name: 'Reddit', icon: 'RD', enabled: true, color: '#FF4500', bgColor: '#031425' },
+  { id: 'instagram', name: 'Instagram', icon: '📸', enabled: true, color: '#E1306C', bgColor: '#031425' },
+  { id: 'x', name: 'X (Twitter)', icon: '𝕏', enabled: true, color: '#000000', bgColor: '#031425' },
+  { id: 'meta', name: 'Meta', icon: '👤', enabled: true, color: '#1877F2', bgColor: '#031425' },
 ];
 
+// Sentiment Configuration with Stackline colors
+// Positive: Score > 0.2 - Favorable mentions, recommendations, praise
+// Neutral: Score between -0.2 and 0.2 - Factual mentions, no strong opinion
+// Negative: Score < -0.2 - Complaints, issues, negative reviews
 const SENTIMENT_CONFIG = {
-  positive: { color: '#10B981', bg: '#ECFDF5', label: 'Positive' },
-  neutral: { color: '#64748B', bg: '#F1F5F9', label: 'Neutral' },
-  negative: { color: '#EF4444', bg: '#FEF2F2', label: 'Negative' },
+  positive: { color: '#71c184', bg: 'rgba(113, 193, 132, 0.15)', label: 'Positive' },
+  neutral: { color: '#4E596A', bg: 'rgba(78, 89, 106, 0.15)', label: 'Neutral' },
+  negative: { color: '#ff534a', bg: 'rgba(255, 83, 74, 0.15)', label: 'Negative' },
 };
 
 
-// Source styling - Simple navy and white palette
+// Source styling - Updated for new sources
 const SOURCE_STYLING: Record<string, { label: string }> = {
-  youtube: { label: 'YouTube' },
-  tiktok: { label: 'TikTok' },
-  news: { label: 'News' },
   reddit: { label: 'Reddit' },
-  temptalia: { label: 'Temptalia' },
-  makeupalley: { label: 'MakeupAlley' },
-  mock: { label: 'Mock' },
+  instagram: { label: 'Instagram' },
+  x: { label: 'X (Twitter)' },
+  meta: { label: 'Meta' },
+  social: { label: 'Social' },
+  mock: { label: 'Demo' },
 };
 
 // Simple activity chart component
@@ -223,10 +225,17 @@ export default function MentionsPage() {
     // Filter by date range
     const mentionDate = new Date(m.createdAt);
     if (now.getTime() - mentionDate.getTime() > daysInMs) return false;
-    // Filter by source type (youtube, news, reddit, mock)
-    // Map sourceType to filter IDs (mock maps to all since it's demo data)
-    const sourceId = m.sourceType === 'mock' ? 'youtube' : m.sourceType; // mock data shows as various sources
-    if (!enabledSourceIds.includes(sourceId)) return false;
+    // Filter by source type (reddit, instagram, x, meta)
+    // Map source name to filter IDs for matching
+    const sourceNameLower = m.source.toLowerCase();
+    let sourceId = sourceNameLower;
+    if (sourceNameLower === 'x' || sourceNameLower === 'x (twitter)' || sourceNameLower === 'twitter') {
+      sourceId = 'x';
+    } else if (sourceNameLower === 'facebook' || sourceNameLower === 'meta') {
+      sourceId = 'meta';
+    }
+    // Mock data should show for all enabled sources
+    if (m.sourceType !== 'mock' && !enabledSourceIds.includes(sourceId)) return false;
     // Filter by sentiment
     if (sentiment && m.sentiment !== sentiment) return false;
     return true;
@@ -311,7 +320,6 @@ export default function MentionsPage() {
                   <option value={7}>Last 7 days</option>
                   <option value={14}>Last 14 days</option>
                   <option value={30}>Last 30 days</option>
-                  <option value={90}>Last 90 days</option>
                 </select>
               </div>
 

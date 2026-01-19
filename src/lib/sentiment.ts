@@ -1,4 +1,31 @@
 // Sentiment Analysis using OpenAI GPT-4o-mini
+//
+// SENTIMENT CATEGORIES DEFINITION:
+// ================================
+//
+// POSITIVE (Score > 0.2):
+// - Favorable mentions, recommendations, praise
+// - "I love this product", "Best drugstore foundation"
+// - Enthusiastic reviews, purchase recommendations
+// - High engagement with positive tone
+//
+// NEUTRAL (Score between -0.2 and 0.2):
+// - Factual mentions without strong opinion
+// - Product comparisons without clear preference
+// - Questions or inquiries about products
+// - News/informational posts
+//
+// NEGATIVE (Score < -0.2):
+// - Complaints, issues, criticism
+// - "Don't buy this", "Waste of money"
+// - Quality concerns, negative experiences
+// - Product failures or disappointments
+//
+// Using Stackline colors:
+// - Positive: #71c184 (Success Green)
+// - Neutral: #4E596A (Slate)
+// - Negative: #ff534a (Danger Red)
+
 import OpenAI from 'openai';
 
 // Lazy-load OpenAI client to avoid build-time errors
@@ -111,13 +138,26 @@ export function getSentimentLabel(score: number): 'positive' | 'neutral' | 'nega
   return 'neutral';
 }
 
+// Returns Stackline-branded colors for sentiment labels
 export function getSentimentColor(label: string): string {
   switch (label) {
     case 'positive':
-      return '#22c55e';
+      return '#71c184'; // Stackline Success Green
     case 'negative':
-      return '#ef4444';
+      return '#ff534a'; // Stackline Danger Red
     default:
-      return '#6b7280';
+      return '#4E596A'; // Stackline Slate (neutral)
+  }
+}
+
+// Returns background colors with transparency for sentiment badges
+export function getSentimentBgColor(label: string): string {
+  switch (label) {
+    case 'positive':
+      return 'rgba(113, 193, 132, 0.15)';
+    case 'negative':
+      return 'rgba(255, 83, 74, 0.15)';
+    default:
+      return 'rgba(78, 89, 106, 0.15)';
   }
 }

@@ -1,9 +1,9 @@
 // Unified Scraper Service
 // Orchestrates all scrapers and handles de-duplication + sentiment analysis
-// v2: Reddit now uses Google Custom Search to bypass IP blocking
+// v3: Now uses SerpAPI for Instagram, X, and Meta; Removed MakeupAlley, Temptalia, News
 
 import { redditScraper } from './reddit';
-import { temptaliaScraper, makeupAlleyScraper, intoTheGlossScraper, allureScraper } from './blogs';
+import { instagramScraper, xScraper, metaScraper } from './social';
 import {
   BaseScraper,
   ScraperResult,
@@ -16,13 +16,14 @@ import { analyzeSentiment } from '../sentiment';
 // Re-export types
 export * from './types';
 
-// All available scrapers
+// All available scrapers - Updated sources
+// Removed: MakeupAlley, Temptalia, Into The Gloss, Allure, News
+// Added: Instagram, X (Twitter), Meta (Facebook)
 const ALL_SCRAPERS: BaseScraper[] = [
   redditScraper,
-  makeupAlleyScraper,
-  temptaliaScraper,
-  intoTheGlossScraper,
-  allureScraper,
+  instagramScraper,
+  xScraper,
+  metaScraper,
 ];
 
 // Default keywords for beauty brand monitoring
@@ -67,8 +68,8 @@ export async function scrapeAllSources(
     keywords = DEFAULT_KEYWORDS,
     brands = DEFAULT_BRANDS,
     sources,
-    maxResultsPerSource = 30,
-    daysBack = 7,
+    maxResultsPerSource = 20, // Updated: max 20 per source
+    daysBack = 30, // Updated: default to 30 days
     includeSentiment = true,
   } = options;
 
@@ -142,10 +143,13 @@ export async function scrapeAllSources(
     return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
   });
 
+  // Limit to max 20 total mentions
+  const limitedMentions = mentionsWithSentiment.slice(0, 20);
+
   return {
     success: errors.length < activeScrapers.length,
-    totalMentions: mentionsWithSentiment.length,
-    mentions: mentionsWithSentiment,
+    totalMentions: limitedMentions.length,
+    mentions: limitedMentions,
     bySource,
     bySentiment,
     errors,
@@ -232,16 +236,17 @@ export async function scrapeSingleSource(
   return scraper.scrape({
     keywords: options.keywords || DEFAULT_KEYWORDS,
     brands: options.brands || DEFAULT_BRANDS,
-    maxResults: options.maxResultsPerSource || 30,
-    daysBack: options.daysBack || 7,
+    maxResults: options.maxResultsPerSource || 20,
+    daysBack: options.daysBack || 30,
   });
 }
 
-// Generate mock data for demo purposes
+// Generate mock data for demo purposes - Updated with new sources
 export function getMockScrapedMentions(): ScrapedMention[] {
   const now = new Date();
 
   return [
+    // Reddit mentions
     {
       id: 'mock-reddit-1',
       source: 'Reddit',
@@ -276,87 +281,110 @@ export function getMockScrapedMentions(): ScrapedMention[] {
       contentHash: generateContentHash('elf power grip primer'),
       sentiment: { label: 'positive', score: 0.85 },
     },
+    // Instagram mentions
     {
-      id: 'mock-temptalia-1',
-      source: 'Temptalia',
-      sourceType: 'blog',
-      url: 'https://www.temptalia.com/revlon-colorstay-review',
-      title: 'Revlon ColorStay Foundation Review & Swatches',
-      snippet: 'Revlon\'s ColorStay Foundation has been a drugstore staple for years. In this review, I\'ll break down the formula, coverage, and how it performs throughout the day...',
+      id: 'mock-instagram-1',
+      source: 'Instagram',
+      sourceType: 'social',
+      url: 'https://instagram.com/p/example1',
+      title: 'Revlon One-Step Hair Dryer Tutorial',
+      snippet: 'Obsessed with my new Revlon One-Step Hair Dryer! Perfect salon blowout at home in 15 minutes. Game changer for busy mornings... #revlon #hairstyle',
+      matchedKeyword: 'Revlon',
+      publishedAt: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(),
+      scrapedAt: now.toISOString(),
+      engagement: { upvotes: 1520, comments: 87 },
+      author: '@beautyinfluencer',
+      category: 'Instagram',
+      isHighEngagement: true,
+      contentHash: generateContentHash('revlon one step hair dryer instagram'),
+      sentiment: { label: 'positive', score: 0.92 },
+    },
+    {
+      id: 'mock-instagram-2',
+      source: 'Instagram',
+      sourceType: 'social',
+      url: 'https://instagram.com/p/example2',
+      title: 'e.l.f. Halo Glow Review',
+      snippet: 'The viral e.l.f. Halo Glow lives up to the hype! Dewy finish without looking greasy. Perfect for the clean girl aesthetic... #elfcosmetics #haloglow',
+      matchedKeyword: 'e.l.f.',
+      publishedAt: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(),
+      scrapedAt: now.toISOString(),
+      engagement: { upvotes: 3400, comments: 156 },
+      author: '@skincarebabe',
+      category: 'Instagram',
+      isHighEngagement: true,
+      contentHash: generateContentHash('elf halo glow instagram'),
+      sentiment: { label: 'positive', score: 0.88 },
+    },
+    // X (Twitter) mentions
+    {
+      id: 'mock-x-1',
+      source: 'X',
+      sourceType: 'social',
+      url: 'https://x.com/user/status/example1',
+      title: 'Maybelline Sky High Mascara thoughts',
+      snippet: 'Finally tried the Maybelline Sky High mascara everyone\'s been talking about. It\'s good but not life changing? Maybe I hyped it up too much. Still prefer my Essence...',
+      matchedKeyword: 'Maybelline',
+      publishedAt: new Date(now.getTime() - 4 * 60 * 60 * 1000).toISOString(),
+      scrapedAt: now.toISOString(),
+      engagement: { upvotes: 89, comments: 23 },
+      author: '@beautytweeter',
+      category: 'X (Twitter)',
+      isHighEngagement: false,
+      contentHash: generateContentHash('maybelline sky high x'),
+      sentiment: { label: 'neutral', score: 0.05 },
+    },
+    {
+      id: 'mock-x-2',
+      source: 'X',
+      sourceType: 'social',
+      url: 'https://x.com/user/status/example2',
+      title: 'NYX Butter Gloss appreciation post',
+      snippet: 'NYX Butter Gloss is the GOAT of lip glosses and I will die on this hill. $5 for the perfect non-sticky formula?? Unmatched.',
+      matchedKeyword: 'NYX',
+      publishedAt: new Date(now.getTime() - 18 * 60 * 60 * 1000).toISOString(),
+      scrapedAt: now.toISOString(),
+      engagement: { upvotes: 456, comments: 67 },
+      author: '@makeupqueen',
+      category: 'X (Twitter)',
+      isHighEngagement: true,
+      contentHash: generateContentHash('nyx butter gloss x'),
+      sentiment: { label: 'positive', score: 0.95 },
+    },
+    // Meta (Facebook) mentions
+    {
+      id: 'mock-meta-1',
+      source: 'Meta',
+      sourceType: 'social',
+      url: 'https://facebook.com/groups/example/posts/123',
+      title: 'Revlon Super Lustrous Lipstick Swatches',
+      snippet: 'Sharing swatches of my Revlon Super Lustrous collection! These are such underrated lipsticks. The formula is creamy and the shades are beautiful...',
       matchedKeyword: 'Revlon',
       publishedAt: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
       scrapedAt: now.toISOString(),
-      engagement: { comments: 28 },
-      category: 'Beauty Review',
+      engagement: { upvotes: 234, comments: 45 },
+      author: 'Makeup Lovers Group',
+      category: 'Facebook',
       isHighEngagement: true,
-      contentHash: generateContentHash('revlon colorstay review temptalia'),
-      sentiment: { label: 'neutral', score: 0.15 },
-    },
-    {
-      id: 'mock-makeupalley-1',
-      source: 'MakeupAlley',
-      sourceType: 'review',
-      url: 'https://www.makeupalley.com/product/showreview.asp/example',
-      title: 'Maybelline Sky High Mascara - Mixed Feelings',
-      snippet: 'I wanted to love this mascara so much based on all the hype. While it does give length, I found it clumps after a few coats and smudges by mid-day...',
-      matchedKeyword: 'Maybelline',
-      publishedAt: new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString(),
-      scrapedAt: now.toISOString(),
-      engagement: { upvotes: 75, comments: 12 },
-      category: 'Product Review',
-      isHighEngagement: true,
-      contentHash: generateContentHash('maybelline sky high mascara'),
-      sentiment: { label: 'neutral', score: -0.1 },
-    },
-    {
-      id: 'mock-reddit-3',
-      source: 'Reddit',
-      sourceType: 'social',
-      url: 'https://reddit.com/r/BeautyGuruChatter/comments/example3',
-      title: 'NYX Butter Gloss vs Fenty Gloss Bomb - drugstore dupe?',
-      snippet: 'I picked up the NYX Butter Gloss after someone said it was a dupe for Fenty. It\'s definitely not the same formula but for the price it\'s a solid option...',
-      matchedKeyword: 'NYX',
-      publishedAt: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(),
-      scrapedAt: now.toISOString(),
-      engagement: { upvotes: 156, comments: 34 },
-      author: 'glossy_girl',
-      subreddit: 'BeautyGuruChatter',
-      isHighEngagement: true,
-      contentHash: generateContentHash('nyx butter gloss fenty'),
-      sentiment: { label: 'positive', score: 0.52 },
-    },
-    {
-      id: 'mock-allure-1',
-      source: 'Allure',
-      sourceType: 'blog',
-      url: 'https://www.allure.com/story/best-drugstore-foundations',
-      title: 'The 15 Best Drugstore Foundations According to Makeup Artists',
-      snippet: 'Makeup artists share their favorite affordable foundations, including picks from Revlon, Maybelline, and e.l.f. that rival high-end formulas...',
-      matchedKeyword: 'drugstore makeup',
-      publishedAt: new Date(now.getTime() - 72 * 60 * 60 * 1000).toISOString(),
-      scrapedAt: now.toISOString(),
-      engagement: {},
-      category: 'Beauty Magazine',
-      isHighEngagement: false,
-      contentHash: generateContentHash('best drugstore foundations allure'),
-      sentiment: { label: 'positive', score: 0.65 },
-    },
-    {
-      id: 'mock-itg-1',
-      source: 'Into The Gloss',
-      sourceType: 'blog',
-      url: 'https://intothegloss.com/drugstore-beauty-finds',
-      title: 'The Drugstore Beauty Products We Actually Use',
-      snippet: 'From the e.l.f. Camo Concealer to the Revlon One-Step Hair Dryer, these are the affordable products that have earned permanent spots in our routines...',
-      matchedKeyword: 'e.l.f.',
-      publishedAt: new Date(now.getTime() - 96 * 60 * 60 * 1000).toISOString(),
-      scrapedAt: now.toISOString(),
-      engagement: {},
-      author: 'ITG Editors',
-      category: 'Beauty Editorial',
-      isHighEngagement: false,
-      contentHash: generateContentHash('drugstore beauty into the gloss'),
+      contentHash: generateContentHash('revlon super lustrous facebook'),
       sentiment: { label: 'positive', score: 0.72 },
+    },
+    {
+      id: 'mock-meta-2',
+      source: 'Meta',
+      sourceType: 'social',
+      url: 'https://facebook.com/groups/example/posts/456',
+      title: 'Disappointed with e.l.f. purchase',
+      snippet: 'Bought the e.l.f. Camo Concealer based on recommendations but it oxidized so badly on my skin. Has anyone else had this issue? Looking for alternatives...',
+      matchedKeyword: 'e.l.f.',
+      publishedAt: new Date(now.getTime() - 36 * 60 * 60 * 1000).toISOString(),
+      scrapedAt: now.toISOString(),
+      engagement: { upvotes: 56, comments: 89 },
+      author: 'Budget Beauty Tips',
+      category: 'Facebook',
+      isHighEngagement: false,
+      contentHash: generateContentHash('elf camo concealer facebook'),
+      sentiment: { label: 'negative', score: -0.45 },
     },
   ];
 }
