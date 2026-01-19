@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { searchBrandVideos } from '@/lib/youtube';
-import { searchBrandNews } from '@/lib/newsApi';
 import { redditScraper } from '@/lib/scrapers/reddit';
-import { tiktokScraper } from '@/lib/scrapers/tiktok';
+import { instagramScraper, xScraper, metaScraper, tiktokScraper, youtubeScraper } from '@/lib/scrapers/social';
 import { getCacheKey, getCache, getStaleCache, setCache } from '@/lib/cache';
 
 // Cache TTL: 2 hours
@@ -130,121 +128,68 @@ export async function GET(request: NextRequest) {
     const signals: PurchaseIntentSignal[] = [];
     const keywords = BRAND_KEYWORDS[brand] || BRAND_KEYWORDS['Revlon'];
 
-    // Fetch from all sources in parallel
-    const [youtubeResults, newsResults, redditResults, tiktokResults] = await Promise.allSettled([
-      // YouTube
-      process.env.YOUTUBE_API_KEY
-        ? searchBrandVideos(keywords, days).catch(() => [])
-        : Promise.resolve([]),
-      // News
-      process.env.NEWS_API_KEY
-        ? searchBrandNews(keywords, days).catch(() => [])
-        : Promise.resolve([]),
-      // Reddit via Google Custom Search
-      redditScraper.scrape({
-        keywords: [brand],
-        brands: [],
-        maxResults: 20,
-        daysBack: days,
-      }).catch(() => ({ mentions: [] })),
-      // TikTok via Google Custom Search
-      tiktokScraper.scrape({
-        keywords: [brand],
-        brands: [],
-        maxResults: 20,
-        daysBack: days,
-      }).catch(() => ({ mentions: [] })),
+    // Scraper options
+    const scraperOptions = {
+      keywords: [brand],
+      brands: [],
+      maxResults: 10,
+      daysBack: days,
+    };
+
+    // Fetch from all 6 sources in parallel via SerpAPI
+    const [redditResults, instagramResults, xResults, metaResults, tiktokResults, youtubeResults] = await Promise.allSettled([
+      // Reddit
+      redditScraper.scrape(scraperOptions).catch(() => ({ mentions: [] })),
+      // Instagram via SerpAPI
+      instagramScraper.scrape(scraperOptions).catch(() => ({ mentions: [] })),
+      // X (Twitter) via SerpAPI
+      xScraper.scrape(scraperOptions).catch(() => ({ mentions: [] })),
+      // Meta (Facebook) via SerpAPI
+      metaScraper.scrape(scraperOptions).catch(() => ({ mentions: [] })),
+      // TikTok via SerpAPI
+      tiktokScraper.scrape(scraperOptions).catch(() => ({ mentions: [] })),
+      // YouTube via SerpAPI
+      youtubeScraper.scrape(scraperOptions).catch(() => ({ mentions: [] })),
     ]);
 
-    // Process YouTube results
-    if (youtubeResults.status === 'fulfilled' && Array.isArray(youtubeResults.value)) {
-      for (const video of youtubeResults.value) {
-        const text = `${video.title || ''} ${video.description || ''}`;
-        const intentType = detectIntentType(text);
+    // Helper function to process scraper results
+    const processScraperResults = (
+      results: PromiseSettledResult<any>,
+      sourceName: string,
+      sourceIcon: string,
+      idPrefix: string
+    ) => {
+      if (results.status === 'fulfilled') {
+        const result = results.value as { mentions?: any[] };
+        const mentions = result.mentions || [];
 
-        if (intentType) {
-          signals.push({
-            id: `yt_${video.id}`,
-            text: video.title?.slice(0, 150) || '',
-            source: 'YouTube',
-            sourceIcon: '▶️',
-            intentType,
-            product: extractProduct(text, brand),
-            timestamp: formatTimestamp(video.publishedAt),
-            url: video.url || `https://www.youtube.com/watch?v=${video.id}`,
-          });
+        for (const post of mentions) {
+          const text = `${post.title || ''} ${post.snippet || post.fullText || ''}`;
+          const intentType = detectIntentType(text);
+
+          if (intentType) {
+            signals.push({
+              id: `${idPrefix}_${post.id}`,
+              text: (post.title || post.snippet)?.slice(0, 150) || '',
+              source: sourceName,
+              sourceIcon,
+              intentType,
+              product: extractProduct(text, brand),
+              timestamp: formatTimestamp(post.publishedAt),
+              url: post.url,
+            });
+          }
         }
       }
-    }
+    };
 
-    // Process News results
-    if (newsResults.status === 'fulfilled' && Array.isArray(newsResults.value)) {
-      for (const article of newsResults.value) {
-        const text = `${article.title || ''} ${article.description || ''}`;
-        const intentType = detectIntentType(text);
-
-        if (intentType) {
-          signals.push({
-            id: `news_${Buffer.from(article.url || '').toString('base64').slice(0, 20)}`,
-            text: article.title?.slice(0, 150) || '',
-            source: 'News',
-            sourceIcon: '📰',
-            intentType,
-            product: extractProduct(text, brand),
-            timestamp: formatTimestamp(article.publishedAt),
-            url: article.url,
-          });
-        }
-      }
-    }
-
-    // Process Reddit results
-    if (redditResults.status === 'fulfilled') {
-      const result = redditResults.value as { mentions?: any[] };
-      const mentions = result.mentions || [];
-
-      for (const post of mentions) {
-        const text = `${post.title || ''} ${post.snippet || post.fullText || ''}`;
-        const intentType = detectIntentType(text);
-
-        if (intentType) {
-          signals.push({
-            id: `reddit_${post.id}`,
-            text: (post.title || post.snippet)?.slice(0, 150) || '',
-            source: 'Reddit',
-            sourceIcon: '💬',
-            intentType,
-            product: extractProduct(text, brand),
-            timestamp: formatTimestamp(post.publishedAt),
-            url: post.url,
-          });
-        }
-      }
-    }
-
-    // Process TikTok results
-    if (tiktokResults.status === 'fulfilled') {
-      const result = tiktokResults.value as { mentions?: any[] };
-      const mentions = result.mentions || [];
-
-      for (const post of mentions) {
-        const text = `${post.title || ''} ${post.snippet || post.fullText || ''}`;
-        const intentType = detectIntentType(text);
-
-        if (intentType) {
-          signals.push({
-            id: `tiktok_${post.id}`,
-            text: (post.title || post.snippet)?.slice(0, 150) || '',
-            source: 'TikTok',
-            sourceIcon: '🎵',
-            intentType,
-            product: extractProduct(text, brand),
-            timestamp: formatTimestamp(post.publishedAt),
-            url: post.url,
-          });
-        }
-      }
-    }
+    // Process all 6 sources
+    processScraperResults(redditResults, 'Reddit', '💬', 'reddit');
+    processScraperResults(instagramResults, 'Instagram', '📸', 'instagram');
+    processScraperResults(xResults, 'X', '𝕏', 'x');
+    processScraperResults(metaResults, 'Meta', '👤', 'meta');
+    processScraperResults(tiktokResults, 'TikTok', '🎵', 'tiktok');
+    processScraperResults(youtubeResults, 'YouTube', '▶️', 'youtube');
 
     // Sort by intent type priority (purchase > consideration > research)
     const intentPriority = { purchase: 0, consideration: 1, research: 2 };
