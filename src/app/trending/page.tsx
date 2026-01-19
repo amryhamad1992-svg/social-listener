@@ -318,7 +318,7 @@ export default function TrendingPage() {
           </div>
 
           {/* Google Search Trends */}
-          <SearchTrends />
+          <SearchTrends days={days} />
 
           {/* Brand Keyword Explorer */}
           <BrandKeywordExplorer days={days} />

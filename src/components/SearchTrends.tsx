@@ -49,8 +49,8 @@ const COLORS = {
 };
 
 const DAYS_OPTIONS = [
+  { value: '1d', label: 'Yesterday', days: 1 },
   { value: '7d', label: '7 days', days: 7 },
-  { value: '14d', label: '14 days', days: 14 },
   { value: '30d', label: '30 days', days: 30 },
 ];
 
@@ -63,7 +63,11 @@ const COUNTRIES = [
   { code: 'ES', name: 'Spain', flag: '🇪🇸' },
 ];
 
-export function SearchTrends() {
+interface SearchTrendsProps {
+  days?: number; // Controlled by parent page's date filter
+}
+
+export function SearchTrends({ days: parentDays }: SearchTrendsProps) {
   const { settings, isLoaded } = useSettings();
 
   // Map settings brand to display brand name
@@ -76,9 +80,17 @@ export function SearchTrends() {
     return brandMap[settings.selectedBrand] || 'Revlon';
   };
 
+  // Convert parent days to timeRange format
+  const daysToTimeRange = (d: number | undefined): string => {
+    if (d === 1) return '1d';
+    if (d === 7) return '7d';
+    if (d === 30) return '30d';
+    return '7d'; // default
+  };
+
   const [selectedBrand, setSelectedBrand] = useState('Revlon');
   const [view, setView] = useState<'branded' | 'generic'>('branded');
-  const [timeRange, setTimeRange] = useState('90d');
+  const [timeRange, setTimeRange] = useState(() => daysToTimeRange(parentDays));
   const [country, setCountry] = useState('US');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +103,13 @@ export function SearchTrends() {
       setSelectedBrand(getBrandFromSettings());
     }
   }, [isLoaded, settings.selectedBrand]);
+
+  // Sync timeRange when parent days changes
+  useEffect(() => {
+    if (parentDays !== undefined) {
+      setTimeRange(daysToTimeRange(parentDays));
+    }
+  }, [parentDays]);
 
   const fetchTrends = useCallback(async () => {
     setLoading(true);
