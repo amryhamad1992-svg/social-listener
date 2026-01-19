@@ -98,8 +98,8 @@ export function ShareOfVoice() {
           onChange={(e) => setDays(parseInt(e.target.value, 10))}
           className="px-2 py-1 text-[11px] border border-[#E2E8F0] rounded bg-white focus:outline-none focus:border-[#0EA5E9]"
         >
+          <option value={1}>Yesterday</option>
           <option value={7}>7 days</option>
-          <option value={14}>14 days</option>
           <option value={30}>30 days</option>
         </select>
       </div>

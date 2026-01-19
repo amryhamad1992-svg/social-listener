@@ -138,8 +138,8 @@ export default function DashboardPage() {
               className="text-[13px] text-[#1E293B] bg-transparent border-none focus:outline-none cursor-pointer font-medium"
               style={{ fontFamily: 'Roboto, sans-serif' }}
             >
+              <option value={1}>Yesterday</option>
               <option value={7}>Last 7 days</option>
-              <option value={14}>Last 14 days</option>
               <option value={30}>Last 30 days</option>
             </select>
           </div>
