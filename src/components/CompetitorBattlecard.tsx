@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
-import { Trophy, TrendingUp, TrendingDown, Minus, MessageSquare, Heart, MoreHorizontal } from 'lucide-react';
+import { useMemo, useEffect, useState } from 'react';
+import { Trophy, TrendingUp, TrendingDown, Minus, MessageSquare, Heart, MoreHorizontal, Loader2 } from 'lucide-react';
 import { useSettings } from '@/lib/SettingsContext';
 
 // Stackline Official Colors
@@ -34,49 +34,50 @@ interface BrandMetrics {
   weakness: string;
 }
 
-function getBattlecardData(): BrandMetrics[] {
+// Default data when API is loading or fails
+function getDefaultBattlecardData(): BrandMetrics[] {
   return [
     {
       id: 'revlon',
       name: 'Revlon',
       emoji: '💄',
-      shareOfVoice: 38,
-      sovChange: 2,
-      sentiment: 0.68,
-      sentimentChange: 0.03,
-      mentions: 2450,
-      engagement: 45200,
-      topProduct: 'One-Step Hair Dryer',
-      strength: 'Hair tools dominance',
-      weakness: 'Foundation perception',
+      shareOfVoice: 33,
+      sovChange: 0,
+      sentiment: 0,
+      sentimentChange: 0,
+      mentions: 0,
+      engagement: 0,
+      topProduct: 'ColorStay Foundation',
+      strength: 'Loading...',
+      weakness: 'Loading...',
     },
     {
       id: 'elf',
       name: 'e.l.f.',
       emoji: '✨',
-      shareOfVoice: 42,
-      sovChange: 8,
-      sentiment: 0.78,
-      sentimentChange: 0.05,
-      mentions: 3120,
-      engagement: 68400,
+      shareOfVoice: 34,
+      sovChange: 0,
+      sentiment: 0,
+      sentimentChange: 0,
+      mentions: 0,
+      engagement: 0,
       topProduct: 'Power Grip Primer',
-      strength: 'Value perception, viral moments',
-      weakness: 'Limited shade ranges',
+      strength: 'Loading...',
+      weakness: 'Loading...',
     },
     {
       id: 'maybelline',
       name: 'Maybelline',
       emoji: '💋',
-      shareOfVoice: 20,
-      sovChange: -6,
-      sentiment: 0.65,
-      sentimentChange: -0.02,
-      mentions: 1680,
-      engagement: 32100,
+      shareOfVoice: 33,
+      sovChange: 0,
+      sentiment: 0,
+      sentimentChange: 0,
+      mentions: 0,
+      engagement: 0,
       topProduct: 'Sky High Mascara',
-      strength: 'Mascara category leader',
-      weakness: 'Losing ground to e.l.f.',
+      strength: 'Loading...',
+      weakness: 'Loading...',
     },
   ];
 }
@@ -111,7 +112,28 @@ interface CompetitorBattlecardProps {
 
 export function CompetitorBattlecard({ days = 30 }: CompetitorBattlecardProps) {
   const { settings } = useSettings();
-  const data = useMemo(() => getBattlecardData(), []);
+  const [data, setData] = useState<BrandMetrics[]>(getDefaultBattlecardData());
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCompetitorData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/competitor-comparison?days=${days}`);
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          setData(result.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch competitor data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCompetitorData();
+  }, [days]);
 
   // Find the leader (highest share of voice)
   const leader = useMemo(() => {
@@ -131,10 +153,17 @@ export function CompetitorBattlecard({ days = 30 }: CompetitorBattlecardProps) {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 px-2 py-1 rounded" style={{ backgroundColor: 'rgba(3, 20, 37, 0.08)' }}>
-            <Trophy className="w-3 h-3" style={{ color: COLORS.warning }} />
-            <span className="text-[10px] font-medium" style={{ color: COLORS.carbonIndigo }}>Leader: {leader.emoji} {leader.name}</span>
-          </div>
+          {loading ? (
+            <div className="flex items-center gap-2 px-2 py-1 rounded" style={{ backgroundColor: 'rgba(3, 20, 37, 0.08)' }}>
+              <Loader2 className="w-3 h-3 animate-spin" style={{ color: COLORS.slate }} />
+              <span className="text-[10px] font-medium" style={{ color: COLORS.slate }}>Loading...</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 px-2 py-1 rounded" style={{ backgroundColor: 'rgba(3, 20, 37, 0.08)' }}>
+              <Trophy className="w-3 h-3" style={{ color: COLORS.warning }} />
+              <span className="text-[10px] font-medium" style={{ color: COLORS.carbonIndigo }}>Leader: {leader.emoji} {leader.name}</span>
+            </div>
+          )}
           <button className="w-7 h-7 rounded flex items-center justify-center hover:bg-gray-100 transition-colors">
             <MoreHorizontal className="w-4 h-4" style={{ color: COLORS.slate }} />
           </button>

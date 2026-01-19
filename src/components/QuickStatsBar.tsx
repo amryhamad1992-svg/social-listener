@@ -29,40 +29,118 @@ interface QuickStat {
   bgColor: string;
 }
 
-// Quick stats by brand - using Stackline colors
-function getQuickStats(brand: string): QuickStat[] {
-  const statsByBrand: Record<string, QuickStat[]> = {
-    'Revlon': [
-      { label: 'Today', value: '127', change: 23, icon: <MessageSquare className="w-4 h-4" />, color: COLORS.carbonIndigo, bgColor: COLORS.productHeader },
-      { label: 'Positive', value: '72%', change: 5, icon: <Smile className="w-4 h-4" />, color: COLORS.teal, bgColor: 'rgba(22, 148, 155, 0.1)' },
-      { label: 'vs Yesterday', value: '+23%', icon: <TrendingUp className="w-4 h-4" />, color: COLORS.success, bgColor: 'rgba(113, 193, 132, 0.1)' },
-      { label: 'Trending', value: '2', icon: <Flame className="w-4 h-4" />, color: COLORS.warning, bgColor: 'rgba(255, 189, 50, 0.1)' },
-      { label: 'Share of Voice', value: '38%', change: 2, icon: <BarChart3 className="w-4 h-4" />, color: COLORS.blue, bgColor: 'rgba(70, 168, 246, 0.1)' },
-    ],
-    'e.l.f.': [
-      { label: 'Today', value: '312', change: 45, icon: <MessageSquare className="w-4 h-4" />, color: COLORS.carbonIndigo, bgColor: COLORS.productHeader },
-      { label: 'Positive', value: '78%', change: 8, icon: <Smile className="w-4 h-4" />, color: COLORS.teal, bgColor: 'rgba(22, 148, 155, 0.1)' },
-      { label: 'vs Yesterday', value: '+45%', icon: <TrendingUp className="w-4 h-4" />, color: COLORS.success, bgColor: 'rgba(113, 193, 132, 0.1)' },
-      { label: 'Trending', value: '5', icon: <Flame className="w-4 h-4" />, color: COLORS.warning, bgColor: 'rgba(255, 189, 50, 0.1)' },
-      { label: 'Share of Voice', value: '42%', change: 8, icon: <BarChart3 className="w-4 h-4" />, color: COLORS.blue, bgColor: 'rgba(70, 168, 246, 0.1)' },
-    ],
-    'Maybelline': [
-      { label: 'Today', value: '89', change: -12, icon: <MessageSquare className="w-4 h-4" />, color: COLORS.carbonIndigo, bgColor: COLORS.productHeader },
-      { label: 'Positive', value: '65%', change: -2, icon: <Smile className="w-4 h-4" />, color: COLORS.teal, bgColor: 'rgba(22, 148, 155, 0.1)' },
-      { label: 'vs Yesterday', value: '-12%', icon: <TrendingDown className="w-4 h-4" />, color: COLORS.slate, bgColor: COLORS.productHeader },
-      { label: 'Trending', value: '1', icon: <Flame className="w-4 h-4" />, color: COLORS.warning, bgColor: 'rgba(255, 189, 50, 0.1)' },
-      { label: 'Share of Voice', value: '20%', change: -6, icon: <BarChart3 className="w-4 h-4" />, color: COLORS.blue, bgColor: 'rgba(70, 168, 246, 0.1)' },
-    ],
+interface QuickStatsBarProps {
+  data?: {
+    kpis: {
+      totalMentions: number;
+      mentionsChange: number;
+      avgSentiment: number;
+      sentimentChange: number;
+      trendingTopicsCount: number;
+      topSource: string;
+      positiveCount: number;
+      neutralCount: number;
+      negativeCount: number;
+      totalEngagement?: number;
+      highEngagementCount?: number;
+    };
+    sentimentTrend: Array<{
+      date: string;
+      sentiment: number;
+      mentions: number;
+    }>;
   };
-
-  return statsByBrand[brand] || statsByBrand['Revlon'];
+  isLiveData?: boolean;
 }
 
-export function QuickStatsBar() {
+// Generate stats from real data
+function generateStatsFromData(data: QuickStatsBarProps['data'], brandName: string): QuickStat[] {
+  if (!data) {
+    return getDefaultStats(brandName);
+  }
+
+  const { kpis, sentimentTrend } = data;
+
+  // Today's mentions (last day in trend data)
+  const todayMentions = sentimentTrend.length > 0
+    ? sentimentTrend[sentimentTrend.length - 1].mentions
+    : kpis.totalMentions;
+
+  // Yesterday's mentions (second to last day)
+  const yesterdayMentions = sentimentTrend.length > 1
+    ? sentimentTrend[sentimentTrend.length - 2].mentions
+    : todayMentions;
+
+  // Calculate change vs yesterday
+  const vsYesterdayChange = yesterdayMentions > 0
+    ? Math.round(((todayMentions - yesterdayMentions) / yesterdayMentions) * 100)
+    : 0;
+
+  // Positive percentage
+  const positivePercent = kpis.totalMentions > 0
+    ? Math.round((kpis.positiveCount / kpis.totalMentions) * 100)
+    : 0;
+
+  // Calculate sentiment change as percentage
+  const sentimentChangePercent = Math.round(kpis.sentimentChange * 100);
+
+  return [
+    {
+      label: 'Today',
+      value: todayMentions.toString(),
+      change: vsYesterdayChange > 0 ? vsYesterdayChange : undefined,
+      icon: <MessageSquare className="w-4 h-4" />,
+      color: COLORS.carbonIndigo,
+      bgColor: COLORS.productHeader
+    },
+    {
+      label: 'Positive',
+      value: `${positivePercent}%`,
+      change: sentimentChangePercent !== 0 ? sentimentChangePercent : undefined,
+      icon: <Smile className="w-4 h-4" />,
+      color: COLORS.teal,
+      bgColor: 'rgba(22, 148, 155, 0.1)'
+    },
+    {
+      label: 'vs Yesterday',
+      value: `${vsYesterdayChange >= 0 ? '+' : ''}${vsYesterdayChange}%`,
+      icon: vsYesterdayChange >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />,
+      color: vsYesterdayChange >= 0 ? COLORS.success : COLORS.slate,
+      bgColor: vsYesterdayChange >= 0 ? 'rgba(113, 193, 132, 0.1)' : COLORS.productHeader
+    },
+    {
+      label: 'Trending',
+      value: kpis.trendingTopicsCount.toString(),
+      icon: <Flame className="w-4 h-4" />,
+      color: COLORS.warning,
+      bgColor: 'rgba(255, 189, 50, 0.1)'
+    },
+    {
+      label: 'Top Source',
+      value: kpis.topSource,
+      icon: <BarChart3 className="w-4 h-4" />,
+      color: COLORS.blue,
+      bgColor: 'rgba(70, 168, 246, 0.1)'
+    },
+  ];
+}
+
+// Default stats when no data is available
+function getDefaultStats(brand: string): QuickStat[] {
+  return [
+    { label: 'Today', value: '--', icon: <MessageSquare className="w-4 h-4" />, color: COLORS.carbonIndigo, bgColor: COLORS.productHeader },
+    { label: 'Positive', value: '--%', icon: <Smile className="w-4 h-4" />, color: COLORS.teal, bgColor: 'rgba(22, 148, 155, 0.1)' },
+    { label: 'vs Yesterday', value: '--%', icon: <TrendingUp className="w-4 h-4" />, color: COLORS.success, bgColor: 'rgba(113, 193, 132, 0.1)' },
+    { label: 'Trending', value: '--', icon: <Flame className="w-4 h-4" />, color: COLORS.warning, bgColor: 'rgba(255, 189, 50, 0.1)' },
+    { label: 'Top Source', value: 'N/A', icon: <BarChart3 className="w-4 h-4" />, color: COLORS.blue, bgColor: 'rgba(70, 168, 246, 0.1)' },
+  ];
+}
+
+export function QuickStatsBar({ data, isLiveData = false }: QuickStatsBarProps) {
   const { getBrandName } = useSettings();
   const brandName = getBrandName();
 
-  const stats = useMemo(() => getQuickStats(brandName), [brandName]);
+  const stats = useMemo(() => generateStatsFromData(data, brandName), [data, brandName]);
 
   return (
     <div className="bg-white rounded-lg px-5 py-4 shadow-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
@@ -73,9 +151,9 @@ export function QuickStatsBar() {
             <Activity className="w-4 h-4" style={{ color: COLORS.carbonIndigo }} />
             <span className="text-[13px] font-semibold" style={{ color: COLORS.carbonIndigo }}>{brandName}</span>
           </div>
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-full" style={{ backgroundColor: 'rgba(113, 193, 132, 0.15)' }}>
-            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: COLORS.success }} />
-            <span className="text-[10px] font-medium" style={{ color: COLORS.success }}>Live</span>
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-full" style={{ backgroundColor: isLiveData ? 'rgba(113, 193, 132, 0.15)' : 'rgba(78, 89, 106, 0.15)' }}>
+            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: isLiveData ? COLORS.success : COLORS.slate }} />
+            <span className="text-[10px] font-medium" style={{ color: isLiveData ? COLORS.success : COLORS.slate }}>{isLiveData ? 'Live' : 'Demo'}</span>
           </div>
         </div>
 

@@ -23,6 +23,8 @@ interface DashboardData {
     positiveCount: number;
     neutralCount: number;
     negativeCount: number;
+    totalEngagement?: number;
+    highEngagementCount?: number;
   };
   sentimentTrend: Array<{
     date: string;
@@ -45,6 +47,7 @@ interface DashboardData {
     createdAt: string;
     url: string | null;
   }>;
+  bySource?: Record<string, number>;
 }
 
 export default function DashboardPage() {
@@ -55,6 +58,7 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
   const [days, setDays] = useState(7);
   const [settingsApplied, setSettingsApplied] = useState(false);
+  const [isLiveData, setIsLiveData] = useState(false);
 
   // Apply default days from settings once loaded
   useEffect(() => {
@@ -72,7 +76,8 @@ export default function DashboardPage() {
 
   const fetchDashboard = async () => {
     try {
-      const response = await fetch(`/api/dashboard?days=${days}`);
+      const brandName = getBrandName();
+      const response = await fetch(`/api/dashboard?days=${days}&brand=${encodeURIComponent(brandName)}`);
       const result = await response.json();
 
       if (!result.success) {
@@ -85,6 +90,7 @@ export default function DashboardPage() {
       }
 
       setData(result.data);
+      setIsLiveData(result.isLiveData || false);
     } catch {
       setError('Failed to load dashboard');
     } finally {
@@ -151,13 +157,22 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Stats Bar - Live Metrics */}
-      <QuickStatsBar />
+      <QuickStatsBar
+        data={data ? { kpis: data.kpis, sentimentTrend: data.sentimentTrend } : undefined}
+        isLiveData={isLiveData}
+      />
 
       {/* Executive Summary - AI Insights */}
-      <ExecutiveSummary days={days} />
+      <ExecutiveSummary
+        days={days}
+        data={data ? { kpis: data.kpis, sentimentTrend: data.sentimentTrend, bySource: data.bySource, recentMentions: data.recentMentions } : undefined}
+      />
 
       {/* Spike Alerts - Full Width for Priority */}
-      <SpikeAlerts days={days} />
+      <SpikeAlerts
+        days={days}
+        data={data ? { kpis: data.kpis, sentimentTrend: data.sentimentTrend, bySource: data.bySource, recentMentions: data.recentMentions } : undefined}
+      />
 
       {/* KPI Cards with Sparklines */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

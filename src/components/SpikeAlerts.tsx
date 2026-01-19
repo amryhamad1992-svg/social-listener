@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { AlertTriangle, TrendingUp, X, ExternalLink, Clock, Zap } from 'lucide-react';
 import { useSettings } from '@/lib/SettingsContext';
 
@@ -17,126 +17,145 @@ interface Alert {
   dismissed: boolean;
 }
 
-// Generate alerts based on brand
-function getAlerts(brand: string): Alert[] {
-  const alertsByBrand: Record<string, Alert[]> = {
-    'Revlon': [
-      {
-        id: '1',
-        type: 'spike',
-        severity: 'high',
-        title: 'Mention Spike Detected',
-        description: 'Viral TikTok video featuring One-Step Hair Dryer driving massive engagement',
-        metric: 'Mentions',
-        change: '+340%',
-        timestamp: '2 hours ago',
-        source: 'TikTok',
-        dismissed: false,
-      },
-      {
-        id: '2',
-        type: 'sentiment_shift',
-        severity: 'medium',
-        title: 'Positive Sentiment Surge',
-        description: 'ColorStay Foundation trending in "drugstore dupes" conversations',
-        metric: 'Sentiment',
-        change: '+12%',
-        timestamp: '5 hours ago',
-        source: 'Reddit',
-        dismissed: false,
-      },
-      {
-        id: '3',
-        type: 'trending',
-        severity: 'low',
-        title: 'New Trending Topic',
-        description: '"Revlon lip liner" appearing in top beauty searches',
-        metric: 'Search Volume',
-        change: '+85%',
-        timestamp: '1 day ago',
-        source: 'Google Trends',
-        dismissed: false,
-      },
-    ],
-    'e.l.f.': [
-      {
-        id: '1',
-        type: 'spike',
-        severity: 'high',
-        title: 'Viral Moment Detected',
-        description: 'Halo Glow featured in viral "Get Ready With Me" with 2.3M views',
-        metric: 'Mentions',
-        change: '+520%',
-        timestamp: '1 hour ago',
-        source: 'TikTok',
-        dismissed: false,
-      },
-      {
-        id: '2',
-        type: 'trending',
-        severity: 'high',
-        title: 'Dupe Alert Trending',
-        description: 'Power Grip Primer compared to Charlotte Tilbury in 50+ posts',
-        metric: 'Comparisons',
-        change: '+280%',
-        timestamp: '3 hours ago',
-        source: 'YouTube',
-        dismissed: false,
-      },
-      {
-        id: '3',
-        type: 'sentiment_shift',
-        severity: 'medium',
-        title: 'Stock Concerns Rising',
-        description: 'Increase in "out of stock" complaints for Bronzing Drops',
-        metric: 'Negative Mentions',
-        change: '+45%',
-        timestamp: '6 hours ago',
-        source: 'Twitter',
-        dismissed: false,
-      },
-    ],
-    'Maybelline': [
-      {
-        id: '1',
-        type: 'spike',
-        severity: 'medium',
-        title: 'Influencer Mention',
-        description: 'Major beauty YouTuber (1.2M subs) featured Sky High Mascara',
-        metric: 'Reach',
-        change: '+180%',
-        timestamp: '4 hours ago',
-        source: 'YouTube',
-        dismissed: false,
-      },
-      {
-        id: '2',
-        type: 'sentiment_shift',
-        severity: 'low',
-        title: 'Sentiment Improving',
-        description: 'Fit Me foundation shade range discussions turning positive',
-        metric: 'Sentiment',
-        change: '+8%',
-        timestamp: '1 day ago',
-        source: 'Reddit',
-        dismissed: false,
-      },
-      {
-        id: '3',
-        type: 'trending',
-        severity: 'medium',
-        title: 'Competitor Comparison',
-        description: 'Vinyl Ink vs e.l.f. Lip Oil comparison trending',
-        metric: 'Mentions',
-        change: '+95%',
-        timestamp: '8 hours ago',
-        source: 'TikTok',
-        dismissed: false,
-      },
-    ],
+interface SpikeAlertsData {
+  kpis: {
+    totalMentions: number;
+    mentionsChange: number;
+    avgSentiment: number;
+    sentimentChange: number;
+    trendingTopicsCount: number;
+    topSource: string;
+    positiveCount: number;
+    neutralCount: number;
+    negativeCount: number;
+    highEngagementCount?: number;
   };
+  sentimentTrend: Array<{
+    date: string;
+    sentiment: number;
+    mentions: number;
+  }>;
+  bySource?: Record<string, number>;
+  recentMentions?: Array<{
+    title: string;
+    source: string;
+    sentiment: string | null;
+    score: number;
+    url?: string | null;
+  }>;
+}
 
-  return alertsByBrand[brand] || alertsByBrand['Revlon'];
+// Generate alerts from real data
+function generateAlertsFromData(data: SpikeAlertsData | undefined, brand: string): Alert[] {
+  if (!data) {
+    return [];
+  }
+
+  const { kpis, sentimentTrend, bySource, recentMentions } = data;
+  const alerts: Alert[] = [];
+  let alertId = 1;
+
+  // 1. Check for mention spike (day-over-day)
+  if (sentimentTrend.length >= 2) {
+    const today = sentimentTrend[sentimentTrend.length - 1];
+    const yesterday = sentimentTrend[sentimentTrend.length - 2];
+
+    if (yesterday.mentions > 0) {
+      const dayChange = ((today.mentions - yesterday.mentions) / yesterday.mentions) * 100;
+
+      if (dayChange > 50) {
+        alerts.push({
+          id: String(alertId++),
+          type: 'spike',
+          severity: dayChange > 100 ? 'high' : 'medium',
+          title: 'Mention Spike Detected',
+          description: `${brand} mentions increased significantly today vs yesterday`,
+          metric: 'Mentions',
+          change: `+${Math.round(dayChange)}%`,
+          timestamp: 'Today',
+          source: kpis.topSource || 'Multiple',
+          dismissed: false,
+        });
+      }
+    }
+  }
+
+  // 2. Check for sentiment shift
+  if (kpis.sentimentChange !== 0) {
+    const sentimentChangePercent = Math.round(kpis.sentimentChange * 100);
+
+    if (Math.abs(sentimentChangePercent) > 10) {
+      const isPositive = sentimentChangePercent > 0;
+      alerts.push({
+        id: String(alertId++),
+        type: 'sentiment_shift',
+        severity: Math.abs(sentimentChangePercent) > 20 ? 'high' : 'medium',
+        title: isPositive ? 'Positive Sentiment Surge' : 'Sentiment Decline Detected',
+        description: isPositive
+          ? `${brand} sentiment has improved significantly`
+          : `${brand} sentiment has declined - review recent mentions`,
+        metric: 'Sentiment',
+        change: `${sentimentChangePercent > 0 ? '+' : ''}${sentimentChangePercent}%`,
+        timestamp: 'Recent',
+        source: kpis.topSource || 'Multiple',
+        dismissed: false,
+      });
+    }
+  }
+
+  // 3. Check for high negative sentiment
+  const negativePercent = kpis.totalMentions > 0
+    ? Math.round((kpis.negativeCount / kpis.totalMentions) * 100)
+    : 0;
+
+  if (negativePercent > 30) {
+    alerts.push({
+      id: String(alertId++),
+      type: 'crisis',
+      severity: negativePercent > 50 ? 'high' : 'medium',
+      title: 'High Negative Sentiment',
+      description: `${negativePercent}% of ${brand} mentions are negative - review and respond`,
+      metric: 'Negative Mentions',
+      change: `${negativePercent}%`,
+      timestamp: 'Active',
+      source: 'All Sources',
+      dismissed: false,
+    });
+  }
+
+  // 4. Check for high engagement content
+  if (kpis.highEngagementCount && kpis.highEngagementCount > 0) {
+    alerts.push({
+      id: String(alertId++),
+      type: 'trending',
+      severity: kpis.highEngagementCount > 5 ? 'high' : 'low',
+      title: 'High Engagement Content',
+      description: `${kpis.highEngagementCount} ${brand} mention${kpis.highEngagementCount > 1 ? 's' : ''} with unusually high engagement`,
+      metric: 'Engagement',
+      change: 'High',
+      timestamp: 'Recent',
+      source: kpis.topSource || 'Multiple',
+      dismissed: false,
+    });
+  }
+
+  // 5. Check for trending topics
+  if (kpis.trendingTopicsCount > 2) {
+    alerts.push({
+      id: String(alertId++),
+      type: 'trending',
+      severity: 'low',
+      title: 'Multiple Trending Topics',
+      description: `${kpis.trendingTopicsCount} trending topics detected for ${brand}`,
+      metric: 'Topics',
+      change: `${kpis.trendingTopicsCount}`,
+      timestamp: 'Active',
+      source: 'All Sources',
+      dismissed: false,
+    });
+  }
+
+  return alerts;
 }
 
 const severityStyles = {
@@ -169,12 +188,24 @@ const typeIcons = {
 
 interface SpikeAlertsProps {
   days?: number;
+  data?: SpikeAlertsData;
 }
 
-export function SpikeAlerts({ days = 7 }: SpikeAlertsProps) {
+export function SpikeAlerts({ days = 7, data }: SpikeAlertsProps) {
   const { getBrandName } = useSettings();
   const brandName = getBrandName();
-  const [alerts, setAlerts] = useState(() => getAlerts(brandName));
+
+  // Generate alerts from data
+  const generatedAlerts = useMemo(() => {
+    return generateAlertsFromData(data, brandName);
+  }, [data, brandName]);
+
+  const [alerts, setAlerts] = useState<Alert[]>(generatedAlerts);
+
+  // Update alerts when data changes
+  useEffect(() => {
+    setAlerts(generatedAlerts);
+  }, [generatedAlerts]);
 
   const dismissAlert = (id: string) => {
     setAlerts(prev => prev.map(a => a.id === id ? { ...a, dismissed: true } : a));

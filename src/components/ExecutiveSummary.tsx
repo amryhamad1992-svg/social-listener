@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Sparkles, TrendingUp, TrendingDown, AlertTriangle, Zap, MoreHorizontal } from 'lucide-react';
 import { useSettings } from '@/lib/SettingsContext';
 
@@ -24,103 +24,163 @@ interface Insight {
   text: string;
 }
 
-// Generate insights based on brand and time period
-function generateInsights(brand: string, days: number): Insight[] {
-  const brandInsights: Record<string, Record<number, Insight[]>> = {
-    'Revlon': {
-      7: [
-        { type: 'positive', icon: <TrendingUp className="w-4 h-4" />, text: 'Mentions up 23% this week, driven by viral TikTok reviews of ColorStay Foundation' },
-        { type: 'positive', icon: <Zap className="w-4 h-4" />, text: 'Sentiment improved from 0.62 to 0.71 following new product launch announcements' },
-        { type: 'neutral', icon: <Sparkles className="w-4 h-4" />, text: 'Top performing content: "Best Drugstore Lipsticks 2025" video (45K views, 92% positive)' },
-        { type: 'alert', icon: <AlertTriangle className="w-4 h-4" />, text: 'Monitor: Increased discussion around pricing compared to e.l.f. alternatives' },
-      ],
-      14: [
-        { type: 'positive', icon: <TrendingUp className="w-4 h-4" />, text: 'Brand visibility increased 18% over 2 weeks across YouTube and news outlets' },
-        { type: 'positive', icon: <Zap className="w-4 h-4" />, text: 'One-Step Hair Dryer continues to drive 35% of all brand mentions' },
-        { type: 'neutral', icon: <Sparkles className="w-4 h-4" />, text: 'Super Lustrous lipstick line seeing renewed interest (+12% searches)' },
-        { type: 'alert', icon: <AlertTriangle className="w-4 h-4" />, text: 'Competitor alert: Maybelline launched similar product line' },
-      ],
-      30: [
-        { type: 'positive', icon: <TrendingUp className="w-4 h-4" />, text: 'Monthly mentions reached 2.4K, highest since Q3 2024' },
-        { type: 'positive', icon: <Zap className="w-4 h-4" />, text: 'Share of voice improved to 42% in drugstore beauty category' },
-        { type: 'neutral', icon: <Sparkles className="w-4 h-4" />, text: 'Hair tools category now represents 28% of total brand discussion' },
-        { type: 'negative', icon: <TrendingDown className="w-4 h-4" />, text: 'Foundation category mentions down 8% month-over-month' },
-      ],
-      90: [
-        { type: 'positive', icon: <TrendingUp className="w-4 h-4" />, text: 'Quarterly brand health score: 7.8/10 (up from 7.2 last quarter)' },
-        { type: 'positive', icon: <Zap className="w-4 h-4" />, text: 'Successfully maintained #2 position in drugstore beauty mentions' },
-        { type: 'neutral', icon: <Sparkles className="w-4 h-4" />, text: 'Key growth driver: Hair tools expanded audience by 45%' },
-        { type: 'alert', icon: <AlertTriangle className="w-4 h-4" />, text: 'Opportunity: Lip category underperforming vs. competitors' },
-      ],
-    },
-    'e.l.f.': {
-      7: [
-        { type: 'positive', icon: <TrendingUp className="w-4 h-4" />, text: 'Explosive week: Mentions up 45% driven by Halo Glow viral moment' },
-        { type: 'positive', icon: <Zap className="w-4 h-4" />, text: 'Highest sentiment score (0.78) among all tracked brands this week' },
-        { type: 'neutral', icon: <Sparkles className="w-4 h-4" />, text: 'Power Grip Primer mentioned as "Charlotte Tilbury dupe" in 340+ posts' },
-        { type: 'positive', icon: <TrendingUp className="w-4 h-4" />, text: 'TikTok engagement: 2.8M views on #elfcosmetics this week' },
-      ],
-      14: [
-        { type: 'positive', icon: <TrendingUp className="w-4 h-4" />, text: 'Brand momentum continues with 38% increase in social mentions' },
-        { type: 'positive', icon: <Zap className="w-4 h-4" />, text: 'Bronzing Drops now the #1 searched e.l.f. product (+55% interest)' },
-        { type: 'neutral', icon: <Sparkles className="w-4 h-4" />, text: '"Affordable luxury" positioning resonating strongly with Gen Z' },
-        { type: 'alert', icon: <AlertTriangle className="w-4 h-4" />, text: 'Stock concerns mentioned in 12% of purchase-intent discussions' },
-      ],
-      30: [
-        { type: 'positive', icon: <TrendingUp className="w-4 h-4" />, text: 'Monthly share of voice: 35% (up 8 points from previous month)' },
-        { type: 'positive', icon: <Zap className="w-4 h-4" />, text: 'Average sentiment 0.74 - leading all drugstore beauty brands' },
-        { type: 'neutral', icon: <Sparkles className="w-4 h-4" />, text: 'Sephora partnership driving 22% of total brand visibility' },
-        { type: 'positive', icon: <TrendingUp className="w-4 h-4" />, text: '"Dupe culture" mentions featuring e.l.f. up 65% this month' },
-      ],
-      90: [
-        { type: 'positive', icon: <TrendingUp className="w-4 h-4" />, text: 'Quarterly brand health score: 8.5/10 - highest among competitors' },
-        { type: 'positive', icon: <Zap className="w-4 h-4" />, text: 'Successfully captured 35% share of voice (was 24% last quarter)' },
-        { type: 'neutral', icon: <Sparkles className="w-4 h-4" />, text: 'Key insight: Brand perceived as "prestige quality at drugstore price"' },
-        { type: 'alert', icon: <AlertTriangle className="w-4 h-4" />, text: 'Watch: Increased competitor activity in primer category' },
-      ],
-    },
-    'Maybelline': {
-      7: [
-        { type: 'positive', icon: <TrendingUp className="w-4 h-4" />, text: 'Sky High Mascara maintains viral status with 18% mention increase' },
-        { type: 'neutral', icon: <Sparkles className="w-4 h-4" />, text: 'Vinyl Ink liquid lipstick gaining traction (+25% search interest)' },
-        { type: 'positive', icon: <Zap className="w-4 h-4" />, text: 'Strong YouTube presence: 12 beauty influencer features this week' },
-        { type: 'negative', icon: <TrendingDown className="w-4 h-4" />, text: 'Fit Me foundation sentiment dipped slightly (-0.05) due to shade range concerns' },
-      ],
-      14: [
-        { type: 'positive', icon: <TrendingUp className="w-4 h-4" />, text: 'Two-week momentum: Brand mentions up 15% across all platforms' },
-        { type: 'positive', icon: <Zap className="w-4 h-4" />, text: 'SuperStay line mentioned in 8 major beauty publication articles' },
-        { type: 'neutral', icon: <Sparkles className="w-4 h-4" />, text: 'Core strength: Mascara category dominance continues (68% positive)' },
-        { type: 'alert', icon: <AlertTriangle className="w-4 h-4" />, text: 'Competitive pressure: e.l.f. gaining ground in foundation segment' },
-      ],
-      30: [
-        { type: 'positive', icon: <TrendingUp className="w-4 h-4" />, text: 'Monthly brand visibility: 23% share of voice in mascara category' },
-        { type: 'positive', icon: <Zap className="w-4 h-4" />, text: 'Instant Age Rewind concealer showing renewed interest (+12%)' },
-        { type: 'neutral', icon: <Sparkles className="w-4 h-4" />, text: 'Brand perception: "Reliable drugstore staple" - 78% positive association' },
-        { type: 'negative', icon: <TrendingDown className="w-4 h-4" />, text: 'Lip category losing ground to emerging brands (-8% share)' },
-      ],
-      90: [
-        { type: 'positive', icon: <TrendingUp className="w-4 h-4" />, text: 'Quarterly brand health score: 7.5/10 (stable from last quarter)' },
-        { type: 'neutral', icon: <Sparkles className="w-4 h-4" />, text: 'Maintained #3 position in overall drugstore beauty conversations' },
-        { type: 'positive', icon: <Zap className="w-4 h-4" />, text: 'Mascara category: Undisputed leader with 45% category share' },
-        { type: 'alert', icon: <AlertTriangle className="w-4 h-4" />, text: 'Strategic opportunity: Expand presence in trending "clean beauty" space' },
-      ],
-    },
+interface ExecutiveSummaryData {
+  kpis: {
+    totalMentions: number;
+    mentionsChange: number;
+    avgSentiment: number;
+    sentimentChange: number;
+    trendingTopicsCount: number;
+    topSource: string;
+    positiveCount: number;
+    neutralCount: number;
+    negativeCount: number;
+    totalEngagement?: number;
+    highEngagementCount?: number;
   };
+  sentimentTrend: Array<{
+    date: string;
+    sentiment: number;
+    mentions: number;
+  }>;
+  bySource?: Record<string, number>;
+  recentMentions?: Array<{
+    title: string;
+    source: string;
+    sentiment: string | null;
+    score: number;
+  }>;
+}
 
-  return brandInsights[brand]?.[days] || brandInsights[brand]?.[90] || brandInsights['Revlon'][7];
+// Generate insights from real data
+function generateInsightsFromData(data: ExecutiveSummaryData | undefined, brand: string, days: number): Insight[] {
+  if (!data) {
+    return getDefaultInsights(brand, days);
+  }
+
+  const { kpis, sentimentTrend, bySource, recentMentions } = data;
+  const insights: Insight[] = [];
+
+  // Calculate week-over-week or period change
+  const mentionChange = kpis.mentionsChange;
+  const sentimentChange = kpis.sentimentChange;
+
+  // 1. Mentions trend insight
+  if (mentionChange > 10) {
+    insights.push({
+      type: 'positive',
+      icon: <TrendingUp className="w-4 h-4" />,
+      text: `Mentions up ${mentionChange}% over the last ${days} days, with ${kpis.totalMentions} total mentions tracked`
+    });
+  } else if (mentionChange < -10) {
+    insights.push({
+      type: 'negative',
+      icon: <TrendingDown className="w-4 h-4" />,
+      text: `Mentions down ${Math.abs(mentionChange)}% over the last ${days} days (${kpis.totalMentions} total)`
+    });
+  } else {
+    insights.push({
+      type: 'neutral',
+      icon: <Sparkles className="w-4 h-4" />,
+      text: `Stable mention volume with ${kpis.totalMentions} mentions tracked over ${days} days`
+    });
+  }
+
+  // 2. Sentiment insight
+  const positivePercent = kpis.totalMentions > 0
+    ? Math.round((kpis.positiveCount / kpis.totalMentions) * 100)
+    : 0;
+  const negativePercent = kpis.totalMentions > 0
+    ? Math.round((kpis.negativeCount / kpis.totalMentions) * 100)
+    : 0;
+
+  if (kpis.avgSentiment > 0.5) {
+    insights.push({
+      type: 'positive',
+      icon: <Zap className="w-4 h-4" />,
+      text: `Strong positive sentiment (${kpis.avgSentiment.toFixed(2)}) with ${positivePercent}% positive mentions`
+    });
+  } else if (kpis.avgSentiment < 0) {
+    insights.push({
+      type: 'negative',
+      icon: <TrendingDown className="w-4 h-4" />,
+      text: `Sentiment trending negative (${kpis.avgSentiment.toFixed(2)}) with ${negativePercent}% negative mentions - requires attention`
+    });
+  } else {
+    insights.push({
+      type: 'neutral',
+      icon: <Sparkles className="w-4 h-4" />,
+      text: `Sentiment is neutral (${kpis.avgSentiment.toFixed(2)}) with balanced positive (${positivePercent}%) and negative (${negativePercent}%) mentions`
+    });
+  }
+
+  // 3. Top source insight
+  if (kpis.topSource && kpis.topSource !== 'N/A') {
+    const sourceCount = bySource?.[kpis.topSource] || 0;
+    const sourcePercent = kpis.totalMentions > 0
+      ? Math.round((sourceCount / kpis.totalMentions) * 100)
+      : 0;
+    insights.push({
+      type: 'neutral',
+      icon: <Sparkles className="w-4 h-4" />,
+      text: `${kpis.topSource} is the top source with ${sourcePercent > 0 ? `${sourcePercent}% of mentions` : 'the most activity'}`
+    });
+  }
+
+  // 4. High engagement or trending insight
+  if (kpis.highEngagementCount && kpis.highEngagementCount > 0) {
+    insights.push({
+      type: 'positive',
+      icon: <TrendingUp className="w-4 h-4" />,
+      text: `${kpis.highEngagementCount} high-engagement mentions detected - potential viral content`
+    });
+  } else if (kpis.trendingTopicsCount > 0) {
+    insights.push({
+      type: 'neutral',
+      icon: <Zap className="w-4 h-4" />,
+      text: `${kpis.trendingTopicsCount} trending topic${kpis.trendingTopicsCount > 1 ? 's' : ''} identified for ${brand}`
+    });
+  }
+
+  // 5. Alert if sentiment is declining
+  if (sentimentChange < -0.1) {
+    insights.push({
+      type: 'alert',
+      icon: <AlertTriangle className="w-4 h-4" />,
+      text: `Monitor: Sentiment has declined ${Math.abs(Math.round(sentimentChange * 100))}% - review recent negative mentions`
+    });
+  } else if (negativePercent > 30) {
+    insights.push({
+      type: 'alert',
+      icon: <AlertTriangle className="w-4 h-4" />,
+      text: `Alert: ${negativePercent}% negative sentiment detected - consider response strategy`
+    });
+  }
+
+  return insights.slice(0, 4); // Return max 4 insights
+}
+
+// Default insights when no data is available
+function getDefaultInsights(brand: string, days: number): Insight[] {
+  return [
+    { type: 'neutral', icon: <Sparkles className="w-4 h-4" />, text: `Loading ${brand} insights for the last ${days} days...` },
+    { type: 'neutral', icon: <Zap className="w-4 h-4" />, text: 'Analyzing sentiment patterns and trends...' },
+    { type: 'neutral', icon: <TrendingUp className="w-4 h-4" />, text: 'Processing social media mentions...' },
+    { type: 'neutral', icon: <AlertTriangle className="w-4 h-4" />, text: 'Monitoring for alerts and anomalies...' },
+  ];
 }
 
 interface ExecutiveSummaryProps {
   days?: number;
+  data?: ExecutiveSummaryData;
 }
 
-export function ExecutiveSummary({ days = 7 }: ExecutiveSummaryProps) {
+export function ExecutiveSummary({ days = 7, data }: ExecutiveSummaryProps) {
   const { settings, getBrandName } = useSettings();
-  const [insights, setInsights] = useState<Insight[]>([]);
 
-  useEffect(() => {
-    setInsights(generateInsights(getBrandName(), days));
-  }, [settings.selectedBrand, days, getBrandName]);
+  const insights = useMemo(() => {
+    return generateInsightsFromData(data, getBrandName(), days);
+  }, [data, settings.selectedBrand, days, getBrandName]);
 
   const getInsightStyles = (type: Insight['type']) => {
     switch (type) {
