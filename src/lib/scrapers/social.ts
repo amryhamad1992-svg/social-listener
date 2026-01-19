@@ -1,5 +1,5 @@
 // Social Media Scrapers via SerpAPI
-// Uses SerpAPI to search Instagram, X (Twitter), and Meta/Facebook
+// Uses SerpAPI to search Instagram, X (Twitter), Meta/Facebook, TikTok, and YouTube
 
 import {
   BaseScraper,
@@ -305,7 +305,41 @@ export class MetaScraper extends SerpAPIScraper {
   platform = 'Facebook';
 }
 
+// TikTok Scraper via SerpAPI
+export class TikTokScraper extends SerpAPIScraper {
+  config: ScraperConfig = {
+    name: 'TikTok',
+    baseUrl: 'https://www.tiktok.com',
+    sourceType: 'social',
+    rateLimit: 30,
+    requiresJs: false,
+    enabled: true,
+  };
+
+  siteFilter = 'tiktok.com';
+  sourceIcon = '🎵';
+  platform = 'TikTok';
+}
+
+// YouTube Scraper via SerpAPI
+export class YouTubeScraper extends SerpAPIScraper {
+  config: ScraperConfig = {
+    name: 'YouTube',
+    baseUrl: 'https://www.youtube.com',
+    sourceType: 'social',
+    rateLimit: 30,
+    requiresJs: false,
+    enabled: true,
+  };
+
+  siteFilter = 'youtube.com';
+  sourceIcon = '▶️';
+  platform = 'YouTube';
+}
+
 // Export instances
 export const instagramScraper = new InstagramScraper();
 export const xScraper = new XScraper();
 export const metaScraper = new MetaScraper();
+export const tiktokScraper = new TikTokScraper();
+export const youtubeScraper = new YouTubeScraper();

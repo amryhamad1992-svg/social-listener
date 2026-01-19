@@ -12,7 +12,7 @@ interface UnifiedMention {
   title: string;
   body: string;
   source: string;
-  sourceType: 'reddit' | 'instagram' | 'x' | 'meta' | 'social' | 'mock';
+  sourceType: 'reddit' | 'instagram' | 'x' | 'meta' | 'tiktok' | 'youtube' | 'social' | 'mock';
   sourceIcon: string;
   sourceColor: string;
   sourceBg: string;
@@ -37,12 +37,14 @@ interface SourceFilter {
   bgColor: string;
 }
 
-// Updated sources: Reddit, Instagram, X, Meta (using Stackline colors)
+// Updated sources: Reddit, Instagram, X, Meta, TikTok, YouTube (using Stackline colors)
 const SOURCE_FILTERS: SourceFilter[] = [
   { id: 'reddit', name: 'Reddit', icon: 'RD', enabled: true, color: '#FF4500', bgColor: '#031425' },
   { id: 'instagram', name: 'Instagram', icon: '📸', enabled: true, color: '#E1306C', bgColor: '#031425' },
   { id: 'x', name: 'X (Twitter)', icon: '𝕏', enabled: true, color: '#000000', bgColor: '#031425' },
   { id: 'meta', name: 'Meta', icon: '👤', enabled: true, color: '#1877F2', bgColor: '#031425' },
+  { id: 'tiktok', name: 'TikTok', icon: '🎵', enabled: true, color: '#00F2EA', bgColor: '#031425' },
+  { id: 'youtube', name: 'YouTube', icon: '▶️', enabled: true, color: '#FF0000', bgColor: '#031425' },
 ];
 
 // Sentiment Configuration with Stackline colors
@@ -62,6 +64,8 @@ const SOURCE_STYLING: Record<string, { label: string }> = {
   instagram: { label: 'Instagram' },
   x: { label: 'X (Twitter)' },
   meta: { label: 'Meta' },
+  tiktok: { label: 'TikTok' },
+  youtube: { label: 'YouTube' },
   social: { label: 'Social' },
   mock: { label: 'Demo' },
 };

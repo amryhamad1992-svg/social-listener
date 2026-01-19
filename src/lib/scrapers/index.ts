@@ -1,9 +1,9 @@
 // Unified Scraper Service
 // Orchestrates all scrapers and handles de-duplication + sentiment analysis
-// v3: Now uses SerpAPI for Instagram, X, and Meta; Removed MakeupAlley, Temptalia, News
+// v4: Now uses SerpAPI for Instagram, X, Meta, TikTok, and YouTube
 
 import { redditScraper } from './reddit';
-import { instagramScraper, xScraper, metaScraper } from './social';
+import { instagramScraper, xScraper, metaScraper, tiktokScraper, youtubeScraper } from './social';
 import {
   BaseScraper,
   ScraperResult,
@@ -17,13 +17,14 @@ import { analyzeSentiment } from '../sentiment';
 export * from './types';
 
 // All available scrapers - Updated sources
-// Removed: MakeupAlley, Temptalia, Into The Gloss, Allure, News
-// Added: Instagram, X (Twitter), Meta (Facebook)
+// Sources: Reddit, Instagram, X (Twitter), Meta (Facebook), TikTok, YouTube
 const ALL_SCRAPERS: BaseScraper[] = [
   redditScraper,
   instagramScraper,
   xScraper,
   metaScraper,
+  tiktokScraper,
+  youtubeScraper,
 ];
 
 // Default keywords for beauty brand monitoring
@@ -385,6 +386,76 @@ export function getMockScrapedMentions(): ScrapedMention[] {
       isHighEngagement: false,
       contentHash: generateContentHash('elf camo concealer facebook'),
       sentiment: { label: 'negative', score: -0.45 },
+    },
+    // TikTok mentions
+    {
+      id: 'mock-tiktok-1',
+      source: 'TikTok',
+      sourceType: 'social',
+      url: 'https://tiktok.com/@beautycreator/video/example1',
+      title: 'GRWM using only Revlon products',
+      snippet: 'Get ready with me using only drugstore Revlon makeup! The ColorStay foundation + Super Lustrous lip combo is *chefs kiss* 💋 #revlon #drugstoremakeup #grwm',
+      matchedKeyword: 'Revlon',
+      publishedAt: new Date(now.getTime() - 6 * 60 * 60 * 1000).toISOString(),
+      scrapedAt: now.toISOString(),
+      engagement: { upvotes: 45000, comments: 892, views: 520000 },
+      author: '@beautyontiktok',
+      category: 'TikTok',
+      isHighEngagement: true,
+      contentHash: generateContentHash('revlon grwm tiktok'),
+      sentiment: { label: 'positive', score: 0.88 },
+    },
+    {
+      id: 'mock-tiktok-2',
+      source: 'TikTok',
+      sourceType: 'social',
+      url: 'https://tiktok.com/@makeuphacks/video/example2',
+      title: 'e.l.f. dupes that are BETTER than the originals',
+      snippet: 'POV: You discover e.l.f. makes better versions of high-end products for $6. The Poreless Putty Primer is identical to Tatcha!! #elfcosmetics #makeupdupes',
+      matchedKeyword: 'e.l.f.',
+      publishedAt: new Date(now.getTime() - 10 * 60 * 60 * 1000).toISOString(),
+      scrapedAt: now.toISOString(),
+      engagement: { upvotes: 128000, comments: 2340, views: 1800000 },
+      author: '@makeuphacks',
+      category: 'TikTok',
+      isHighEngagement: true,
+      contentHash: generateContentHash('elf dupes tiktok'),
+      sentiment: { label: 'positive', score: 0.92 },
+    },
+    // YouTube mentions
+    {
+      id: 'mock-youtube-1',
+      source: 'YouTube',
+      sourceType: 'social',
+      url: 'https://youtube.com/watch?v=example1',
+      title: 'HONEST Revlon ColorStay Foundation Review | 12 Hour Wear Test',
+      snippet: 'Testing the viral Revlon ColorStay foundation for a full 12 hours! Is it really worth the hype? Spoiler: I was SHOCKED by the results...',
+      matchedKeyword: 'Revlon',
+      publishedAt: new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString(),
+      scrapedAt: now.toISOString(),
+      engagement: { upvotes: 8900, comments: 456, views: 245000 },
+      author: 'Beauty By Sarah',
+      category: 'YouTube',
+      isHighEngagement: true,
+      contentHash: generateContentHash('revlon colorstay youtube review'),
+      sentiment: { label: 'positive', score: 0.75 },
+    },
+    {
+      id: 'mock-youtube-2',
+      source: 'YouTube',
+      sourceType: 'social',
+      url: 'https://youtube.com/watch?v=example2',
+      title: 'Full Face of Maybelline | Drugstore Makeup Tutorial',
+      snippet: 'Can you get a full glam look using ONLY Maybelline products? Today I\'m putting their entire line to the test including the new SuperStay foundations...',
+      matchedKeyword: 'Maybelline',
+      publishedAt: new Date(now.getTime() - 72 * 60 * 60 * 1000).toISOString(),
+      scrapedAt: now.toISOString(),
+      engagement: { upvotes: 12400, comments: 678, views: 389000 },
+      author: 'Makeup Maven',
+      category: 'YouTube',
+      isHighEngagement: true,
+      contentHash: generateContentHash('maybelline full face youtube'),
+      sentiment: { label: 'positive', score: 0.68 },
     },
   ];
 }
