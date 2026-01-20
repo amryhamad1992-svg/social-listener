@@ -113,6 +113,7 @@ function calculatePlatformDistribution(mentions: any[]): TrendItem['platforms'] 
     youtube: 0,
     reddit: 0,
     twitter: 0,
+    web: 0,
   };
 
   const total = mentions.length || 1;
@@ -124,15 +125,17 @@ function calculatePlatformDistribution(mentions: any[]): TrendItem['platforms'] 
     else if (source.includes('youtube')) platforms.youtube++;
     else if (source.includes('reddit')) platforms.reddit++;
     else if (source.includes('x') || source.includes('twitter')) platforms.twitter++;
+    else platforms.web++;
   });
 
-  // Convert to percentages (0-100 scale)
+  // Return actual counts
   return {
-    tiktok: Math.round((platforms.tiktok / total) * 100) || Math.floor(Math.random() * 40 + 30),
-    instagram: Math.round((platforms.instagram / total) * 100) || Math.floor(Math.random() * 40 + 25),
-    youtube: Math.round((platforms.youtube / total) * 100) || Math.floor(Math.random() * 35 + 20),
-    reddit: Math.round((platforms.reddit / total) * 100) || Math.floor(Math.random() * 30 + 15),
-    twitter: Math.round((platforms.twitter / total) * 100) || Math.floor(Math.random() * 25 + 10),
+    tiktok: platforms.tiktok,
+    instagram: platforms.instagram,
+    youtube: platforms.youtube,
+    reddit: platforms.reddit,
+    twitter: platforms.twitter,
+    web: platforms.web,
   };
 }
 
@@ -145,6 +148,7 @@ function normalizePlatforms(platforms: TrendItem['platforms']): TrendItem['platf
     youtube: Math.round((platforms.youtube / max) * 100),
     reddit: Math.round((platforms.reddit / max) * 100),
     twitter: Math.round((platforms.twitter / max) * 100),
+    web: Math.round((platforms.web / max) * 100),
   };
 }
 

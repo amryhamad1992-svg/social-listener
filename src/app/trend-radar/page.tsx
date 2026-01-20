@@ -431,40 +431,43 @@ export default function TrendRadarPage() {
                     </div>
 
                     <div className="p-4 space-y-4">
-                      {/* Source Distribution - Simple Bar Chart */}
+                      {/* Source Distribution - Vertical Bar Chart */}
                       <div>
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center justify-between mb-4">
                           <h4 className="text-xs font-medium text-[#0F172A]">Source Distribution</h4>
                           <span className="text-[10px] text-[#64748B]">{selectedTrend.totalSources} total</span>
                         </div>
 
-                        {/* Simple horizontal bars for all 6 sources */}
-                        <div className="space-y-2">
+                        {/* Vertical bars - 6 columns */}
+                        <div className="flex items-end justify-between gap-2 h-32">
                           {(() => {
                             const maxValue = Math.max(...Object.values(selectedTrend.platforms), 1);
                             const platformOrder = ['tiktok', 'instagram', 'youtube', 'reddit', 'twitter', 'web'] as const;
 
                             return platformOrder.map((platform) => {
                               const value = selectedTrend.platforms[platform] || 0;
-                              const barWidth = (value / maxValue) * 100;
+                              const barHeight = maxValue > 0 ? (value / maxValue) * 100 : 0;
 
                               return (
-                                <div key={platform} className="flex items-center gap-2">
-                                  <span className="text-[10px] text-[#64748B] w-14 truncate">{PLATFORM_NAMES[platform]}</span>
-                                  <div className="flex-1 h-5 bg-[#F1F5F9] rounded overflow-hidden relative">
+                                <div key={platform} className="flex-1 flex flex-col items-center">
+                                  {/* Count above bar */}
+                                  <span className="text-[11px] font-semibold text-[#0F172A] mb-1">
+                                    {value}
+                                  </span>
+                                  {/* Vertical bar */}
+                                  <div className="w-full h-24 bg-[#F1F5F9] rounded-t relative flex items-end">
                                     <div
-                                      className="h-full rounded transition-all duration-300"
+                                      className="w-full rounded-t transition-all duration-300"
                                       style={{
-                                        width: value > 0 ? `${Math.max(barWidth, 8)}%` : '0%',
+                                        height: value > 0 ? `${Math.max(barHeight, 5)}%` : '0%',
                                         backgroundColor: PLATFORM_COLORS[platform],
                                       }}
                                     />
-                                    {value > 0 && (
-                                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-medium text-[#0F172A]">
-                                        {value}
-                                      </span>
-                                    )}
                                   </div>
+                                  {/* Label below */}
+                                  <span className="text-[9px] text-[#64748B] mt-1.5 text-center leading-tight">
+                                    {PLATFORM_NAMES[platform]}
+                                  </span>
                                 </div>
                               );
                             });
@@ -472,7 +475,7 @@ export default function TrendRadarPage() {
                         </div>
 
                         {Object.values(selectedTrend.platforms).every(v => v === 0) && (
-                          <p className="text-[10px] text-[#94A3B8] italic mt-2">No platform-specific sources detected</p>
+                          <p className="text-[10px] text-[#94A3B8] italic mt-2 text-center">No sources detected</p>
                         )}
                       </div>
 
