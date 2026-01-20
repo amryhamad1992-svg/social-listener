@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Sparkles,
   BarChart3,
+  Zap,
 } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { useRouter } from 'next/navigation';
