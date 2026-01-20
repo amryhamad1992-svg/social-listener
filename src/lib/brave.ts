@@ -293,7 +293,9 @@ const GENERIC_TERMS = new Set([
   // Filter out year-based and generic skin terms
   'the skin', '2024 skin', '2025 skin', '2026 skin', '2027 skin', 'your skin', 'my skin',
   'oily skin', 'dry skin', 'normal skin', 'combination skin', 'mature skin', 'aging skin',
+  'sensitive skin', 'acne skin', 'problem skin', 'healthy skin', 'clear skin', 'perfect skin',
   'viral serum', 'viral product', 'viral trend', 'new trend', 'latest trend',
+  'luscious oil', 'facial oil', 'face oil', 'body oil', 'hair oil', // too generic without qualifier
 ]);
 
 // Extract specific trending terms from text
