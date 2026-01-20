@@ -572,40 +572,73 @@ export async function checkRetailAvailability(term: string): Promise<RetailAvail
   const topProducts: string[] = [];
 
   try {
-    // Search for products on Amazon
-    const amazonResults = await braveWebSearch(`"${term}" site:amazon.com product`, { count: 10, freshness: 'py' });
+    // Search for products on Amazon - multiple queries for better coverage
+    // Don't use freshness filter - products exist regardless of when indexed
+    const searchQueries = [
+      `${term} site:amazon.com`,
+      `${term} skincare site:amazon.com`,
+    ];
 
-    // Filter for actual product pages (not just any Amazon page)
-    const productResults = amazonResults.filter(r =>
-      r.url?.includes('/dp/') ||
-      r.url?.includes('/gp/product/') ||
-      r.title?.toLowerCase().includes(term.toLowerCase())
-    );
+    for (const query of searchQueries) {
+      if (amazonCount >= 10) break; // Already found enough
 
-    amazonCount = productResults.length;
+      const amazonResults = await braveWebSearch(query, { count: 20 });
 
-    // Get top product titles
-    productResults.slice(0, 3).forEach(r => {
-      if (r.title) topProducts.push(r.title.slice(0, 60));
-    });
+      console.log(`[Retail Check] Searching "${query}" - found ${amazonResults.length} results`);
+
+      // Filter for Amazon product pages
+      for (const r of amazonResults) {
+        if (!r.url) continue;
+
+        const isAmazonProduct =
+          r.url.includes('amazon.com') && (
+            r.url.includes('/dp/') ||
+            r.url.includes('/gp/product/') ||
+            r.url.includes('/gp/aw/d/') ||
+            // Also check if it looks like a product listing
+            (r.title && !r.url.includes('/s?') && !r.url.includes('/b/'))
+          );
+
+        if (isAmazonProduct) {
+          amazonCount++;
+          if (topProducts.length < 3 && r.title) {
+            // Clean up Amazon title
+            const cleanTitle = r.title
+              .replace(/Amazon\.com\s*[:\-]\s*/i, '')
+              .replace(/\s*-\s*Amazon\.com$/i, '')
+              .slice(0, 80);
+            if (!topProducts.includes(cleanTitle)) {
+              topProducts.push(cleanTitle);
+            }
+          }
+        }
+      }
+
+      // Small delay between searches
+      if (amazonCount < 10) {
+        await new Promise(r => setTimeout(r, 100));
+      }
+    }
+
+    console.log(`[Retail Check] "${term}" - Total Amazon products found: ${amazonCount}`);
 
   } catch (err) {
     console.error(`[Retail Check] Error checking Amazon for "${term}":`, err);
   }
 
-  // Determine overall retail status
+  // Determine overall retail status based on actual product count
   let overall: RetailAvailability['overall'];
   let opportunityScore: number;
 
   if (amazonCount === 0) {
     overall = 'not_available';
     opportunityScore = 95; // Huge opportunity - trending but not on Amazon
-  } else if (amazonCount <= 2) {
+  } else if (amazonCount <= 3) {
     overall = 'emerging';
-    opportunityScore = 75; // Good opportunity - just starting to appear
-  } else if (amazonCount <= 5) {
+    opportunityScore = 70; // Good opportunity - few products
+  } else if (amazonCount <= 7) {
     overall = 'growing';
-    opportunityScore = 45; // Some opportunity - competition building
+    opportunityScore = 40; // Moderate - competition building
   } else {
     overall = 'saturated';
     opportunityScore = 15; // Low opportunity - market is crowded
