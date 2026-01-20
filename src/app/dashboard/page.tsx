@@ -9,6 +9,7 @@ import { ExecutiveSummary } from '@/components/ExecutiveSummary';
 import { CompetitorBattlecard } from '@/components/CompetitorBattlecard';
 import { SpikeAlerts } from '@/components/SpikeAlerts';
 import { QuickStatsBar } from '@/components/QuickStatsBar';
+import { BrandSelector } from '@/components/BrandSelector';
 import { useSettings } from '@/lib/SettingsContext';
 
 interface DashboardData {
@@ -129,6 +130,9 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {/* Brand Selector */}
+          <BrandSelector />
+
           {/* Global Date Range */}
           <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#E2E8F0] rounded-lg">
             <Calendar className="w-4 h-4 text-[#64748B]" />

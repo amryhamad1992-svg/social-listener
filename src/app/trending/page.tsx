@@ -6,6 +6,7 @@ import { Loader2, TrendingUp, TrendingDown, Minus, Flame, Zap, BarChart3, Hash, 
 import { Sidebar } from '@/components/Sidebar';
 import { BrandKeywordExplorer } from '@/components/BrandKeywordExplorer';
 import { SearchTrends } from '@/components/SearchTrends';
+import { BrandSelector } from '@/components/BrandSelector';
 import { useSettings } from '@/lib/SettingsContext';
 
 interface TrendingItem {
@@ -235,6 +236,9 @@ export default function TrendingPage() {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              {/* Brand Selector */}
+              <BrandSelector />
+
               {/* Global Date Range */}
               <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#E2E8F0] rounded-lg">
                 <Calendar className="w-4 h-4 text-[#64748B]" />
