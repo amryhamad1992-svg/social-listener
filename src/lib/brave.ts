@@ -228,42 +228,107 @@ interface TrendResult {
   sources: SourceInfo[];
 }
 
-// Category-specific search queries to find REAL viral trends
+// Category-specific search queries to find REAL viral trends - Beauty focused
 const CATEGORY_SEARCHES: Record<string, string[]> = {
-  beauty: [
+  skincare: [
     'viral skincare ingredient TikTok 2026',
-    'beauty hack going viral TikTok',
     'skincare trend TikTok viral',
-    'makeup trend viral 2026',
-    'K-beauty trend viral',
     'skincare ingredient everyone is using',
-    'beauty product sold out viral',
     'dermatologist trending ingredient',
+    'serum going viral TikTok',
+    'skin cycling routine viral',
+    'barrier repair skincare trend',
+    'anti aging ingredient viral',
   ],
-  fashion: [
-    'fashion trend viral TikTok 2026',
-    'outfit trend going viral',
-    'clothing item everyone buying',
-    'fashion hack TikTok viral',
-    'street style trend 2026',
+  makeup: [
+    'makeup trend viral TikTok 2026',
+    'viral makeup product TikTok',
+    'makeup hack going viral',
+    'lipstick trend viral 2026',
+    'foundation viral TikTok',
+    'clean girl makeup trend',
+    'latte makeup trend viral',
+    'blush placement trend',
   ],
-  electronics: [
-    'tech gadget viral TikTok 2026',
-    'electronics trending product',
-    'tech product going viral',
-    'gadget everyone buying 2026',
+  haircare: [
+    'hair growth ingredient viral TikTok',
+    'rosemary oil hair trend',
+    'scalp care routine viral',
+    'hair oiling trend TikTok',
+    'hair treatment going viral',
+    'hair serum viral product',
+    'castor oil hair growth viral',
+    'rice water hair trend',
   ],
-  home: [
-    'home decor trend viral TikTok',
-    'kitchen gadget going viral',
-    'home product TikTok made me buy',
-    'interior design trend 2026',
+  nails: [
+    'nail trend viral TikTok 2026',
+    'chrome nails trend viral',
+    'nail art going viral',
+    'press on nails viral',
+    'glazed donut nails trend',
+    'jelly nails trend viral',
+    'nail design TikTok viral',
+    'manicure trend 2026',
   ],
-  fitness: [
-    'fitness trend viral TikTok 2026',
-    'workout going viral',
-    'supplement trending TikTok',
-    'fitness product viral',
+  fragrance: [
+    'perfume going viral TikTok 2026',
+    'fragrance trend viral',
+    'perfume dupe viral TikTok',
+    'vanilla perfume trend',
+    'niche fragrance viral',
+    'perfume layering trend',
+    'signature scent trend',
+    'affordable perfume viral',
+  ],
+  bodycare: [
+    'body care routine viral TikTok',
+    'everything shower routine trend',
+    'body lotion going viral',
+    'self tanner viral product',
+    'body scrub trend TikTok',
+    'soft skin routine viral',
+    'body care ingredient trending',
+    'brazilian bum bum dupe viral',
+  ],
+  suncare: [
+    'sunscreen viral TikTok 2026',
+    'korean sunscreen trend',
+    'tinted sunscreen viral',
+    'no white cast sunscreen',
+    'spf trend viral TikTok',
+    'sunscreen reapply hack',
+    'mineral sunscreen viral',
+    'sunscreen stick trend',
+  ],
+  tools: [
+    'beauty tool viral TikTok 2026',
+    'led mask trend viral',
+    'gua sha routine viral',
+    'ice roller skincare trend',
+    'microcurrent device viral',
+    'facial massage tool trend',
+    'dermaplaning at home viral',
+    'red light therapy trend',
+  ],
+  kbeauty: [
+    'K-beauty trend viral 2026',
+    'korean skincare ingredient viral',
+    'snail mucin trend TikTok',
+    'glass skin routine viral',
+    'korean sunscreen viral',
+    'essence skincare trend',
+    'j-beauty trend viral',
+    'rice toner viral TikTok',
+  ],
+  cleanbeauty: [
+    'clean beauty trend viral 2026',
+    'natural skincare ingredient viral',
+    'organic beauty product TikTok',
+    'vegan beauty trend viral',
+    'non toxic makeup trend',
+    'sustainable beauty viral',
+    'clean girl skincare routine',
+    'minimalist skincare trend',
   ],
 };
 
@@ -354,7 +419,7 @@ export async function braveTrendingTopics(
   category: string,
   keywords: string[]
 ): Promise<TrendResult[]> {
-  const searches = CATEGORY_SEARCHES[category.toLowerCase()] || CATEGORY_SEARCHES.beauty;
+  const searches = CATEGORY_SEARCHES[category.toLowerCase()] || CATEGORY_SEARCHES.skincare;
   const trendMap = new Map<string, { count: number; sources: SourceInfo[] }>();
 
   console.log(`[Brave Trends] Searching for ${category} trends...`);

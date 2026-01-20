@@ -1,42 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { braveTrendingTopics, braveWebSearch, isBraveConfigured } from '@/lib/brave';
 
-// Categories available for trend tracking
+// Categories available for trend tracking - Beauty focused
 const CATEGORIES: Record<string, {
   name: string;
   keywords: string[];
   amazonCategory: string;
   trendingTerms: string[];
 }> = {
-  beauty: {
-    name: 'Beauty & Cosmetics',
-    keywords: ['makeup', 'skincare', 'lipstick', 'foundation', 'mascara', 'eyeshadow', 'serum', 'moisturizer', 'concealer', 'blush'],
-    amazonCategory: 'Beauty & Personal Care',
-    trendingTerms: ['makeup tutorial', 'skincare routine', 'viral makeup'],
+  skincare: {
+    name: 'Skincare',
+    keywords: ['serum', 'moisturizer', 'cleanser', 'toner', 'essence', 'mask', 'retinol', 'hyaluronic acid', 'vitamin c', 'niacinamide', 'sunscreen', 'exfoliant'],
+    amazonCategory: 'Skin Care',
+    trendingTerms: ['skincare routine', 'glass skin', 'skin cycling', 'barrier repair'],
   },
-  fashion: {
-    name: 'Fashion & Apparel',
-    keywords: ['sneakers', 'dress', 'jacket', 'jeans', 'handbag', 'shoes', 'streetwear', 'vintage'],
-    amazonCategory: 'Clothing, Shoes & Jewelry',
-    trendingTerms: ['fashion trend', 'outfit ideas', 'style tips'],
+  makeup: {
+    name: 'Makeup & Color Cosmetics',
+    keywords: ['foundation', 'concealer', 'lipstick', 'lip gloss', 'eyeshadow', 'mascara', 'blush', 'bronzer', 'highlighter', 'primer', 'setting spray', 'eyeliner'],
+    amazonCategory: 'Makeup',
+    trendingTerms: ['makeup tutorial', 'viral makeup', 'clean girl makeup', 'latte makeup'],
   },
-  electronics: {
-    name: 'Electronics & Tech',
-    keywords: ['headphones', 'smart watch', 'tablet', 'wireless earbuds', 'gaming', 'laptop', 'phone case'],
-    amazonCategory: 'Electronics',
-    trendingTerms: ['tech review', 'gadget unboxing', 'best tech'],
+  haircare: {
+    name: 'Haircare',
+    keywords: ['shampoo', 'conditioner', 'hair oil', 'hair mask', 'scalp treatment', 'hair serum', 'leave-in', 'heat protectant', 'styling cream', 'dry shampoo'],
+    amazonCategory: 'Hair Care',
+    trendingTerms: ['hair growth', 'rosemary oil hair', 'scalp care', 'hair oiling'],
   },
-  home: {
-    name: 'Home & Kitchen',
-    keywords: ['air fryer', 'blender', 'organizer', 'cleaning', 'candles', 'bedding', 'kitchen gadgets'],
-    amazonCategory: 'Home & Kitchen',
-    trendingTerms: ['home organization', 'kitchen gadgets', 'home decor'],
+  nails: {
+    name: 'Nails & Nail Art',
+    keywords: ['nail polish', 'gel nails', 'press-on nails', 'nail art', 'cuticle oil', 'nail strengthener', 'dip powder', 'nail stickers', 'chrome nails', 'builder gel'],
+    amazonCategory: 'Nail Art & Polish',
+    trendingTerms: ['nail trends', 'chrome nails', 'jelly nails', 'glazed donut nails'],
   },
-  fitness: {
-    name: 'Fitness & Wellness',
-    keywords: ['protein', 'yoga mat', 'resistance bands', 'supplements', 'water bottle', 'fitness tracker'],
-    amazonCategory: 'Sports & Outdoors',
-    trendingTerms: ['workout routine', 'fitness tips', 'gym essentials'],
+  fragrance: {
+    name: 'Fragrance & Perfume',
+    keywords: ['perfume', 'eau de parfum', 'body mist', 'fragrance oil', 'cologne', 'scent', 'vanilla perfume', 'oud', 'musk', 'niche fragrance'],
+    amazonCategory: 'Fragrance',
+    trendingTerms: ['perfume dupes', 'viral fragrance', 'signature scent', 'layering perfume'],
+  },
+  bodycare: {
+    name: 'Body Care',
+    keywords: ['body lotion', 'body butter', 'body scrub', 'body wash', 'deodorant', 'body oil', 'self tanner', 'body mist', 'hand cream', 'foot care'],
+    amazonCategory: 'Body Care',
+    trendingTerms: ['everything shower', 'body care routine', 'soft skin', 'brazilian bum bum'],
+  },
+  suncare: {
+    name: 'Sun Care & SPF',
+    keywords: ['sunscreen', 'spf', 'tinted sunscreen', 'mineral sunscreen', 'chemical sunscreen', 'sun protection', 'after sun', 'sunscreen stick', 'spf moisturizer'],
+    amazonCategory: 'Sun Care',
+    trendingTerms: ['spf every day', 'sunscreen reapply', 'no white cast', 'korean sunscreen'],
+  },
+  tools: {
+    name: 'Beauty Tools & Devices',
+    keywords: ['led mask', 'gua sha', 'jade roller', 'ice roller', 'dermaplaning', 'microcurrent', 'facial steamer', 'makeup brushes', 'beauty blender', 'eyelash curler'],
+    amazonCategory: 'Beauty Tools',
+    trendingTerms: ['red light therapy', 'facial massage', 'lymphatic drainage', 'at home facial'],
+  },
+  kbeauty: {
+    name: 'K-Beauty & J-Beauty',
+    keywords: ['korean skincare', 'japanese skincare', 'snail mucin', 'essence', 'sheet mask', 'cushion compact', 'bb cream', 'centella', 'rice toner', 'mugwort'],
+    amazonCategory: 'K-Beauty',
+    trendingTerms: ['glass skin', 'korean skincare routine', 'j-beauty', 'slugging'],
+  },
+  cleanbeauty: {
+    name: 'Clean & Natural Beauty',
+    keywords: ['clean beauty', 'organic skincare', 'natural makeup', 'vegan beauty', 'cruelty free', 'sustainable beauty', 'non-toxic', 'reef safe', 'plant based'],
+    amazonCategory: 'Natural & Organic Beauty',
+    trendingTerms: ['clean girl aesthetic', 'minimalist skincare', 'skin minimalism', 'less is more'],
   },
 };
 
@@ -140,7 +170,7 @@ function normalizePlatforms(platforms: TrendItem['platforms']): TrendItem['platf
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const category = searchParams.get('category') || 'beauty';
+  const category = searchParams.get('category') || 'skincare';
   const timeRange = searchParams.get('timeRange') || '7d';
 
   // Check cache first
@@ -155,7 +185,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const categoryInfo = CATEGORIES[category] || CATEGORIES.beauty;
+    const categoryInfo = CATEGORIES[category] || CATEGORIES.skincare;
     const trends: TrendItem[] = [];
     let source = 'demo';
 
@@ -344,17 +374,22 @@ function getTopPlatform(trends: TrendItem[]): string {
 
 // Generate demo trends when APIs are unavailable
 function generateDemoTrends(category: string, timeRange: string): TrendItem[] {
-  const cat = CATEGORIES[category] || CATEGORIES.beauty;
+  const cat = CATEGORIES[category] || CATEGORIES.skincare;
 
   const demoTerms: Record<string, string[]> = {
-    beauty: ['glazed donut skin', 'lip combo', 'cold girl makeup', 'skin cycling', 'latte makeup', 'mob wife aesthetic'],
-    fashion: ['quiet luxury', 'coquette bow', 'coastal grandmother', 'clean girl aesthetic'],
-    electronics: ['transparent tech', 'AI pin', 'smart ring', 'portable monitor'],
-    home: ['bookshelf wealth', 'everything shower', 'bed rotting', 'cozy cardio'],
-    fitness: ['12-3-30', 'cortisol face', 'pilates princess', 'hot girl walk'],
+    skincare: ['glazed donut skin', 'skin cycling', 'snail mucin', 'retinol sandwich', 'barrier repair', 'glass skin'],
+    makeup: ['latte makeup', 'cold girl makeup', 'lip combo', 'mob wife aesthetic', 'clean girl look', 'strawberry girl'],
+    haircare: ['rosemary oil', 'hair oiling', 'rice water rinse', 'scalp care', 'castor oil growth', 'protein treatment'],
+    nails: ['chrome nails', 'glazed donut nails', 'jelly nails', 'aura nails', 'lip gloss nails', 'milk bath nails'],
+    fragrance: ['vanilla perfume', 'perfume layering', 'clean girl scent', 'cozy fragrance', 'dupe finds', 'niche discovery'],
+    bodycare: ['everything shower', 'soft skin routine', 'body slugging', 'dry brushing', 'glow oil', 'self tan routine'],
+    suncare: ['korean sunscreen', 'tinted spf', 'sunscreen stick', 'no white cast', 'spf reapply', 'beauty of joseon'],
+    tools: ['gua sha routine', 'led mask', 'ice roller', 'microcurrent', 'facial steamer', 'dermaplaning'],
+    kbeauty: ['glass skin', 'snail mucin', 'rice toner', 'centella', 'mugwort', '7 skin method'],
+    cleanbeauty: ['clean girl aesthetic', 'skin minimalism', 'less is more', 'barrier repair', 'gentle actives', 'mushroom skincare'],
   };
 
-  const terms = demoTerms[category] || demoTerms.beauty;
+  const terms = demoTerms[category] || demoTerms.skincare;
 
   return terms.map((term, index) => {
     const velocity = Math.round(300 - index * 40 + Math.random() * 50);
