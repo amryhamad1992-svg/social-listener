@@ -294,8 +294,15 @@ const GENERIC_TERMS = new Set([
   'the skin', '2024 skin', '2025 skin', '2026 skin', '2027 skin', 'your skin', 'my skin',
   'oily skin', 'dry skin', 'normal skin', 'combination skin', 'mature skin', 'aging skin',
   'sensitive skin', 'acne skin', 'problem skin', 'healthy skin', 'clear skin', 'perfect skin',
+  'firmer skin', 'smoother skin', 'brighter skin', 'glowing skin', 'radiant skin', 'youthful skin',
+  'smooth skin', 'soft skin', 'plump skin', 'dewy skin', 'flawless skin', 'beautiful skin',
+  'leaving skin', 'making skin', 'keeping skin', 'getting skin', 'having skin',
+  'their skin', 'our skin', 'its skin', 'her skin', 'his skin',
   'viral serum', 'viral product', 'viral trend', 'new trend', 'latest trend',
-  'luscious oil', 'facial oil', 'face oil', 'body oil', 'hair oil', // too generic without qualifier
+  'luscious oil', 'facial oil', 'face oil', 'body oil', 'hair oil',
+  'k-beauty as', 'k-beauty is', 'k-beauty has', 'k-beauty world', 'k-beauty industry',
+  'korean as', 'korean is', 'korean has', 'korean world', 'korean industry',
+  'korean brands', 'korean products', 'japanese brands', 'japanese products',
 ]);
 
 // Extract specific trending terms from text
@@ -307,20 +314,24 @@ function extractSpecificTrends(text: string): string[] {
   const patterns = [
     // "X oil" patterns (rosemary oil, castor oil, etc.)
     /\b(\w+)\s+(oil|acid|serum|extract|butter|tallow|water|essence)\b/gi,
-    // "X skin" techniques (glass skin, dolphin skin, etc.)
-    /\b(\w+)\s+skin\b/gi,
-    // Korean/Japanese/etc + term
-    /\b(korean|japanese|french|k-beauty|j-beauty)\s+(\w+)/gi,
-    // Specific ingredients
-    /\b(retinol|niacinamide|hyaluronic|salicylic|glycolic|peptide|ceramide|centella|cica|bakuchiol|snail\s*mucin|bee\s*venom|propolis)\b/gi,
+    // SPECIFIC skin techniques only (not generic "X skin")
+    /\b(glass|dolphin|glazed|honey|porcelain|cloud|jelly|mochi)\s+skin\b/gi,
+    // Korean/Japanese/etc + skincare/beauty
+    /\b(korean|japanese|french|k-beauty|j-beauty)\s+(skincare|beauty|routine|trends?)\b/gi,
+    // Specific ingredients (full names, not partial)
+    /\b(retinol|niacinamide|hyaluronic\s+acid|salicylic\s+acid|glycolic\s+acid|peptides?|ceramides?|centella|cica|bakuchiol|snail\s*mucin|bee\s*venom|propolis|squalane|azelaic\s+acid)\b/gi,
     // Techniques with -ing
     /\b(slugging|skin\s*cycling|dermaplaning|microneedling|dry\s*brushing|gua\s*sha|face\s*yoga)\b/gi,
     // "beef/salmon/snail + X" (beef tallow, salmon sperm, snail mucin)
-    /\b(beef|salmon|snail|mushroom|rice|sake)\s+(\w+)/gi,
+    /\b(beef|salmon|snail|mushroom|rice|sake|rosemary|castor|argan|jojoba|marula)\s+(\w+)/gi,
     // LED/light therapy
     /\b(led|red\s*light|blue\s*light)\s*(mask|therapy|treatment)?\b/gi,
     // Specific viral products/ingredients
-    /\b(glow\s*recipe|drunk\s*elephant|the\s*ordinary|cerave|la\s*roche|cosrx)\b/gi,
+    /\b(glow\s*recipe|drunk\s*elephant|the\s*ordinary|cerave|la\s*roche|cosrx|medicube|anua|beauty\s*of\s*joseon|innisfree|laneige)\b/gi,
+    // More ingredient patterns
+    /\b(vitamin\s*c|vitamin\s*e|azelaic|mandelic|lactic|tranexamic|alpha\s*arbutin|kojic)\b/gi,
+    // Specific trending terms
+    /\b(tinted\s*sunscreen|barrier\s*repair|skin\s*flooding|dopamine\s*beauty|clean\s*girl|latte\s*makeup|strawberry\s*girl|vanilla\s*girl)\b/gi,
   ];
 
   for (const pattern of patterns) {
@@ -414,13 +425,13 @@ export async function braveTrendingTopics(
   // Convert to array and sort by frequency
   const sortedTrends = Array.from(trendMap.entries())
     .filter(([term, data]) => {
-      // Must appear in at least 2 sources to be considered a real trend
-      return data.count >= 2 && data.sources.length >= 1;
+      // Must appear in at least 1 source to be considered a trend
+      return data.count >= 1 && data.sources.length >= 1;
     })
     .sort((a, b) => b[1].count - a[1].count)
-    .slice(0, 12);
+    .slice(0, 15);
 
-  console.log(`[Brave Trends] Found ${sortedTrends.length} specific trends for ${category}`);
+  console.log(`[Brave Trends] Found ${sortedTrends.length} specific trends for ${category}:`, sortedTrends.map(t => t[0]).join(', '));
 
   return sortedTrends.map(([term, data], index) => ({
     term: term.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '), // Title case
