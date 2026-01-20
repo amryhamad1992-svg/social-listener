@@ -3,25 +3,63 @@
 
 const YOUTUBE_CHANNELS = ['Beauty Guru', 'Makeup Tutorial', 'Skincare Expert', 'Drugstore Beauty', 'Glam Reviews'];
 
-const REVLON_KEYWORDS = ['revlon', 'super lustrous', 'colorstay', 'revlon lipstick'];
-
-const VIDEO_TITLES = [
-  "Finally found my perfect everyday lipstick - Revlon Super Lustrous in Rose Velvet!",
-  "Drugstore foundation comparison: Revlon ColorStay vs L'Oreal vs Maybelline",
-  "Has anyone tried the new Revlon lip products? Full review!",
-  "My holy grail drugstore makeup routine featuring Revlon",
-  "Revlon ColorStay foundation oxidizing on me - help!",
-  "Best drugstore lipsticks for dry lips? Testing Revlon Super Lustrous",
-  "Unpopular opinion: Revlon is still one of the best drugstore brands",
-  "Revlon vs high-end: are expensive foundations worth it?",
-  "Looking for a Revlon Super Lustrous dupe - swatches comparison",
-  "My mom's been using Revlon for 30 years and her skin looks amazing",
-  "PSA: Revlon ColorStay is 40% off this week!",
-  "Swatches of all my Revlon lipsticks - 15 shades compared",
-  "Is Revlon cruelty-free? Everything you need to know",
-  "Revlon foundation broke me out - honest review",
-  "The staying power of Revlon ColorStay is unmatched for the price",
-];
+// Brand-specific content
+const BRAND_CONTENT: Record<string, { keywords: string[]; titles: string[] }> = {
+  'Revlon': {
+    keywords: ['revlon', 'super lustrous', 'colorstay', 'revlon lipstick'],
+    titles: [
+      "Finally found my perfect everyday lipstick - Revlon Super Lustrous in Rose Velvet!",
+      "Drugstore foundation comparison: Revlon ColorStay vs L'Oreal vs Maybelline",
+      "Has anyone tried the new Revlon lip products? Full review!",
+      "My holy grail drugstore makeup routine featuring Revlon",
+      "Revlon ColorStay foundation oxidizing on me - help!",
+      "Best drugstore lipsticks for dry lips? Testing Revlon Super Lustrous",
+      "Unpopular opinion: Revlon is still one of the best drugstore brands",
+      "The staying power of Revlon ColorStay is unmatched for the price",
+    ],
+  },
+  'e.l.f.': {
+    keywords: ['elf', 'e.l.f.', 'halo glow', 'elf primer', 'elf cosmetics'],
+    titles: [
+      "e.l.f. Halo Glow is the best drugstore product of the year!",
+      "Full face using only e.l.f. products - affordable glam",
+      "Is e.l.f. really as good as high-end? Testing viral products",
+      "e.l.f. Power Grip Primer vs high-end alternatives",
+      "My top 10 e.l.f. products you need to try",
+      "e.l.f. dupes for expensive makeup - side by side comparison",
+      "Why e.l.f. is taking over the beauty industry",
+      "Honest review: e.l.f. Camo Concealer after 1 month",
+    ],
+  },
+  'Maybelline': {
+    keywords: ['maybelline', 'sky high', 'fit me', 'superstay', 'lash sensational'],
+    titles: [
+      "Maybelline Sky High Mascara - worth the hype?",
+      "Drugstore foundation battle: Maybelline Fit Me review",
+      "Maybelline SuperStay Matte Ink - 24 hour wear test",
+      "My everyday makeup using Maybelline products",
+      "Maybelline Lash Sensational vs Sky High comparison",
+      "Best Maybelline products for beginners",
+      "Is Maybelline Fit Me good for oily skin? Honest review",
+      "Maybelline Color Sensational lipsticks swatches and review",
+    ],
+  },
+  'Weleda': {
+    keywords: ['weleda', 'skin food', 'weleda oil', 'weleda rosemary', 'natural skincare'],
+    titles: [
+      "Weleda Skin Food saved my dry winter skin - holy grail!",
+      "Is Weleda worth the price? Natural skincare review",
+      "Weleda Rosemary Hair Oil transformed my hair",
+      "My natural skincare routine featuring Weleda",
+      "Weleda body oils comparison - which one is best?",
+      "Why everyone is obsessed with Weleda Skin Food",
+      "Weleda vs other natural brands - honest comparison",
+      "Using Weleda products for 30 days - results",
+      "The best Weleda products for sensitive skin",
+      "Weleda calendula baby products review - gentle and effective",
+    ],
+  },
+};
 
 const POSITIVE_BODIES = [
   "I've been using this for months and absolutely love it. The formula is so creamy and the color payoff is incredible. Highly recommend!",
@@ -87,9 +125,14 @@ export interface MockPost {
   matchedKeyword: string;
 }
 
-export function generateMockPosts(count: number = 50, daysBack: number = 30): MockPost[] {
+export function generateMockPosts(count: number = 50, daysBack: number = 30, brand: string = 'Revlon'): MockPost[] {
   const posts: MockPost[] = [];
   const now = new Date();
+
+  // Get brand-specific content or fall back to Revlon
+  const brandContent = BRAND_CONTENT[brand] || BRAND_CONTENT['Revlon'];
+  const titles = brandContent.titles;
+  const keywords = brandContent.keywords;
 
   for (let i = 0; i < count; i++) {
     // Randomly determine sentiment (weighted: 45% positive, 35% neutral, 20% negative)
@@ -122,7 +165,7 @@ export function generateMockPosts(count: number = 50, daysBack: number = 30): Mo
       videoId,
       source: channel,
       sourceIcon: '▶️',
-      title: randomElement(VIDEO_TITLES),
+      title: randomElement(titles),
       body,
       author: randomElement(AUTHORS),
       score: randomInt(100, 50000),
@@ -131,7 +174,7 @@ export function generateMockPosts(count: number = 50, daysBack: number = 30): Mo
       createdUtc,
       sentiment,
       sentimentScore,
-      matchedKeyword: randomElement(REVLON_KEYWORDS),
+      matchedKeyword: randomElement(keywords),
     });
   }
 
