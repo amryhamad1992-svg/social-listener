@@ -300,8 +300,8 @@ const CATEGORY_SEARCHES: Record<string, string[]> = {
     'mineral sunscreen viral',
     'sunscreen stick trend',
   ],
-  tools: [
-    'beauty tool viral TikTok 2026',
+  beautytech: [
+    'beauty device viral TikTok 2026',
     'led mask trend viral',
     'gua sha routine viral',
     'ice roller skincare trend',

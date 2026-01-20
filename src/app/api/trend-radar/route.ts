@@ -50,8 +50,8 @@ const CATEGORIES: Record<string, {
     amazonCategory: 'Sun Care',
     trendingTerms: ['spf every day', 'sunscreen reapply', 'no white cast', 'korean sunscreen'],
   },
-  tools: {
-    name: 'Beauty Tools & Devices',
+  beautytech: {
+    name: 'Beauty Tech',
     keywords: ['led mask', 'gua sha', 'jade roller', 'ice roller', 'dermaplaning', 'microcurrent', 'facial steamer', 'makeup brushes', 'beauty blender', 'eyelash curler'],
     amazonCategory: 'Beauty Tools',
     trendingTerms: ['red light therapy', 'facial massage', 'lymphatic drainage', 'at home facial'],
@@ -384,7 +384,7 @@ function generateDemoTrends(category: string, timeRange: string): TrendItem[] {
     fragrance: ['vanilla perfume', 'perfume layering', 'clean girl scent', 'cozy fragrance', 'dupe finds', 'niche discovery'],
     bodycare: ['everything shower', 'soft skin routine', 'body slugging', 'dry brushing', 'glow oil', 'self tan routine'],
     suncare: ['korean sunscreen', 'tinted spf', 'sunscreen stick', 'no white cast', 'spf reapply', 'beauty of joseon'],
-    tools: ['gua sha routine', 'led mask', 'ice roller', 'microcurrent', 'facial steamer', 'dermaplaning'],
+    beautytech: ['gua sha routine', 'led mask', 'ice roller', 'microcurrent', 'facial steamer', 'dermaplaning'],
     kbeauty: ['glass skin', 'snail mucin', 'rice toner', 'centella', 'mugwort', '7 skin method'],
     cleanbeauty: ['clean girl aesthetic', 'skin minimalism', 'less is more', 'barrier repair', 'gentle actives', 'mushroom skincare'],
   };
