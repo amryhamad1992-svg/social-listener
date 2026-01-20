@@ -231,7 +231,7 @@ interface TrendResult {
 }
 
 // Detect platform from URL
-function detectPlatform(url: string): string {
+function detectPlatformFromUrl(url: string): string {
   if (!url) return 'web';
   const lowerUrl = url.toLowerCase();
   if (lowerUrl.includes('tiktok.com')) return 'tiktok';
@@ -241,6 +241,35 @@ function detectPlatform(url: string): string {
   if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) return 'twitter';
   if (lowerUrl.includes('pinterest.com')) return 'pinterest';
   if (lowerUrl.includes('facebook.com')) return 'facebook';
+  return 'web';
+}
+
+// Detect platform mentioned in content (title/description) - for articles ABOUT platform trends
+function detectPlatformFromContent(text: string): string | null {
+  if (!text) return null;
+  const lower = text.toLowerCase();
+
+  // Check for explicit platform mentions in the content
+  if (lower.includes('tiktok') || lower.includes('tik tok') || lower.includes('#tiktok')) return 'tiktok';
+  if (lower.includes('instagram') || lower.includes('insta ') || lower.includes('#instagram') || lower.includes('reels')) return 'instagram';
+  if (lower.includes('youtube') || lower.includes('youtuber')) return 'youtube';
+  if (lower.includes('reddit') || lower.includes('r/')) return 'reddit';
+  if (lower.includes('twitter') || lower.includes(' x ') || lower.includes('tweet')) return 'twitter';
+
+  return null;
+}
+
+// Combined platform detection - check URL first, then content
+function detectPlatform(url: string, title?: string, description?: string): string {
+  // First check if the URL is directly from a social platform
+  const urlPlatform = detectPlatformFromUrl(url);
+  if (urlPlatform !== 'web') return urlPlatform;
+
+  // If URL is web, check if the content mentions a specific platform
+  const content = `${title || ''} ${description || ''}`;
+  const contentPlatform = detectPlatformFromContent(content);
+  if (contentPlatform) return contentPlatform;
+
   return 'web';
 }
 
@@ -460,7 +489,7 @@ export async function braveTrendingTopics(
       for (const result of results) {
         const fullText = `${result.title} ${result.description}`;
         const extractedTrends = extractSpecificTrends(fullText);
-        const platform = detectPlatform(result.url);
+        const platform = detectPlatform(result.url, result.title, result.description);
 
         for (const trend of extractedTrends) {
           const normalized = trend.toLowerCase().trim();
@@ -501,7 +530,7 @@ export async function braveTrendingTopics(
     for (const result of viralSearch) {
       const fullText = `${result.title} ${result.description}`;
       const extractedTrends = extractSpecificTrends(fullText);
-      const platform = detectPlatform(result.url);
+      const platform = detectPlatform(result.url, result.title, result.description);
 
       for (const trend of extractedTrends) {
         const normalized = trend.toLowerCase().trim();
