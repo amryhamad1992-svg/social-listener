@@ -301,8 +301,20 @@ export async function GET(request: NextRequest) {
       trends.push(...generateDemoTrends(category, timeRange));
     }
 
-    // Sort by velocity (highest first)
-    trends.sort((a, b) => b.velocity - a.velocity);
+    // Sort by OPPORTUNITY: TikTok presence + not on Amazon = highest priority
+    // This reflects the hypothesis: TikTok viral → Amazon bestseller
+    trends.sort((a, b) => {
+      // Primary: Opportunity score (higher = better, not on Amazon yet)
+      const opportunityDiff = b.retailData.opportunityScore - a.retailData.opportunityScore;
+      if (opportunityDiff !== 0) return opportunityDiff;
+
+      // Secondary: TikTok source count (more TikTok sources = stronger signal)
+      const tiktokDiff = b.platforms.tiktok - a.platforms.tiktok;
+      if (tiktokDiff !== 0) return tiktokDiff;
+
+      // Tertiary: Overall velocity
+      return b.velocity - a.velocity;
+    });
 
     // Calculate summary with REAL retail data
     const summary = {
