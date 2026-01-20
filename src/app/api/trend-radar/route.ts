@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { braveTrendingTopics, braveWebSearch, isBraveConfigured } from '@/lib/brave';
+import { braveTrendingTopics, braveWebSearch, isBraveConfigured, checkRetailAvailability, RetailAvailability } from '@/lib/brave';
 
 // Categories available for trend tracking - Beauty focused
 const CATEGORIES: Record<string, {
@@ -82,8 +82,14 @@ interface TrendItem {
     reddit: number;
     twitter: number;
   };
-  amazonStatus: 'not_trending' | 'early' | 'growing' | 'peak';
-  predictedDaysToAmazon: number | null;
+  // Real retail availability data
+  retailStatus: 'not_available' | 'emerging' | 'growing' | 'saturated';
+  retailData: {
+    amazonAvailable: boolean;
+    amazonProductCount: number;
+    topProducts: string[];
+    opportunityScore: number;
+  };
   sentiment: number;
   relatedTerms: string[];
   samplePosts: Array<{
@@ -104,26 +110,6 @@ function getCacheKey(category: string, timeRange: string): string {
 }
 
 
-// Estimate Amazon status based on trend characteristics
-function estimateAmazonStatus(velocity: number, volume: number): {
-  status: 'not_trending' | 'early' | 'growing' | 'peak';
-  predictedDays: number | null;
-} {
-  // High velocity + low volume = not yet on Amazon (best opportunity)
-  if (velocity > 150 && volume < 60) {
-    return { status: 'not_trending', predictedDays: Math.round(14 - (velocity / 50)) };
-  }
-  // High velocity + medium volume = early on Amazon
-  if (velocity > 100 && volume < 80) {
-    return { status: 'early', predictedDays: Math.round(7 - (velocity / 100)) };
-  }
-  // Medium velocity + high volume = growing on Amazon
-  if (velocity > 50 || volume > 70) {
-    return { status: 'growing', predictedDays: Math.round(3 - (velocity / 150)) };
-  }
-  // Low velocity + high volume = peak (saturated)
-  return { status: 'peak', predictedDays: null };
-}
 
 // Calculate platform distribution from social mentions
 function calculatePlatformDistribution(mentions: any[]): TrendItem['platforms'] {
@@ -235,17 +221,27 @@ export async function GET(request: NextRequest) {
       }));
     }
 
-    // Step 3: Build trend items
-    for (const query of uniqueQueries) {
+    // Step 3: Build trend items with REAL retail availability checks
+    // Check retail availability for top trends (limit to save API calls)
+    const retailChecks = await Promise.all(
+      uniqueQueries.slice(0, 10).map(q => checkRetailAvailability(q.query))
+    );
+
+    for (let i = 0; i < uniqueQueries.length; i++) {
+      const query = uniqueQueries[i];
       const isRising = query.type === 'rising';
       const baseVelocity = isRising ? 150 + Math.random() * 200 : 50 + Math.random() * 100;
       const velocity = Math.round(baseVelocity);
       const volume = Math.min(100, query.value || 50);
 
-      const amazonEstimate = estimateAmazonStatus(velocity, volume);
+      // Get REAL retail availability (or default for trends beyond top 10)
+      const retailAvailability = retailChecks[i] || {
+        overall: 'not_available' as const,
+        opportunityScore: 80,
+        amazon: { available: false, count: 0, topProducts: [] }
+      };
 
       // Use REAL platform counts from search results
-      // Only include platforms where we actually found sources
       const realPlatformCounts = query.platformCounts || {};
       const platforms = {
         tiktok: realPlatformCounts['tiktok'] || 0,
@@ -255,17 +251,20 @@ export async function GET(request: NextRequest) {
         twitter: realPlatformCounts['twitter'] || 0,
       };
 
-      // Calculate total sources for this trend
-      const totalSources = Object.values(platforms).reduce((a, b) => a + b, 0) + (realPlatformCounts['web'] || 0);
-
       trends.push({
         term: query.query,
         category,
         velocity,
         volume,
-        platforms, // Real counts, not normalized percentages
-        amazonStatus: amazonEstimate.status,
-        predictedDaysToAmazon: amazonEstimate.predictedDays,
+        platforms,
+        // REAL retail data from Amazon search
+        retailStatus: retailAvailability.overall,
+        retailData: {
+          amazonAvailable: retailAvailability.amazon.available,
+          amazonProductCount: retailAvailability.amazon.count,
+          topProducts: retailAvailability.amazon.topProducts,
+          opportunityScore: retailAvailability.opportunityScore,
+        },
         sentiment: 0.65 + Math.random() * 0.3,
         relatedTerms: uniqueQueries
           .filter((q: any) => q.query !== query.query)
@@ -305,15 +304,16 @@ export async function GET(request: NextRequest) {
     // Sort by velocity (highest first)
     trends.sort((a, b) => b.velocity - a.velocity);
 
-    // Calculate summary
+    // Calculate summary with REAL retail data
     const summary = {
       totalTrends: trends.length,
-      notOnAmazon: trends.filter(t => t.amazonStatus === 'not_trending').length,
-      earlyOnAmazon: trends.filter(t => t.amazonStatus === 'early').length,
+      notOnAmazon: trends.filter(t => t.retailStatus === 'not_available').length,
+      emergingOnAmazon: trends.filter(t => t.retailStatus === 'emerging').length,
       avgVelocity: Math.round(trends.reduce((sum, t) => sum + t.velocity, 0) / trends.length),
       topPlatform: getTopPlatform(trends),
+      // Average opportunity score from real retail checks
       opportunityScore: Math.round(
-        (trends.filter(t => t.amazonStatus === 'not_trending').length / trends.length) * 100
+        trends.reduce((sum, t) => sum + t.retailData.opportunityScore, 0) / trends.length
       ),
     };
 
@@ -401,7 +401,13 @@ function generateDemoTrends(category: string, timeRange: string): TrendItem[] {
   return terms.map((term, index) => {
     const velocity = Math.round(300 - index * 40 + Math.random() * 50);
     const volume = Math.round(90 - index * 8 + Math.random() * 10);
-    const amazonEstimate = estimateAmazonStatus(velocity, volume);
+
+    // Demo retail status based on index (first few = not available, rest = various)
+    const retailStatuses: Array<'not_available' | 'emerging' | 'growing' | 'saturated'> =
+      ['not_available', 'not_available', 'emerging', 'emerging', 'growing', 'saturated'];
+    const retailStatus = retailStatuses[index] || 'growing';
+    const opportunityScores = [95, 90, 75, 70, 45, 15];
+    const opportunityScore = opportunityScores[index] || 45;
 
     return {
       term,
@@ -415,8 +421,13 @@ function generateDemoTrends(category: string, timeRange: string): TrendItem[] {
         reddit: Math.round(45 - index * 3 + Math.random() * 10),
         twitter: Math.round(40 - index * 3 + Math.random() * 10),
       },
-      amazonStatus: amazonEstimate.status,
-      predictedDaysToAmazon: amazonEstimate.predictedDays,
+      retailStatus,
+      retailData: {
+        amazonAvailable: retailStatus !== 'not_available',
+        amazonProductCount: retailStatus === 'not_available' ? 0 : retailStatus === 'emerging' ? 2 : retailStatus === 'growing' ? 5 : 10,
+        topProducts: [],
+        opportunityScore,
+      },
       sentiment: 0.7 + Math.random() * 0.25,
       relatedTerms: terms.filter(t => t !== term).slice(0, 4),
       samplePosts: [

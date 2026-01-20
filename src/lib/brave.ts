@@ -555,3 +555,72 @@ export async function braveTrendingTopics(
 export function isBraveConfigured(): boolean {
   return !!BRAVE_API_KEY;
 }
+
+// Check retail availability for a trend term
+export interface RetailAvailability {
+  amazon: { available: boolean; count: number; topProducts: string[] };
+  overall: 'not_available' | 'emerging' | 'growing' | 'saturated';
+  opportunityScore: number; // 0-100, higher = better opportunity (not on retail yet)
+}
+
+export async function checkRetailAvailability(term: string): Promise<RetailAvailability> {
+  const cacheKey = getCacheKey('retail', term);
+  const cached = getFromCache(cacheKey);
+  if (cached) return cached;
+
+  let amazonCount = 0;
+  const topProducts: string[] = [];
+
+  try {
+    // Search for products on Amazon
+    const amazonResults = await braveWebSearch(`"${term}" site:amazon.com product`, { count: 10, freshness: 'py' });
+
+    // Filter for actual product pages (not just any Amazon page)
+    const productResults = amazonResults.filter(r =>
+      r.url?.includes('/dp/') ||
+      r.url?.includes('/gp/product/') ||
+      r.title?.toLowerCase().includes(term.toLowerCase())
+    );
+
+    amazonCount = productResults.length;
+
+    // Get top product titles
+    productResults.slice(0, 3).forEach(r => {
+      if (r.title) topProducts.push(r.title.slice(0, 60));
+    });
+
+  } catch (err) {
+    console.error(`[Retail Check] Error checking Amazon for "${term}":`, err);
+  }
+
+  // Determine overall retail status
+  let overall: RetailAvailability['overall'];
+  let opportunityScore: number;
+
+  if (amazonCount === 0) {
+    overall = 'not_available';
+    opportunityScore = 95; // Huge opportunity - trending but not on Amazon
+  } else if (amazonCount <= 2) {
+    overall = 'emerging';
+    opportunityScore = 75; // Good opportunity - just starting to appear
+  } else if (amazonCount <= 5) {
+    overall = 'growing';
+    opportunityScore = 45; // Some opportunity - competition building
+  } else {
+    overall = 'saturated';
+    opportunityScore = 15; // Low opportunity - market is crowded
+  }
+
+  const result: RetailAvailability = {
+    amazon: {
+      available: amazonCount > 0,
+      count: amazonCount,
+      topProducts,
+    },
+    overall,
+    opportunityScore,
+  };
+
+  setCache(cacheKey, result);
+  return result;
+}

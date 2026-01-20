@@ -33,8 +33,13 @@ interface TrendItem {
     reddit: number;
     twitter: number;
   };
-  amazonStatus: 'not_trending' | 'early' | 'growing' | 'peak';
-  predictedDaysToAmazon: number | null;
+  retailStatus: 'not_available' | 'emerging' | 'growing' | 'saturated';
+  retailData: {
+    amazonAvailable: boolean;
+    amazonProductCount: number;
+    topProducts: string[];
+    opportunityScore: number;
+  };
   sentiment: number;
   relatedTerms: string[];
   samplePosts: Array<{
@@ -86,30 +91,30 @@ const PLATFORM_NAMES: Record<string, string> = {
   twitter: 'X',
 };
 
-const AMAZON_STATUS_CONFIG = {
-  not_trending: {
+const RETAIL_STATUS_CONFIG = {
+  not_available: {
     label: 'Not on Amazon',
     color: 'bg-green-100 text-green-700 border-green-200',
     icon: Sparkles,
-    description: 'High opportunity - trending socially but not yet on Amazon',
+    description: 'High opportunity - trending socially but no products found on Amazon yet',
   },
-  early: {
-    label: 'Early on Amazon',
+  emerging: {
+    label: 'Emerging',
     color: 'bg-blue-100 text-blue-700 border-blue-200',
     icon: Zap,
-    description: 'Just starting to appear on Amazon',
+    description: 'Just starting to appear - only 1-2 products found on Amazon',
   },
   growing: {
-    label: 'Growing on Amazon',
+    label: 'Growing',
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
     icon: TrendingUp,
-    description: 'Gaining traction on Amazon',
+    description: 'Competition building - 3-5 products now on Amazon',
   },
-  peak: {
-    label: 'Peak on Amazon',
+  saturated: {
+    label: 'Saturated',
     color: 'bg-gray-100 text-gray-600 border-gray-200',
     icon: Target,
-    description: 'Already mainstream on Amazon',
+    description: 'Market is crowded - many products already on Amazon',
   },
 };
 
@@ -300,11 +305,11 @@ export default function TrendRadarPage() {
               <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Sparkles className="w-4 h-4 text-green-600" />
-                  <span className="text-xs text-[#64748B]">Amazon Opportunity</span>
+                  <span className="text-xs text-[#64748B]">High Opportunity</span>
                 </div>
                 <div className="flex items-end gap-2">
                   <span className="text-2xl font-bold text-[#0F172A]">{data.summary.notOnAmazon}</span>
-                  <span className="text-sm text-[#64748B] mb-1">trends not yet on Amazon</span>
+                  <span className="text-sm text-[#64748B] mb-1">trends not on Amazon</span>
                 </div>
                 <div className="mt-2 h-1.5 bg-[#E2E8F0] rounded-full overflow-hidden">
                   <div
@@ -312,6 +317,7 @@ export default function TrendRadarPage() {
                     style={{ width: `${data.summary.opportunityScore}%` }}
                   />
                 </div>
+                <p className="text-[9px] text-[#94A3B8] mt-1">Avg opportunity: {data.summary.opportunityScore}%</p>
               </div>
 
               <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
@@ -360,7 +366,7 @@ export default function TrendRadarPage() {
 
                 <div className="divide-y divide-[#E2E8F0]">
                   {data.trends.map((trend, index) => {
-                    const statusConfig = AMAZON_STATUS_CONFIG[trend.amazonStatus];
+                    const statusConfig = RETAIL_STATUS_CONFIG[trend.retailStatus];
                     const StatusIcon = statusConfig.icon;
                     const isSelected = selectedTrend?.term === trend.term;
 
@@ -381,6 +387,14 @@ export default function TrendRadarPage() {
                                 <StatusIcon className="w-3 h-3" />
                                 {statusConfig.label}
                               </span>
+                              {/* Opportunity Score Badge */}
+                              <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${
+                                trend.retailData.opportunityScore >= 70 ? 'bg-green-500 text-white' :
+                                trend.retailData.opportunityScore >= 40 ? 'bg-yellow-500 text-white' :
+                                'bg-gray-400 text-white'
+                              }`}>
+                                {trend.retailData.opportunityScore}% opportunity
+                              </span>
                             </div>
 
                             <div className="flex items-center gap-4 mt-2">
@@ -390,25 +404,15 @@ export default function TrendRadarPage() {
                                 <span className="text-xs font-semibold text-green-600">+{trend.velocity}%</span>
                               </div>
 
-                              {/* Volume bar */}
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] text-[#64748B]">Volume</span>
-                                <div className="w-16 h-1.5 bg-[#E2E8F0] rounded-full overflow-hidden">
-                                  <div
-                                    className="h-full bg-[#0F172A] rounded-full"
-                                    style={{ width: `${trend.volume}%` }}
-                                  />
-                                </div>
-                                <span className="text-[10px] text-[#64748B]">{trend.volume}</span>
+                              {/* Amazon Product Count */}
+                              <div className="flex items-center gap-1 text-[10px] text-[#64748B]">
+                                <ShoppingCart className="w-3 h-3" />
+                                <span>
+                                  {trend.retailData.amazonProductCount === 0
+                                    ? 'No products on Amazon'
+                                    : `${trend.retailData.amazonProductCount} products on Amazon`}
+                                </span>
                               </div>
-
-                              {/* Days to Amazon */}
-                              {trend.predictedDaysToAmazon !== null && (
-                                <div className="flex items-center gap-1 text-[10px] text-[#64748B]">
-                                  <Clock className="w-3 h-3" />
-                                  <span>~{trend.predictedDaysToAmazon}d to Amazon</span>
-                                </div>
-                              )}
                             </div>
 
                             {/* Platform Distribution - Only show platforms with actual sources */}
@@ -452,34 +456,61 @@ export default function TrendRadarPage() {
                     <div className="p-4 border-b border-[#E2E8F0]">
                       <h3 className="text-base font-semibold text-[#0F172A]">{selectedTrend.term}</h3>
                       <p className="text-xs text-[#64748B] mt-1">
-                        {AMAZON_STATUS_CONFIG[selectedTrend.amazonStatus].description}
+                        {RETAIL_STATUS_CONFIG[selectedTrend.retailStatus].description}
                       </p>
                     </div>
 
                     <div className="p-4 space-y-4">
-                      {/* Amazon Prediction */}
-                      <div className="p-3 bg-gradient-to-br from-[#0F172A] to-[#1E293B] rounded-lg text-white">
+                      {/* Retail Availability - REAL DATA */}
+                      <div className={`p-3 rounded-lg ${
+                        selectedTrend.retailData.opportunityScore >= 70
+                          ? 'bg-gradient-to-br from-green-600 to-green-700'
+                          : selectedTrend.retailData.opportunityScore >= 40
+                          ? 'bg-gradient-to-br from-yellow-500 to-yellow-600'
+                          : 'bg-gradient-to-br from-gray-500 to-gray-600'
+                      } text-white`}>
                         <div className="flex items-center gap-2 mb-2">
                           <ShoppingCart className="w-4 h-4" />
-                          <span className="text-xs font-medium">Amazon Prediction</span>
+                          <span className="text-xs font-medium">Amazon Availability</span>
                         </div>
-                        {selectedTrend.predictedDaysToAmazon !== null ? (
-                          <div>
-                            <span className="text-2xl font-bold">{selectedTrend.predictedDaysToAmazon}</span>
-                            <span className="text-sm ml-1">days until trending</span>
-                            <p className="text-[10px] text-white/60 mt-1">
-                              Based on social velocity and historical patterns
-                            </p>
+                        <div>
+                          <span className="text-2xl font-bold">{selectedTrend.retailData.amazonProductCount}</span>
+                          <span className="text-sm ml-1">products found</span>
+                          <div className="mt-2">
+                            <div className="flex items-center justify-between text-[10px]">
+                              <span>Opportunity Score</span>
+                              <span className="font-bold">{selectedTrend.retailData.opportunityScore}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-white/20 rounded-full mt-1">
+                              <div
+                                className="h-full bg-white rounded-full"
+                                style={{ width: `${selectedTrend.retailData.opportunityScore}%` }}
+                              />
+                            </div>
                           </div>
-                        ) : (
-                          <div>
-                            <span className="text-lg font-medium">Already at Peak</span>
-                            <p className="text-[10px] text-white/60 mt-1">
-                              This trend has already peaked on Amazon
-                            </p>
-                          </div>
-                        )}
+                          <p className="text-[10px] text-white/70 mt-2">
+                            {selectedTrend.retailData.opportunityScore >= 70
+                              ? '🔥 High opportunity - act fast!'
+                              : selectedTrend.retailData.opportunityScore >= 40
+                              ? '⚡ Moderate opportunity - competition building'
+                              : '📊 Low opportunity - market saturated'}
+                          </p>
+                        </div>
                       </div>
+
+                      {/* Top Amazon Products (if any) */}
+                      {selectedTrend.retailData.topProducts.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-medium text-[#0F172A] mb-2">Existing Products on Amazon</h4>
+                          <div className="space-y-1.5">
+                            {selectedTrend.retailData.topProducts.map((product, idx) => (
+                              <div key={idx} className="text-[10px] text-[#64748B] bg-[#F8FAFC] p-2 rounded truncate">
+                                {product}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Platform Breakdown - Only show platforms with actual sources */}
                       <div>
