@@ -28,6 +28,7 @@ const BRAND_KEYWORDS: Record<string, string[]> = {
   'Revlon': ['Revlon makeup', 'Revlon lipstick', 'Revlon ColorStay', 'Revlon foundation'],
   'e.l.f.': ['elf cosmetics', 'elf makeup', 'elf halo glow', 'elf primer'],
   'Maybelline': ['Maybelline mascara', 'Maybelline foundation', 'Maybelline sky high'],
+  'Weleda': ['Weleda Skin Food', 'Weleda skincare', 'Weleda body oil', 'Weleda rosemary'],
 };
 
 // Cache TTL: 2 hours for fresh data
