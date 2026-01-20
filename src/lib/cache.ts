@@ -15,6 +15,9 @@ interface MentionCache {
 // Global cache object (persists across requests in the same process)
 const cache: MentionCache = {};
 
+// Cache version - bump this when adding new brands or changing keywords
+const CACHE_VERSION = 'v2';
+
 // Cache TTL in milliseconds (default: 6 hours)
 const DEFAULT_TTL = 6 * 60 * 60 * 1000;
 
@@ -25,7 +28,7 @@ const MAX_STALE_AGE = 24 * 60 * 60 * 1000;
  * Generate a cache key from source and brand
  */
 export function getCacheKey(source: string, brand: string): string {
-  return `${source.toLowerCase()}_${brand.toLowerCase()}`;
+  return `${CACHE_VERSION}_${source.toLowerCase()}_${brand.toLowerCase()}`;
 }
 
 /**
