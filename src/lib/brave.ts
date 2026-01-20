@@ -2,7 +2,8 @@
 // 2,000 free searches/month, then $5 per 1K
 // Docs: https://brave.com/search/api/
 
-const BRAVE_API_KEY = process.env.BRAVE_API_KEY;
+// Support both BRAVE_API_KEY and BRAVE_API env var names
+const BRAVE_API_KEY = process.env.BRAVE_API_KEY || process.env.BRAVE_API;
 const BASE_URL = 'https://api.search.brave.com/res/v1';
 
 // Cache to reduce API calls
