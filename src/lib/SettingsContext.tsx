@@ -71,6 +71,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       'revlon': 'Revlon',
       'elf': 'e.l.f.',
       'maybelline': 'Maybelline',
+      'weleda': 'Weleda',
     };
     return brandMap[settings.selectedBrand] || 'Revlon';
   }, [settings.selectedBrand]);
@@ -81,6 +82,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       'revlon': ['revlon', 'revlon lipstick', 'revlon foundation', 'revlon makeup', 'colorstay', 'super lustrous'],
       'elf': ['e.l.f.', 'elf cosmetics', 'elf makeup', 'elf beauty', 'e.l.f. cosmetics'],
       'maybelline': ['maybelline', 'maybelline new york', 'maybelline lipstick', 'maybelline mascara', 'lash sensational', 'fit me'],
+      'weleda': ['weleda', 'weleda skin food', 'weleda skincare', 'weleda body oil', 'weleda rosemary'],
     };
     return keywordMap[settings.selectedBrand] || keywordMap['revlon'];
   }, [settings.selectedBrand]);
