@@ -80,7 +80,7 @@ const PLATFORM_NAMES: Record<string, string> = {
   youtube: 'YouTube',
   reddit: 'Reddit',
   twitter: 'X',
-  web: 'Open Web',
+  web: 'Web',
 };
 
 
@@ -97,7 +97,7 @@ const PLATFORM_OPTIONS = [
   { value: 'youtube', label: 'YouTube' },
   { value: 'reddit', label: 'Reddit' },
   { value: 'twitter', label: 'X (Twitter)' },
-  { value: 'web', label: 'Open Web' },
+  { value: 'web', label: 'Web' },
 ];
 
 export default function TrendRadarPage() {
