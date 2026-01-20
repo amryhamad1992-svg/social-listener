@@ -4,19 +4,13 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Radar,
   TrendingUp,
-  TrendingDown,
-  Zap,
-  ShoppingCart,
-  Clock,
   RefreshCw,
   Loader2,
   AlertCircle,
   ExternalLink,
   ChevronRight,
   Sparkles,
-  Target,
   BarChart3,
-  ArrowUpRight,
 } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { useRouter } from 'next/navigation';
@@ -33,13 +27,7 @@ interface TrendItem {
     reddit: number;
     twitter: number;
   };
-  retailStatus: 'not_available' | 'emerging' | 'growing' | 'saturated';
-  retailData: {
-    amazonAvailable: boolean;
-    amazonProductCount: number;
-    topProducts: string[];
-    opportunityScore: number;
-  };
+  totalSources: number;
   sentiment: number;
   relatedTerms: string[];
   samplePosts: Array<{
@@ -59,11 +47,11 @@ interface CategoryInfo {
 
 interface TrendSummary {
   totalTrends: number;
-  notOnAmazon: number;
-  earlyOnAmazon: number;
+  tiktokTrends: number;
+  multiPlatform: number;
   avgVelocity: number;
   topPlatform: string;
-  opportunityScore: number;
+  totalSources: number;
 }
 
 interface TrendData {
@@ -91,32 +79,6 @@ const PLATFORM_NAMES: Record<string, string> = {
   twitter: 'X',
 };
 
-const RETAIL_STATUS_CONFIG = {
-  not_available: {
-    label: 'Not on Amazon',
-    color: 'bg-green-100 text-green-700 border-green-200',
-    icon: Sparkles,
-    description: 'High opportunity - trending socially but no products found on Amazon yet',
-  },
-  emerging: {
-    label: 'Emerging',
-    color: 'bg-blue-100 text-blue-700 border-blue-200',
-    icon: Zap,
-    description: 'Just starting to appear - only 1-2 products found on Amazon',
-  },
-  growing: {
-    label: 'Growing',
-    color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    icon: TrendingUp,
-    description: 'Competition building - 3-5 products now on Amazon',
-  },
-  saturated: {
-    label: 'Saturated',
-    color: 'bg-gray-100 text-gray-600 border-gray-200',
-    icon: Target,
-    description: 'Market is crowded - many products already on Amazon',
-  },
-};
 
 const TIME_OPTIONS = [
   { value: '1d', label: 'Yesterday' },
@@ -205,9 +167,9 @@ export default function TrendRadarPage() {
                 <Radar className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-[#0F172A]">Trend Radar</h1>
+                <h1 className="text-lg font-semibold text-[#0F172A]">Beauty Trend Radar</h1>
                 <p className="text-xs text-[#64748B]">
-                  TikTok viral today → Amazon bestseller tomorrow
+                  What's trending in beauty across social media
                 </p>
               </div>
               {source && (
@@ -304,20 +266,19 @@ export default function TrendRadarPage() {
             <div className="grid grid-cols-4 gap-4 mb-6">
               <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="w-4 h-4 text-green-600" />
-                  <span className="text-xs text-[#64748B]">High Opportunity</span>
+                  <Sparkles className="w-4 h-4 text-[#00f2ea]" />
+                  <span className="text-xs text-[#64748B]">TikTok Trends</span>
                 </div>
                 <div className="flex items-end gap-2">
-                  <span className="text-2xl font-bold text-[#0F172A]">{data.summary.notOnAmazon}</span>
-                  <span className="text-sm text-[#64748B] mb-1">trends not on Amazon</span>
+                  <span className="text-2xl font-bold text-[#0F172A]">{data.summary.tiktokTrends}</span>
+                  <span className="text-sm text-[#64748B] mb-1">trending on TikTok</span>
                 </div>
                 <div className="mt-2 h-1.5 bg-[#E2E8F0] rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-green-500 rounded-full"
-                    style={{ width: `${data.summary.opportunityScore}%` }}
+                    className="h-full bg-[#00f2ea] rounded-full"
+                    style={{ width: `${(data.summary.tiktokTrends / data.summary.totalTrends) * 100}%` }}
                   />
                 </div>
-                <p className="text-[9px] text-[#94A3B8] mt-1">Avg opportunity: {data.summary.opportunityScore}%</p>
               </div>
 
               <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
@@ -358,16 +319,14 @@ export default function TrendRadarPage() {
               {/* Trend List */}
               <div className="col-span-2 bg-white rounded-xl border border-[#E2E8F0]">
                 <div className="p-4 border-b border-[#E2E8F0]">
-                  <h2 className="text-sm font-medium text-[#0F172A]">TikTok → Amazon Opportunities</h2>
+                  <h2 className="text-sm font-medium text-[#0F172A]">Trending Beauty Terms</h2>
                   <p className="text-xs text-[#64748B] mt-0.5">
-                    Sorted by opportunity - TikTok viral trends not yet on Amazon
+                    Sorted by social media presence - TikTok trends first
                   </p>
                 </div>
 
                 <div className="divide-y divide-[#E2E8F0]">
                   {data.trends.map((trend, index) => {
-                    const statusConfig = RETAIL_STATUS_CONFIG[trend.retailStatus];
-                    const StatusIcon = statusConfig.icon;
                     const isSelected = selectedTrend?.term === trend.term;
 
                     return (
@@ -383,40 +342,42 @@ export default function TrendRadarPage() {
                             <div className="flex items-center gap-2">
                               <span className="text-xs text-[#94A3B8] font-mono">#{index + 1}</span>
                               <h3 className="text-sm font-medium text-[#0F172A] truncate">{trend.term}</h3>
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded border ${statusConfig.color}`}>
-                                <StatusIcon className="w-3 h-3" />
-                                {statusConfig.label}
-                              </span>
-                              {/* Opportunity Score Badge */}
-                              <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${
-                                trend.retailData.opportunityScore >= 70 ? 'bg-green-500 text-white' :
-                                trend.retailData.opportunityScore >= 40 ? 'bg-yellow-500 text-white' :
-                                'bg-gray-400 text-white'
-                              }`}>
-                                {trend.retailData.opportunityScore}% opportunity
+                              {/* Total Sources Badge */}
+                              <span className="px-1.5 py-0.5 text-[9px] font-medium rounded bg-[#0F172A] text-white">
+                                {trend.totalSources} {trend.totalSources === 1 ? 'source' : 'sources'}
                               </span>
                             </div>
 
-                            <div className="flex items-center gap-4 mt-2">
+                            <div className="flex items-center gap-3 mt-2">
                               {/* TikTok Signal - Primary Indicator */}
                               {trend.platforms.tiktok > 0 && (
                                 <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#00f2ea]/10">
                                   <div className="w-1.5 h-1.5 rounded-full bg-[#00f2ea]" />
                                   <span className="text-[10px] font-medium text-[#00f2ea]">
-                                    {trend.platforms.tiktok} TikTok {trend.platforms.tiktok === 1 ? 'source' : 'sources'}
+                                    {trend.platforms.tiktok} TikTok
                                   </span>
                                 </div>
                               )}
 
-                              {/* Amazon Status */}
-                              <div className="flex items-center gap-1 text-[10px]">
-                                <ShoppingCart className="w-3 h-3 text-[#64748B]" />
-                                <span className={trend.retailData.amazonProductCount === 0 ? 'text-green-600 font-medium' : 'text-[#64748B]'}>
-                                  {trend.retailData.amazonProductCount === 0
-                                    ? '✓ Not on Amazon yet'
-                                    : `${trend.retailData.amazonProductCount} on Amazon`}
-                                </span>
-                              </div>
+                              {/* Instagram */}
+                              {trend.platforms.instagram > 0 && (
+                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#E4405F]/10">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-[#E4405F]" />
+                                  <span className="text-[10px] font-medium text-[#E4405F]">
+                                    {trend.platforms.instagram} Instagram
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* YouTube */}
+                              {trend.platforms.youtube > 0 && (
+                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#FF0000]/10">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-[#FF0000]" />
+                                  <span className="text-[10px] font-medium text-[#FF0000]">
+                                    {trend.platforms.youtube} YouTube
+                                  </span>
+                                </div>
+                              )}
                             </div>
 
                             {/* Platform Distribution - Only show platforms with actual sources */}
@@ -460,19 +421,19 @@ export default function TrendRadarPage() {
                     <div className="p-4 border-b border-[#E2E8F0]">
                       <h3 className="text-base font-semibold text-[#0F172A]">{selectedTrend.term}</h3>
                       <p className="text-xs text-[#64748B] mt-1">
-                        {RETAIL_STATUS_CONFIG[selectedTrend.retailStatus].description}
+                        {selectedTrend.totalSources} sources across social media
                       </p>
                     </div>
 
                     <div className="p-4 space-y-4">
-                      {/* TikTok → Amazon Pipeline */}
+                      {/* Social Media Presence Overview */}
                       <div className="p-3 bg-[#0F172A] rounded-lg text-white">
-                        <div className="text-[10px] text-white/60 mb-2">TikTok → Amazon Pipeline</div>
+                        <div className="text-[10px] text-white/60 mb-3">Social Media Presence</div>
 
-                        {/* Visual Pipeline */}
-                        <div className="flex items-center gap-2 mb-3">
+                        {/* Platform breakdown visual */}
+                        <div className="grid grid-cols-3 gap-2">
                           {/* TikTok */}
-                          <div className="flex-1 text-center">
+                          <div className="text-center">
                             <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center ${
                               selectedTrend.platforms.tiktok > 0 ? 'bg-[#00f2ea]' : 'bg-white/20'
                             }`}>
@@ -480,86 +441,43 @@ export default function TrendRadarPage() {
                             </div>
                             <div className="text-[10px] mt-1">TikTok</div>
                             <div className={`text-xs font-bold ${selectedTrend.platforms.tiktok > 0 ? 'text-[#00f2ea]' : 'text-white/40'}`}>
-                              {selectedTrend.platforms.tiktok > 0 ? `${selectedTrend.platforms.tiktok} sources` : 'No data'}
+                              {selectedTrend.platforms.tiktok || 0}
                             </div>
                           </div>
 
-                          {/* Arrow */}
-                          <div className="text-white/40">→</div>
-
-                          {/* Amazon */}
-                          <div className="flex-1 text-center">
+                          {/* Instagram */}
+                          <div className="text-center">
                             <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center ${
-                              selectedTrend.retailData.amazonProductCount === 0 ? 'bg-green-500' : 'bg-orange-500'
+                              selectedTrend.platforms.instagram > 0 ? 'bg-[#E4405F]' : 'bg-white/20'
                             }`}>
-                              <span className="text-lg">🛒</span>
+                              <span className="text-lg">📷</span>
                             </div>
-                            <div className="text-[10px] mt-1">Amazon</div>
-                            <div className={`text-xs font-bold ${
-                              selectedTrend.retailData.amazonProductCount === 0 ? 'text-green-400' : 'text-orange-400'
+                            <div className="text-[10px] mt-1">Instagram</div>
+                            <div className={`text-xs font-bold ${selectedTrend.platforms.instagram > 0 ? 'text-[#E4405F]' : 'text-white/40'}`}>
+                              {selectedTrend.platforms.instagram || 0}
+                            </div>
+                          </div>
+
+                          {/* YouTube */}
+                          <div className="text-center">
+                            <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center ${
+                              selectedTrend.platforms.youtube > 0 ? 'bg-[#FF0000]' : 'bg-white/20'
                             }`}>
-                              {selectedTrend.retailData.amazonProductCount === 0 ? 'Not yet!' : `${selectedTrend.retailData.amazonProductCount} products`}
+                              <span className="text-lg">▶️</span>
+                            </div>
+                            <div className="text-[10px] mt-1">YouTube</div>
+                            <div className={`text-xs font-bold ${selectedTrend.platforms.youtube > 0 ? 'text-[#FF0000]' : 'text-white/40'}`}>
+                              {selectedTrend.platforms.youtube || 0}
                             </div>
                           </div>
                         </div>
 
-                        {/* Opportunity Assessment */}
-                        <div className={`p-2 rounded text-center ${
-                          selectedTrend.platforms.tiktok > 0 && selectedTrend.retailData.amazonProductCount === 0
-                            ? 'bg-green-500/20 border border-green-500/30'
-                            : selectedTrend.retailData.amazonProductCount === 0
-                            ? 'bg-blue-500/20 border border-blue-500/30'
-                            : 'bg-white/10'
-                        }`}>
-                          <div className="text-sm font-bold">
-                            {selectedTrend.platforms.tiktok > 0 && selectedTrend.retailData.amazonProductCount === 0
-                              ? '🔥 Prime Opportunity!'
-                              : selectedTrend.retailData.amazonProductCount === 0
-                              ? '✨ Early Opportunity'
-                              : selectedTrend.retailData.amazonProductCount <= 3
-                              ? '⚡ Still Time'
-                              : '📊 Market Active'}
-                          </div>
-                          <div className="text-[10px] text-white/60 mt-1">
-                            {selectedTrend.platforms.tiktok > 0 && selectedTrend.retailData.amazonProductCount === 0
-                              ? 'Trending on TikTok, not on Amazon - act now!'
-                              : selectedTrend.retailData.amazonProductCount === 0
-                              ? 'Social buzz building, no Amazon products yet'
-                              : `${selectedTrend.retailData.amazonProductCount} competitors already on Amazon`}
-                          </div>
-                        </div>
-
-                        {/* Opportunity Score */}
-                        <div className="mt-3">
-                          <div className="flex items-center justify-between text-[10px]">
-                            <span className="text-white/60">Opportunity Score</span>
-                            <span className="font-bold">{selectedTrend.retailData.opportunityScore}%</span>
-                          </div>
-                          <div className="w-full h-2 bg-white/20 rounded-full mt-1">
-                            <div
-                              className={`h-full rounded-full ${
-                                selectedTrend.retailData.opportunityScore >= 70 ? 'bg-green-500' :
-                                selectedTrend.retailData.opportunityScore >= 40 ? 'bg-yellow-500' : 'bg-gray-500'
-                              }`}
-                              style={{ width: `${selectedTrend.retailData.opportunityScore}%` }}
-                            />
-                          </div>
+                        {/* Total Sources */}
+                        <div className="mt-3 p-2 rounded bg-white/10 text-center">
+                          <div className="text-2xl font-bold">{selectedTrend.totalSources}</div>
+                          <div className="text-[10px] text-white/60">total sources found</div>
                         </div>
                       </div>
-
-                      {/* Top Amazon Products (if any) */}
-                      {selectedTrend.retailData.topProducts.length > 0 && (
-                        <div>
-                          <h4 className="text-xs font-medium text-[#0F172A] mb-2">Existing Products on Amazon</h4>
-                          <div className="space-y-1.5">
-                            {selectedTrend.retailData.topProducts.map((product, idx) => (
-                              <div key={idx} className="text-[10px] text-[#64748B] bg-[#F8FAFC] p-2 rounded truncate">
-                                {product}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
 
                       {/* Platform Breakdown - Only show platforms with actual sources */}
                       <div>

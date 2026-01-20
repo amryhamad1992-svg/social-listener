@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { braveTrendingTopics, braveWebSearch, isBraveConfigured, checkRetailAvailability, RetailAvailability } from '@/lib/brave';
+import { braveTrendingTopics, isBraveConfigured } from '@/lib/brave';
 
 // Categories available for trend tracking - Beauty focused
 const CATEGORIES: Record<string, {
@@ -82,14 +82,7 @@ interface TrendItem {
     reddit: number;
     twitter: number;
   };
-  // Real retail availability data
-  retailStatus: 'not_available' | 'emerging' | 'growing' | 'saturated';
-  retailData: {
-    amazonAvailable: boolean;
-    amazonProductCount: number;
-    topProducts: string[];
-    opportunityScore: number;
-  };
+  totalSources: number;
   sentiment: number;
   relatedTerms: string[];
   samplePosts: Array<{
@@ -221,25 +214,12 @@ export async function GET(request: NextRequest) {
       }));
     }
 
-    // Step 3: Build trend items with REAL retail availability checks
-    // Check retail availability for top trends (limit to save API calls)
-    const retailChecks = await Promise.all(
-      uniqueQueries.slice(0, 10).map(q => checkRetailAvailability(q.query))
-    );
-
-    for (let i = 0; i < uniqueQueries.length; i++) {
-      const query = uniqueQueries[i];
+    // Step 3: Build trend items - focus on social media presence
+    for (const query of uniqueQueries) {
       const isRising = query.type === 'rising';
       const baseVelocity = isRising ? 150 + Math.random() * 200 : 50 + Math.random() * 100;
       const velocity = Math.round(baseVelocity);
       const volume = Math.min(100, query.value || 50);
-
-      // Get REAL retail availability (or default for trends beyond top 10)
-      const retailAvailability = retailChecks[i] || {
-        overall: 'not_available' as const,
-        opportunityScore: 80,
-        amazon: { available: false, count: 0, topProducts: [] }
-      };
 
       // Use REAL platform counts from search results
       const realPlatformCounts = query.platformCounts || {};
@@ -251,27 +231,23 @@ export async function GET(request: NextRequest) {
         twitter: realPlatformCounts['twitter'] || 0,
       };
 
+      // Calculate total sources across all platforms
+      const totalSources = Object.values(platforms).reduce((a, b) => a + b, 0) + (realPlatformCounts['web'] || 0);
+
       trends.push({
         term: query.query,
         category,
         velocity,
         volume,
         platforms,
-        // REAL retail data from Amazon search
-        retailStatus: retailAvailability.overall,
-        retailData: {
-          amazonAvailable: retailAvailability.amazon.available,
-          amazonProductCount: retailAvailability.amazon.count,
-          topProducts: retailAvailability.amazon.topProducts,
-          opportunityScore: retailAvailability.opportunityScore,
-        },
+        totalSources,
         sentiment: 0.65 + Math.random() * 0.3,
         relatedTerms: uniqueQueries
           .filter((q: any) => q.query !== query.query)
           .slice(0, 4)
           .map((q: any) => q.query),
         samplePosts: (query.sources && query.sources.length > 0
-          ? query.sources.map((src, idx) => ({
+          ? query.sources.map((src) => ({
               platform: src.platform ? src.platform.charAt(0).toUpperCase() + src.platform.slice(1) :
                         src.url?.includes('youtube') ? 'YouTube' :
                         src.url?.includes('tiktok') ? 'TikTok' :
@@ -301,32 +277,28 @@ export async function GET(request: NextRequest) {
       trends.push(...generateDemoTrends(category, timeRange));
     }
 
-    // Sort by OPPORTUNITY: TikTok presence + not on Amazon = highest priority
-    // This reflects the hypothesis: TikTok viral → Amazon bestseller
+    // Sort by social media presence: TikTok first, then total sources, then velocity
     trends.sort((a, b) => {
-      // Primary: Opportunity score (higher = better, not on Amazon yet)
-      const opportunityDiff = b.retailData.opportunityScore - a.retailData.opportunityScore;
-      if (opportunityDiff !== 0) return opportunityDiff;
-
-      // Secondary: TikTok source count (more TikTok sources = stronger signal)
+      // Primary: TikTok source count (TikTok is the leading indicator)
       const tiktokDiff = b.platforms.tiktok - a.platforms.tiktok;
       if (tiktokDiff !== 0) return tiktokDiff;
+
+      // Secondary: Total sources across all platforms
+      const sourcesDiff = b.totalSources - a.totalSources;
+      if (sourcesDiff !== 0) return sourcesDiff;
 
       // Tertiary: Overall velocity
       return b.velocity - a.velocity;
     });
 
-    // Calculate summary with REAL retail data
+    // Calculate summary focused on social media
     const summary = {
       totalTrends: trends.length,
-      notOnAmazon: trends.filter(t => t.retailStatus === 'not_available').length,
-      emergingOnAmazon: trends.filter(t => t.retailStatus === 'emerging').length,
-      avgVelocity: Math.round(trends.reduce((sum, t) => sum + t.velocity, 0) / trends.length),
+      tiktokTrends: trends.filter(t => t.platforms.tiktok > 0).length,
+      multiPlatform: trends.filter(t => Object.values(t.platforms).filter(v => v > 0).length > 1).length,
+      avgVelocity: Math.round(trends.reduce((sum, t) => sum + t.velocity, 0) / (trends.length || 1)),
       topPlatform: getTopPlatform(trends),
-      // Average opportunity score from real retail checks
-      opportunityScore: Math.round(
-        trends.reduce((sum, t) => sum + t.retailData.opportunityScore, 0) / trends.length
-      ),
+      totalSources: trends.reduce((sum, t) => sum + t.totalSources, 0),
     };
 
     const responseData = {
@@ -414,32 +386,24 @@ function generateDemoTrends(category: string, timeRange: string): TrendItem[] {
     const velocity = Math.round(300 - index * 40 + Math.random() * 50);
     const volume = Math.round(90 - index * 8 + Math.random() * 10);
 
-    // Demo retail status based on index (first few = not available, rest = various)
-    const retailStatuses: Array<'not_available' | 'emerging' | 'growing' | 'saturated'> =
-      ['not_available', 'not_available', 'emerging', 'emerging', 'growing', 'saturated'];
-    const retailStatus = retailStatuses[index] || 'growing';
-    const opportunityScores = [95, 90, 75, 70, 45, 15];
-    const opportunityScore = opportunityScores[index] || 45;
+    // Demo platform sources - TikTok dominant for beauty trends
+    const platforms = {
+      tiktok: Math.max(0, 5 - index + Math.floor(Math.random() * 3)),
+      instagram: Math.max(0, 3 - Math.floor(index / 2) + Math.floor(Math.random() * 2)),
+      youtube: Math.max(0, 2 - Math.floor(index / 3) + Math.floor(Math.random() * 2)),
+      reddit: Math.floor(Math.random() * 2),
+      twitter: Math.floor(Math.random() * 2),
+    };
+
+    const totalSources = Object.values(platforms).reduce((a, b) => a + b, 0);
 
     return {
       term,
       category,
       velocity,
       volume,
-      platforms: {
-        tiktok: Math.round(90 - index * 5 + Math.random() * 10),
-        instagram: Math.round(80 - index * 5 + Math.random() * 10),
-        youtube: Math.round(65 - index * 5 + Math.random() * 10),
-        reddit: Math.round(45 - index * 3 + Math.random() * 10),
-        twitter: Math.round(40 - index * 3 + Math.random() * 10),
-      },
-      retailStatus,
-      retailData: {
-        amazonAvailable: retailStatus !== 'not_available',
-        amazonProductCount: retailStatus === 'not_available' ? 0 : retailStatus === 'emerging' ? 2 : retailStatus === 'growing' ? 5 : 10,
-        topProducts: [],
-        opportunityScore,
-      },
+      platforms,
+      totalSources,
       sentiment: 0.7 + Math.random() * 0.25,
       relatedTerms: terms.filter(t => t !== term).slice(0, 4),
       samplePosts: [
