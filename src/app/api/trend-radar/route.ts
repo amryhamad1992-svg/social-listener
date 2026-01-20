@@ -172,9 +172,10 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const category = searchParams.get('category') || 'skincare';
   const timeRange = searchParams.get('timeRange') || '7d';
+  const platformFilter = searchParams.get('platform') || 'all';
 
   // Check cache first
-  const cacheKey = getCacheKey(category, timeRange);
+  const cacheKey = getCacheKey(category, `${timeRange}-${platformFilter}`);
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return NextResponse.json({
@@ -197,12 +198,13 @@ export async function GET(request: NextRequest) {
       snippet: string;
       url?: string;
       sourceTitle?: string;
-      sources?: Array<{ snippet: string; url: string; title: string }>;
+      sources?: Array<{ snippet: string; url: string; title: string; platform?: string }>;
+      platformCounts?: Record<string, number>;
     }> = [];
 
     if (isBraveConfigured()) {
       try {
-        const braveResults = await braveTrendingTopics(category, categoryInfo.keywords);
+        const braveResults = await braveTrendingTopics(category, categoryInfo.keywords, platformFilter);
         // Map brave results to expected format
         uniqueQueries = braveResults.map(r => ({
           query: r.term,
@@ -212,6 +214,7 @@ export async function GET(request: NextRequest) {
           url: r.url,
           sourceTitle: r.sourceTitle,
           sources: r.sources,
+          platformCounts: r.platformCounts,
         }));
         if (uniqueQueries.length > 0) {
           source = 'brave';
@@ -241,21 +244,26 @@ export async function GET(request: NextRequest) {
 
       const amazonEstimate = estimateAmazonStatus(velocity, volume);
 
-      // Estimate platform distribution based on trend type
+      // Use REAL platform counts from search results
+      // Only include platforms where we actually found sources
+      const realPlatformCounts = query.platformCounts || {};
       const platforms = {
-        tiktok: isRising ? 85 + Math.floor(Math.random() * 15) : 60 + Math.floor(Math.random() * 20),
-        instagram: isRising ? 75 + Math.floor(Math.random() * 15) : 55 + Math.floor(Math.random() * 20),
-        youtube: 50 + Math.floor(Math.random() * 30),
-        reddit: 35 + Math.floor(Math.random() * 25),
-        twitter: 30 + Math.floor(Math.random() * 25),
+        tiktok: realPlatformCounts['tiktok'] || 0,
+        instagram: realPlatformCounts['instagram'] || 0,
+        youtube: realPlatformCounts['youtube'] || 0,
+        reddit: realPlatformCounts['reddit'] || 0,
+        twitter: realPlatformCounts['twitter'] || 0,
       };
+
+      // Calculate total sources for this trend
+      const totalSources = Object.values(platforms).reduce((a, b) => a + b, 0) + (realPlatformCounts['web'] || 0);
 
       trends.push({
         term: query.query,
         category,
         velocity,
         volume,
-        platforms: normalizePlatforms(platforms),
+        platforms, // Real counts, not normalized percentages
         amazonStatus: amazonEstimate.status,
         predictedDaysToAmazon: amazonEstimate.predictedDays,
         sentiment: 0.65 + Math.random() * 0.3,
@@ -265,13 +273,12 @@ export async function GET(request: NextRequest) {
           .map((q: any) => q.query),
         samplePosts: (query.sources && query.sources.length > 0
           ? query.sources.map((src, idx) => ({
-              platform: src.url?.includes('youtube') ? 'YouTube' :
+              platform: src.platform ? src.platform.charAt(0).toUpperCase() + src.platform.slice(1) :
+                        src.url?.includes('youtube') ? 'YouTube' :
                         src.url?.includes('tiktok') ? 'TikTok' :
                         src.url?.includes('reddit') ? 'Reddit' :
                         src.url?.includes('instagram') ? 'Instagram' :
-                        src.url?.includes('vogue') ? 'Vogue' :
-                        src.url?.includes('harpersbazaar') ? 'Harper\'s Bazaar' :
-                        src.url?.includes('allure') ? 'Allure' :
+                        src.url?.includes('twitter') || src.url?.includes('x.com') ? 'Twitter' :
                         'Web',
               text: src.snippet || `${query.query} - trending!`,
               engagement: Math.floor(Math.random() * 80000 + 20000),

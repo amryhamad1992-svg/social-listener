@@ -119,13 +119,23 @@ const TIME_OPTIONS = [
   { value: '30d', label: '30 days' },
 ];
 
+const PLATFORM_OPTIONS = [
+  { value: 'all', label: 'All Sources' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'youtube', label: 'YouTube' },
+  { value: 'reddit', label: 'Reddit' },
+  { value: 'twitter', label: 'X (Twitter)' },
+];
+
 export default function TrendRadarPage() {
   const router = useRouter();
   const [data, setData] = useState<TrendData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState('beauty');
+  const [selectedCategory, setSelectedCategory] = useState('skincare');
   const [timeRange, setTimeRange] = useState('7d');
+  const [platformFilter, setPlatformFilter] = useState('all');
   const [selectedTrend, setSelectedTrend] = useState<TrendItem | null>(null);
   const [source, setSource] = useState('');
 
@@ -137,6 +147,7 @@ export default function TrendRadarPage() {
       const params = new URLSearchParams({
         category: selectedCategory,
         timeRange,
+        platform: platformFilter,
       });
 
       const response = await fetch(`/api/trend-radar?${params}`);
@@ -159,7 +170,7 @@ export default function TrendRadarPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory, timeRange]);
+  }, [selectedCategory, timeRange, platformFilter]);
 
   useEffect(() => {
     fetchTrendData();
@@ -215,6 +226,20 @@ export default function TrendRadarPage() {
               >
                 {data?.categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+
+              {/* Platform Filter */}
+              <select
+                value={platformFilter}
+                onChange={(e) => {
+                  setPlatformFilter(e.target.value);
+                  setSelectedTrend(null);
+                }}
+                className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:border-[#0F172A]"
+              >
+                {PLATFORM_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
 
@@ -386,11 +411,12 @@ export default function TrendRadarPage() {
                               )}
                             </div>
 
-                            {/* Platform Distribution */}
+                            {/* Platform Distribution - Only show platforms with actual sources */}
                             <div className="flex items-center gap-1 mt-2">
                               {Object.entries(trend.platforms)
+                                .filter(([, value]) => value > 0) // Only show platforms with sources
                                 .sort(([,a], [,b]) => b - a)
-                                .slice(0, 3)
+                                .slice(0, 4)
                                 .map(([platform, value]) => (
                                   <div
                                     key={platform}
@@ -402,9 +428,12 @@ export default function TrendRadarPage() {
                                       style={{ backgroundColor: PLATFORM_COLORS[platform] }}
                                     />
                                     <span className="text-[#0F172A]">{PLATFORM_NAMES[platform]}</span>
-                                    <span className="text-[#64748B]">{value}</span>
+                                    <span className="text-[#64748B]">{value} {value === 1 ? 'source' : 'sources'}</span>
                                   </div>
                                 ))}
+                              {Object.values(trend.platforms).every(v => v === 0) && (
+                                <span className="text-[9px] text-[#94A3B8]">Web sources only</span>
+                              )}
                             </div>
                           </div>
 
@@ -452,11 +481,12 @@ export default function TrendRadarPage() {
                         )}
                       </div>
 
-                      {/* Platform Breakdown */}
+                      {/* Platform Breakdown - Only show platforms with actual sources */}
                       <div>
-                        <h4 className="text-xs font-medium text-[#0F172A] mb-2">Platform Performance</h4>
+                        <h4 className="text-xs font-medium text-[#0F172A] mb-2">Sources by Platform</h4>
                         <div className="space-y-2">
                           {Object.entries(selectedTrend.platforms)
+                            .filter(([, value]) => value > 0)
                             .sort(([,a], [,b]) => b - a)
                             .map(([platform, value]) => (
                               <div key={platform} className="flex items-center gap-2">
@@ -469,14 +499,17 @@ export default function TrendRadarPage() {
                                   <div
                                     className="h-full rounded-full transition-all"
                                     style={{
-                                      width: `${value}%`,
+                                      width: `${Math.min(100, value * 20)}%`,
                                       backgroundColor: PLATFORM_COLORS[platform],
                                     }}
                                   />
                                 </div>
-                                <span className="text-xs text-[#0F172A] font-medium w-6 text-right">{value}</span>
+                                <span className="text-xs text-[#0F172A] font-medium w-16 text-right">{value} {value === 1 ? 'source' : 'sources'}</span>
                               </div>
                             ))}
+                          {Object.values(selectedTrend.platforms).every(v => v === 0) && (
+                            <p className="text-xs text-[#94A3B8] italic">Sources from web/news articles only</p>
+                          )}
                         </div>
                       </div>
 

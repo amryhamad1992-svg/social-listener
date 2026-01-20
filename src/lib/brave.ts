@@ -216,6 +216,7 @@ interface SourceInfo {
   snippet: string;
   url: string;
   title: string;
+  platform: string;
 }
 
 interface TrendResult {
@@ -226,6 +227,21 @@ interface TrendResult {
   url: string;
   sourceTitle: string;
   sources: SourceInfo[];
+  platformCounts: Record<string, number>;
+}
+
+// Detect platform from URL
+function detectPlatform(url: string): string {
+  if (!url) return 'web';
+  const lowerUrl = url.toLowerCase();
+  if (lowerUrl.includes('tiktok.com')) return 'tiktok';
+  if (lowerUrl.includes('instagram.com')) return 'instagram';
+  if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) return 'youtube';
+  if (lowerUrl.includes('reddit.com')) return 'reddit';
+  if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) return 'twitter';
+  if (lowerUrl.includes('pinterest.com')) return 'pinterest';
+  if (lowerUrl.includes('facebook.com')) return 'facebook';
+  return 'web';
 }
 
 // Category-specific search queries to find REAL viral trends - Beauty focused
@@ -417,34 +433,50 @@ function extractSpecificTrends(text: string): string[] {
 // Get trending topics for a category - REWRITTEN for specific actionable trends
 export async function braveTrendingTopics(
   category: string,
-  keywords: string[]
+  keywords: string[],
+  platformFilter?: string // Optional: filter by specific platform
 ): Promise<TrendResult[]> {
   const searches = CATEGORY_SEARCHES[category.toLowerCase()] || CATEGORY_SEARCHES.skincare;
-  const trendMap = new Map<string, { count: number; sources: SourceInfo[] }>();
+  const trendMap = new Map<string, { count: number; sources: SourceInfo[]; platformCounts: Record<string, number> }>();
 
-  console.log(`[Brave Trends] Searching for ${category} trends...`);
+  console.log(`[Brave Trends] Searching for ${category} trends${platformFilter ? ` (filtered by ${platformFilter})` : ''}...`);
+
+  // Add platform-specific site filter if requested
+  const platformSiteFilter = platformFilter && platformFilter !== 'all' ? {
+    tiktok: 'site:tiktok.com',
+    instagram: 'site:instagram.com',
+    youtube: 'site:youtube.com',
+    reddit: 'site:reddit.com',
+    twitter: 'site:twitter.com OR site:x.com',
+  }[platformFilter] || '' : '';
 
   // Run multiple targeted searches
   for (const searchQuery of searches.slice(0, 4)) { // Limit to 4 searches to save API quota
     try {
-      const results = await braveWebSearch(searchQuery, { count: 10, freshness: 'pw' });
+      const fullQuery = platformSiteFilter ? `${searchQuery} ${platformSiteFilter}` : searchQuery;
+      const results = await braveWebSearch(fullQuery, { count: 10, freshness: 'pw' });
 
       for (const result of results) {
         const fullText = `${result.title} ${result.description}`;
         const extractedTrends = extractSpecificTrends(fullText);
+        const platform = detectPlatform(result.url);
 
         for (const trend of extractedTrends) {
           const normalized = trend.toLowerCase().trim();
-          const existing = trendMap.get(normalized) || { count: 0, sources: [] };
+          const existing = trendMap.get(normalized) || { count: 0, sources: [], platformCounts: {} };
           existing.count++;
 
-          if (existing.sources.length < 3 && result.url) {
+          // Track platform counts
+          existing.platformCounts[platform] = (existing.platformCounts[platform] || 0) + 1;
+
+          if (existing.sources.length < 5 && result.url) {
             const isDuplicate = existing.sources.some(s => s.url === result.url);
             if (!isDuplicate) {
               existing.sources.push({
                 snippet: result.description?.slice(0, 150) || '',
                 url: result.url,
                 title: result.title || '',
+                platform: platform,
               });
             }
           }
@@ -461,23 +493,31 @@ export async function braveTrendingTopics(
 
   // Also search for the category + viral specifically
   try {
-    const viralSearch = await braveWebSearch(`${category} viral ingredient product 2026 TikTok`, { count: 15, freshness: 'pw' });
+    const viralQuery = platformSiteFilter
+      ? `${category} viral ingredient product 2026 ${platformSiteFilter}`
+      : `${category} viral ingredient product 2026 TikTok`;
+    const viralSearch = await braveWebSearch(viralQuery, { count: 15, freshness: 'pw' });
     for (const result of viralSearch) {
       const fullText = `${result.title} ${result.description}`;
       const extractedTrends = extractSpecificTrends(fullText);
+      const platform = detectPlatform(result.url);
 
       for (const trend of extractedTrends) {
         const normalized = trend.toLowerCase().trim();
-        const existing = trendMap.get(normalized) || { count: 0, sources: [] };
+        const existing = trendMap.get(normalized) || { count: 0, sources: [], platformCounts: {} };
         existing.count++;
 
-        if (existing.sources.length < 3 && result.url) {
+        // Track platform counts
+        existing.platformCounts[platform] = (existing.platformCounts[platform] || 0) + 1;
+
+        if (existing.sources.length < 5 && result.url) {
           const isDuplicate = existing.sources.some(s => s.url === result.url);
           if (!isDuplicate) {
             existing.sources.push({
               snippet: result.description?.slice(0, 150) || '',
               url: result.url,
               title: result.title || '',
+              platform: platform,
             });
           }
         }
@@ -507,6 +547,7 @@ export async function braveTrendingTopics(
     url: data.sources[0]?.url || '',
     sourceTitle: data.sources[0]?.title || '',
     sources: data.sources,
+    platformCounts: data.platformCounts,
   }));
 }
 
