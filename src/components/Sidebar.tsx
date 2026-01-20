@@ -4,8 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard,
-  TrendingUp,
   Search,
   Settings,
   LogOut,
@@ -14,8 +12,6 @@ import {
 
 const navigation = [
   { name: 'Trend Radar', href: '/trend-radar', icon: Radar },
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Trending', href: '/trending', icon: TrendingUp },
   { name: 'Mentions', href: '/mentions', icon: Search },
 ];
 

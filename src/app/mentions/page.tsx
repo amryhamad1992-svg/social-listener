@@ -131,6 +131,7 @@ export default function MentionsPage() {
       'revlon': 'Revlon',
       'elf': 'e.l.f.',
       'maybelline': 'Maybelline',
+      'weleda': 'Weleda',
     };
     return brandMap[settings.selectedBrand] || 'Revlon';
   }, [isLoaded, settings.selectedBrand]);

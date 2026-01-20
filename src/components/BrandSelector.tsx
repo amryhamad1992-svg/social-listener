@@ -6,6 +6,7 @@ const BRANDS = [
   { id: 'revlon', name: 'Revlon', emoji: '💄' },
   { id: 'elf', name: 'e.l.f.', emoji: '✨' },
   { id: 'maybelline', name: 'Maybelline', emoji: '💋' },
+  { id: 'weleda', name: 'Weleda', emoji: '🌿' },
 ];
 
 export function BrandSelector() {
