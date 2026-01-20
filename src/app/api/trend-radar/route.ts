@@ -81,6 +81,7 @@ interface TrendItem {
     youtube: number;
     reddit: number;
     twitter: number;
+    web: number;
   };
   totalSources: number;
   sentiment: number;
@@ -229,10 +230,11 @@ export async function GET(request: NextRequest) {
         youtube: realPlatformCounts['youtube'] || 0,
         reddit: realPlatformCounts['reddit'] || 0,
         twitter: realPlatformCounts['twitter'] || 0,
+        web: realPlatformCounts['web'] || 0,
       };
 
       // Calculate total sources across all platforms
-      const totalSources = Object.values(platforms).reduce((a, b) => a + b, 0) + (realPlatformCounts['web'] || 0);
+      const totalSources = Object.values(platforms).reduce((a, b) => a + b, 0);
 
       trends.push({
         term: query.query,
@@ -351,7 +353,7 @@ function formatRelativeDate(dateStr: string): string {
 }
 
 function getTopPlatform(trends: TrendItem[]): string {
-  const platformTotals = { tiktok: 0, instagram: 0, youtube: 0, reddit: 0, twitter: 0 };
+  const platformTotals = { tiktok: 0, instagram: 0, youtube: 0, reddit: 0, twitter: 0, web: 0 };
 
   trends.forEach(t => {
     Object.keys(platformTotals).forEach(p => {
@@ -393,6 +395,7 @@ function generateDemoTrends(category: string, timeRange: string): TrendItem[] {
       youtube: Math.max(0, 2 - Math.floor(index / 3) + Math.floor(Math.random() * 2)),
       reddit: Math.floor(Math.random() * 2),
       twitter: Math.floor(Math.random() * 2),
+      web: Math.max(0, 3 - Math.floor(index / 2) + Math.floor(Math.random() * 2)),
     };
 
     const totalSources = Object.values(platforms).reduce((a, b) => a + b, 0);

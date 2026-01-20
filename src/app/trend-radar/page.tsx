@@ -27,6 +27,7 @@ interface TrendItem {
     youtube: number;
     reddit: number;
     twitter: number;
+    web: number;
   };
   totalSources: number;
   sentiment: number;
@@ -70,6 +71,7 @@ const PLATFORM_COLORS: Record<string, string> = {
   youtube: '#FF0000',
   reddit: '#FF4500',
   twitter: '#1DA1F2',
+  web: '#64748B',
 };
 
 const PLATFORM_NAMES: Record<string, string> = {
@@ -78,6 +80,7 @@ const PLATFORM_NAMES: Record<string, string> = {
   youtube: 'YouTube',
   reddit: 'Reddit',
   twitter: 'X',
+  web: 'Open Web',
 };
 
 
@@ -94,6 +97,7 @@ const PLATFORM_OPTIONS = [
   { value: 'youtube', label: 'YouTube' },
   { value: 'reddit', label: 'Reddit' },
   { value: 'twitter', label: 'X (Twitter)' },
+  { value: 'web', label: 'Open Web' },
 ];
 
 export default function TrendRadarPage() {
@@ -427,89 +431,49 @@ export default function TrendRadarPage() {
                     </div>
 
                     <div className="p-4 space-y-4">
-                      {/* Social Media Presence Overview */}
-                      <div className="p-3 bg-[#0F172A] rounded-lg text-white">
-                        <div className="text-[10px] text-white/60 mb-3">Social Media Presence</div>
-
-                        {/* Platform breakdown visual */}
-                        <div className="grid grid-cols-3 gap-2">
-                          {/* TikTok */}
-                          <div className="text-center">
-                            <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center ${
-                              selectedTrend.platforms.tiktok > 0 ? 'bg-[#00f2ea]' : 'bg-white/20'
-                            }`}>
-                              <span className="text-lg">📱</span>
-                            </div>
-                            <div className="text-[10px] mt-1">TikTok</div>
-                            <div className={`text-xs font-bold ${selectedTrend.platforms.tiktok > 0 ? 'text-[#00f2ea]' : 'text-white/40'}`}>
-                              {selectedTrend.platforms.tiktok || 0}
-                            </div>
-                          </div>
-
-                          {/* Instagram */}
-                          <div className="text-center">
-                            <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center ${
-                              selectedTrend.platforms.instagram > 0 ? 'bg-[#E4405F]' : 'bg-white/20'
-                            }`}>
-                              <span className="text-lg">📷</span>
-                            </div>
-                            <div className="text-[10px] mt-1">Instagram</div>
-                            <div className={`text-xs font-bold ${selectedTrend.platforms.instagram > 0 ? 'text-[#E4405F]' : 'text-white/40'}`}>
-                              {selectedTrend.platforms.instagram || 0}
-                            </div>
-                          </div>
-
-                          {/* YouTube */}
-                          <div className="text-center">
-                            <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center ${
-                              selectedTrend.platforms.youtube > 0 ? 'bg-[#FF0000]' : 'bg-white/20'
-                            }`}>
-                              <span className="text-lg">▶️</span>
-                            </div>
-                            <div className="text-[10px] mt-1">YouTube</div>
-                            <div className={`text-xs font-bold ${selectedTrend.platforms.youtube > 0 ? 'text-[#FF0000]' : 'text-white/40'}`}>
-                              {selectedTrend.platforms.youtube || 0}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Total Sources */}
-                        <div className="mt-3 p-2 rounded bg-white/10 text-center">
-                          <div className="text-2xl font-bold">{selectedTrend.totalSources}</div>
-                          <div className="text-[10px] text-white/60">total sources found</div>
-                        </div>
-                      </div>
-
-                      {/* Platform Breakdown - Only show platforms with actual sources */}
+                      {/* Source Distribution - Simple Bar Chart */}
                       <div>
-                        <h4 className="text-xs font-medium text-[#0F172A] mb-2">Sources by Platform</h4>
-                        <div className="space-y-2">
-                          {Object.entries(selectedTrend.platforms)
-                            .filter(([, value]) => value > 0)
-                            .sort(([,a], [,b]) => b - a)
-                            .map(([platform, value]) => (
-                              <div key={platform} className="flex items-center gap-2">
-                                <div
-                                  className="w-2 h-2 rounded-full"
-                                  style={{ backgroundColor: PLATFORM_COLORS[platform] }}
-                                />
-                                <span className="text-xs text-[#64748B] w-16">{PLATFORM_NAMES[platform]}</span>
-                                <div className="flex-1 h-2 bg-[#E2E8F0] rounded-full overflow-hidden">
-                                  <div
-                                    className="h-full rounded-full transition-all"
-                                    style={{
-                                      width: `${Math.min(100, value * 20)}%`,
-                                      backgroundColor: PLATFORM_COLORS[platform],
-                                    }}
-                                  />
-                                </div>
-                                <span className="text-xs text-[#0F172A] font-medium w-16 text-right">{value} {value === 1 ? 'source' : 'sources'}</span>
-                              </div>
-                            ))}
-                          {Object.values(selectedTrend.platforms).every(v => v === 0) && (
-                            <p className="text-xs text-[#94A3B8] italic">Sources from web/news articles only</p>
-                          )}
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-xs font-medium text-[#0F172A]">Source Distribution</h4>
+                          <span className="text-[10px] text-[#64748B]">{selectedTrend.totalSources} total</span>
                         </div>
+
+                        {/* Simple horizontal bars for all 6 sources */}
+                        <div className="space-y-2">
+                          {(() => {
+                            const maxValue = Math.max(...Object.values(selectedTrend.platforms), 1);
+                            const platformOrder = ['tiktok', 'instagram', 'youtube', 'reddit', 'twitter', 'web'] as const;
+
+                            return platformOrder.map((platform) => {
+                              const value = selectedTrend.platforms[platform] || 0;
+                              const barWidth = (value / maxValue) * 100;
+
+                              return (
+                                <div key={platform} className="flex items-center gap-2">
+                                  <span className="text-[10px] text-[#64748B] w-14 truncate">{PLATFORM_NAMES[platform]}</span>
+                                  <div className="flex-1 h-5 bg-[#F1F5F9] rounded overflow-hidden relative">
+                                    <div
+                                      className="h-full rounded transition-all duration-300"
+                                      style={{
+                                        width: value > 0 ? `${Math.max(barWidth, 8)}%` : '0%',
+                                        backgroundColor: PLATFORM_COLORS[platform],
+                                      }}
+                                    />
+                                    {value > 0 && (
+                                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-medium text-[#0F172A]">
+                                        {value}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            });
+                          })()}
+                        </div>
+
+                        {Object.values(selectedTrend.platforms).every(v => v === 0) && (
+                          <p className="text-[10px] text-[#94A3B8] italic mt-2">No platform-specific sources detected</p>
+                        )}
                       </div>
 
                       {/* Related Terms */}

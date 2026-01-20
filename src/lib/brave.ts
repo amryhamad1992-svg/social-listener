@@ -448,6 +448,7 @@ export async function braveTrendingTopics(
     youtube: 'site:youtube.com',
     reddit: 'site:reddit.com',
     twitter: 'site:twitter.com OR site:x.com',
+    web: '-site:tiktok.com -site:instagram.com -site:youtube.com -site:reddit.com -site:twitter.com -site:x.com',
   }[platformFilter] || '' : '';
 
   // Run multiple targeted searches
