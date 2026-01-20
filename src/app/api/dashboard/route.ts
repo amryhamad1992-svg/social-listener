@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { scrapeAllSources, getMockScrapedMentions } from '@/lib/scrapers';
+import { scrapeAllSources, getMockScrapedMentions, isBraveConfigured } from '@/lib/scrapers';
 import { analyzeKeywordSentiment } from '@/lib/sentiment';
 import { subDays, format, startOfDay } from 'date-fns';
 
@@ -21,9 +21,9 @@ export async function GET(request: NextRequest) {
     let isLiveData = false;
     let sources: string[] = [];
 
-    // Try to get real data from scrapers
+    // Try to get real data from Brave Search API
     try {
-      if (process.env.SERPAPI_KEY) {
+      if (isBraveConfigured()) {
         const result = await scrapeAllSources({
           keywords: keywords.slice(0, 3),
           brands: [brand],
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
         if (result.mentions.length > 0) {
           mentions = result.mentions;
-          isLiveData = true;
+          isLiveData = result.source === 'brave';
           sources = Object.keys(result.bySource);
         }
       }

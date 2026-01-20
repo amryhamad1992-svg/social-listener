@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { braveSocialMentions, isBraveConfigured } from '@/lib/brave';
 import { searchBrandVideos } from '@/lib/youtube';
 import { searchBrandNews } from '@/lib/newsApi';
-import { redditScraper } from '@/lib/scrapers/reddit';
-import { tiktokScraper } from '@/lib/scrapers/tiktok';
-import { temptaliaScraper, makeupAlleyScraper } from '@/lib/scrapers/blogs';
 import { generateMockPosts } from '@/lib/mockData';
 import { getCacheKey, getCache, getStaleCache, setCache } from '@/lib/cache';
 
@@ -12,7 +10,7 @@ interface Mention {
   title: string;
   body: string;
   source: string;
-  sourceType: 'youtube' | 'news' | 'reddit' | 'tiktok' | 'temptalia' | 'makeupalley' | 'mock';
+  sourceType: 'youtube' | 'news' | 'reddit' | 'tiktok' | 'twitter' | 'brave' | 'mock';
   sourceIcon: string;
   author: string;
   score: number;
@@ -35,12 +33,22 @@ const BRAND_KEYWORDS: Record<string, string[]> = {
 // Cache TTL: 2 hours for fresh data
 const CACHE_TTL = 2 * 60 * 60 * 1000;
 
+// Source icons
+const SOURCE_ICONS: Record<string, string> = {
+  'Reddit': '🔴',
+  'TikTok': '🎵',
+  'YouTube': '▶️',
+  'Twitter': '𝕏',
+  'Instagram': '📸',
+  'News': '📰',
+};
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const days = parseInt(searchParams.get('days') || '7', 10);
     const sentiment = searchParams.get('sentiment');
-    const source = searchParams.get('source'); // youtube, news, reddit, all
+    const source = searchParams.get('source'); // youtube, news, reddit, tiktok, twitter, all
     const brand = searchParams.get('brand') || 'Revlon';
     const limit = parseInt(searchParams.get('limit') || '50', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
@@ -54,6 +62,65 @@ export async function GET(request: NextRequest) {
     // If explicitly requesting mock data, return mock
     if (useMock) {
       return getMockResponse(days, sentiment, limit, offset);
+    }
+
+    // Determine freshness based on days
+    const freshness = days <= 1 ? 'pd' : days <= 7 ? 'pw' : 'pm';
+
+    // Fetch from Brave Search API (covers Reddit, TikTok, YouTube, Twitter)
+    if (isBraveConfigured() && (!source || source === 'all' || ['reddit', 'tiktok', 'youtube', 'twitter'].includes(source))) {
+      const cacheKey = getCacheKey('brave-social', `${brand}-${days}`);
+      let braveMentions = getCache<Mention[]>(cacheKey);
+
+      if (!braveMentions) {
+        try {
+          const result = await braveSocialMentions(brand, keywords.slice(0, 2), { freshness });
+
+          if (result.mentions.length > 0) {
+            braveMentions = result.mentions.map((m, index) => ({
+              id: `brave_${m.platform.toLowerCase()}_${index}`,
+              title: m.title,
+              body: m.snippet || '',
+              source: m.platform,
+              sourceType: 'brave' as const,
+              sourceIcon: SOURCE_ICONS[m.platform] || '🌐',
+              author: extractAuthor(m.url, m.platform),
+              score: estimateEngagement(m.platform, index),
+              numComments: Math.floor(estimateEngagement(m.platform, index) * 0.1),
+              sentiment: 'neutral',
+              sentimentScore: 0,
+              matchedKeyword: brand,
+              createdAt: parseRelativeDate(m.date),
+              url: m.url,
+              thumbnailUrl: undefined,
+            }));
+
+            setCache(cacheKey, braveMentions, CACHE_TTL);
+
+            // Track which platforms we found
+            const foundPlatforms = [...new Set(result.mentions.map(m => m.platform.toLowerCase()))];
+            sources.push(...foundPlatforms);
+          }
+        } catch (err) {
+          console.error('Brave fetch error:', err);
+          braveMentions = getStaleCache<Mention[]>(cacheKey);
+          if (braveMentions) cachedSources.push('brave');
+        }
+      } else {
+        cachedSources.push('brave');
+      }
+
+      if (braveMentions && braveMentions.length > 0) {
+        // Filter by specific source if requested
+        if (source && source !== 'all') {
+          const filtered = braveMentions.filter(m =>
+            m.source.toLowerCase() === source.toLowerCase()
+          );
+          mentions.push(...filtered);
+        } else {
+          mentions.push(...braveMentions);
+        }
+      }
     }
 
     // Fetch from YouTube if API key is configured
@@ -87,7 +154,6 @@ export async function GET(request: NextRequest) {
           }
         } catch (err) {
           console.error('YouTube fetch error:', err);
-          // Try stale cache on error
           ytMentions = getStaleCache<Mention[]>(cacheKey);
           if (ytMentions) cachedSources.push('youtube');
         }
@@ -96,8 +162,13 @@ export async function GET(request: NextRequest) {
       }
 
       if (ytMentions && ytMentions.length > 0) {
-        sources.push('youtube');
-        mentions.push(...ytMentions);
+        // Avoid duplicates if already fetched from Brave
+        const existingYtUrls = new Set(mentions.filter(m => m.sourceType === 'youtube' || m.source === 'YouTube').map(m => m.url));
+        const newYtMentions = ytMentions.filter(m => !existingYtUrls.has(m.url));
+        if (newYtMentions.length > 0) {
+          sources.push('youtube');
+          mentions.push(...newYtMentions);
+        }
       }
     }
 
@@ -145,220 +216,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Fetch from Reddit via Google Custom Search
-    if (!source || source === 'all' || source === 'reddit') {
-      const cacheKey = getCacheKey('reddit', brand);
-      let redditMentions = getCache<Mention[]>(cacheKey);
-
-      if (!redditMentions) {
-        try {
-          const redditResult = await redditScraper.scrape({
-            keywords: [brand],
-            brands: [],
-            maxResults: 20,
-            daysBack: days,
-          });
-
-          if (redditResult.success && redditResult.mentions.length > 0) {
-            redditMentions = redditResult.mentions.map((post) => ({
-              id: `reddit_${post.id}`,
-              title: post.title,
-              body: post.snippet || post.fullText?.substring(0, 200) || '',
-              source: `r/${post.subreddit}`,
-              sourceType: 'reddit' as const,
-              sourceIcon: '🔴',
-              author: post.author || 'Unknown',
-              score: post.engagement.upvotes || 0,
-              numComments: post.engagement.comments || 0,
-              sentiment: 'neutral',
-              sentimentScore: 0,
-              matchedKeyword: post.matchedKeyword,
-              createdAt: post.publishedAt,
-              url: post.url,
-              thumbnailUrl: undefined,
-            }));
-            setCache(cacheKey, redditMentions, CACHE_TTL);
-          } else if (redditResult.error) {
-            console.warn('Reddit fetch warning:', redditResult.error);
-            // Try stale cache on error
-            redditMentions = getStaleCache<Mention[]>(cacheKey);
-            if (redditMentions) cachedSources.push('reddit');
-          }
-        } catch (err) {
-          console.error('Reddit fetch error:', err);
-          redditMentions = getStaleCache<Mention[]>(cacheKey);
-          if (redditMentions) cachedSources.push('reddit');
-        }
-      } else {
-        cachedSources.push('reddit');
-      }
-
-      if (redditMentions && redditMentions.length > 0) {
-        sources.push('reddit');
-        mentions.push(...redditMentions);
-      }
-    }
-
-    // Fetch from TikTok via Google Custom Search
-    if (!source || source === 'all' || source === 'tiktok') {
-      const cacheKey = getCacheKey('tiktok', brand);
-      let tiktokMentions = getCache<Mention[]>(cacheKey);
-
-      if (!tiktokMentions) {
-        try {
-          const tiktokResult = await tiktokScraper.scrape({
-            keywords: [brand],
-            brands: [],
-            maxResults: 20,
-            daysBack: days,
-          });
-
-          if (tiktokResult.success && tiktokResult.mentions.length > 0) {
-            tiktokMentions = tiktokResult.mentions.map((post) => ({
-              id: `tiktok_${post.id}`,
-              title: post.title,
-              body: post.snippet || post.fullText?.substring(0, 200) || '',
-              source: 'TikTok',
-              sourceType: 'tiktok' as const,
-              sourceIcon: '🎵',
-              author: post.author || 'Unknown',
-              score: post.engagement.upvotes || 0,
-              numComments: post.engagement.comments || 0,
-              sentiment: 'neutral',
-              sentimentScore: 0,
-              matchedKeyword: post.matchedKeyword,
-              createdAt: post.publishedAt,
-              url: post.url,
-              thumbnailUrl: undefined,
-            }));
-            setCache(cacheKey, tiktokMentions, CACHE_TTL);
-          } else if (tiktokResult.error) {
-            console.warn('TikTok fetch warning:', tiktokResult.error);
-            // Try stale cache on error
-            tiktokMentions = getStaleCache<Mention[]>(cacheKey);
-            if (tiktokMentions) cachedSources.push('tiktok');
-          }
-        } catch (err) {
-          console.error('TikTok fetch error:', err);
-          tiktokMentions = getStaleCache<Mention[]>(cacheKey);
-          if (tiktokMentions) cachedSources.push('tiktok');
-        }
-      } else {
-        cachedSources.push('tiktok');
-      }
-
-      if (tiktokMentions && tiktokMentions.length > 0) {
-        sources.push('tiktok');
-        mentions.push(...tiktokMentions);
-      }
-    }
-
-    // Fetch from Temptalia (beauty blog)
-    if (!source || source === 'all' || source === 'temptalia') {
-      const cacheKey = getCacheKey('temptalia', brand);
-      let temptaliaMentions = getCache<Mention[]>(cacheKey);
-
-      if (!temptaliaMentions) {
-        try {
-          const temptaliaResult = await temptaliaScraper.scrape({
-            keywords: [brand],
-            brands: [],
-            maxResults: 15,
-            daysBack: days,
-          });
-
-          if (temptaliaResult.success && temptaliaResult.mentions.length > 0) {
-            temptaliaMentions = temptaliaResult.mentions.map((post) => ({
-              id: `temptalia_${post.id}`,
-              title: post.title,
-              body: post.snippet || post.fullText?.substring(0, 200) || '',
-              source: 'Temptalia',
-              sourceType: 'temptalia' as const,
-              sourceIcon: '💋',
-              author: 'Temptalia',
-              score: 0,
-              numComments: post.engagement.comments || 0,
-              sentiment: 'neutral',
-              sentimentScore: 0,
-              matchedKeyword: post.matchedKeyword,
-              createdAt: post.publishedAt,
-              url: post.url,
-              thumbnailUrl: undefined,
-            }));
-            setCache(cacheKey, temptaliaMentions, CACHE_TTL);
-          } else if (temptaliaResult.error) {
-            console.warn('Temptalia fetch warning:', temptaliaResult.error);
-            temptaliaMentions = getStaleCache<Mention[]>(cacheKey);
-            if (temptaliaMentions) cachedSources.push('temptalia');
-          }
-        } catch (err) {
-          console.error('Temptalia fetch error:', err);
-          temptaliaMentions = getStaleCache<Mention[]>(cacheKey);
-          if (temptaliaMentions) cachedSources.push('temptalia');
-        }
-      } else {
-        cachedSources.push('temptalia');
-      }
-
-      if (temptaliaMentions && temptaliaMentions.length > 0) {
-        sources.push('temptalia');
-        mentions.push(...temptaliaMentions);
-      }
-    }
-
-    // Fetch from MakeupAlley (reviews)
-    if (!source || source === 'all' || source === 'makeupalley') {
-      const cacheKey = getCacheKey('makeupalley', brand);
-      let makeupAlleyMentions = getCache<Mention[]>(cacheKey);
-
-      if (!makeupAlleyMentions) {
-        try {
-          const makeupAlleyResult = await makeupAlleyScraper.scrape({
-            keywords: [brand],
-            brands: [],
-            maxResults: 15,
-            daysBack: days,
-          });
-
-          if (makeupAlleyResult.success && makeupAlleyResult.mentions.length > 0) {
-            makeupAlleyMentions = makeupAlleyResult.mentions.map((post) => ({
-              id: `makeupalley_${post.id}`,
-              title: post.title,
-              body: post.snippet || post.fullText?.substring(0, 200) || '',
-              source: 'MakeupAlley',
-              sourceType: 'makeupalley' as const,
-              sourceIcon: '💄',
-              author: post.author || 'MakeupAlley User',
-              score: post.engagement.upvotes || 0,
-              numComments: post.engagement.comments || 0,
-              sentiment: 'neutral',
-              sentimentScore: 0,
-              matchedKeyword: post.matchedKeyword,
-              createdAt: post.publishedAt,
-              url: post.url,
-              thumbnailUrl: undefined,
-            }));
-            setCache(cacheKey, makeupAlleyMentions, CACHE_TTL);
-          } else if (makeupAlleyResult.error) {
-            console.warn('MakeupAlley fetch warning:', makeupAlleyResult.error);
-            makeupAlleyMentions = getStaleCache<Mention[]>(cacheKey);
-            if (makeupAlleyMentions) cachedSources.push('makeupalley');
-          }
-        } catch (err) {
-          console.error('MakeupAlley fetch error:', err);
-          makeupAlleyMentions = getStaleCache<Mention[]>(cacheKey);
-          if (makeupAlleyMentions) cachedSources.push('makeupalley');
-        }
-      } else {
-        cachedSources.push('makeupalley');
-      }
-
-      if (makeupAlleyMentions && makeupAlleyMentions.length > 0) {
-        sources.push('makeupalley');
-        mentions.push(...makeupAlleyMentions);
-      }
-    }
-
     // If no real data was fetched, fall back to mock
     if (mentions.length === 0) {
       return getMockResponse(days, sentiment, limit, offset);
@@ -382,8 +239,8 @@ export async function GET(request: NextRequest) {
         mentions: paginatedMentions,
         pagination: { total, limit, offset, hasMore: offset + limit < total },
       },
-      sources,
-      cachedSources, // Show which sources came from cache
+      sources: [...new Set(sources)],
+      cachedSources,
       isLiveData: true,
     });
   } catch (error) {
@@ -392,6 +249,76 @@ export async function GET(request: NextRequest) {
       { success: false, error: 'Internal server error' },
       { status: 500 }
     );
+  }
+}
+
+// Helper: Parse relative date strings
+function parseRelativeDate(dateStr: string): string {
+  if (!dateStr) return new Date().toISOString();
+
+  const now = new Date();
+  const lower = dateStr.toLowerCase();
+
+  if (lower.includes('hour') || lower.includes('minute')) {
+    return now.toISOString();
+  }
+  if (lower.includes('day')) {
+    const days = parseInt(dateStr) || 1;
+    return new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
+  }
+  if (lower.includes('week')) {
+    const weeks = parseInt(dateStr) || 1;
+    return new Date(now.getTime() - weeks * 7 * 24 * 60 * 60 * 1000).toISOString();
+  }
+  if (lower.includes('month')) {
+    const months = parseInt(dateStr) || 1;
+    return new Date(now.getTime() - months * 30 * 24 * 60 * 60 * 1000).toISOString();
+  }
+
+  return now.toISOString();
+}
+
+// Helper: Extract author from URL
+function extractAuthor(url: string, platform: string): string {
+  try {
+    const urlObj = new URL(url);
+    const path = urlObj.pathname;
+
+    switch (platform.toLowerCase()) {
+      case 'reddit':
+        const subredditMatch = path.match(/\/r\/([^/]+)/);
+        return subredditMatch ? `r/${subredditMatch[1]}` : 'Reddit User';
+      case 'youtube':
+        return 'YouTube Creator';
+      case 'tiktok':
+        const tiktokMatch = path.match(/@([^/]+)/);
+        return tiktokMatch ? `@${tiktokMatch[1]}` : '@TikTok User';
+      case 'twitter':
+        const twitterMatch = path.match(/\/([^/]+)/);
+        return twitterMatch ? `@${twitterMatch[1]}` : '@User';
+      default:
+        return 'User';
+    }
+  } catch {
+    return 'User';
+  }
+}
+
+// Helper: Estimate engagement based on platform and ranking
+function estimateEngagement(platform: string, rank: number): number {
+  const baseEngagement = Math.max(1000, 10000 - rank * 1000);
+
+  switch (platform.toLowerCase()) {
+    case 'tiktok':
+      return baseEngagement * 5;
+    case 'youtube':
+      return baseEngagement;
+    case 'reddit':
+      return Math.floor(baseEngagement * 0.5);
+    case 'twitter':
+      return Math.floor(baseEngagement * 0.3);
+    default:
+      return Math.floor(baseEngagement * 0.2);
   }
 }
 

@@ -9,10 +9,12 @@ import {
   Search,
   Settings,
   LogOut,
+  Radar,
 } from 'lucide-react';
 import { useSettings } from '@/lib/SettingsContext';
 
 const navigation = [
+  { name: 'Trend Radar', href: '/trend-radar', icon: Radar },
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Trending', href: '/trending', icon: TrendingUp },
   { name: 'Mentions', href: '/mentions', icon: Search },
