@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch from Brave Search API (covers Reddit, TikTok, YouTube, Twitter)
     if (isBraveConfigured() && (!source || source === 'all' || ['reddit', 'tiktok', 'youtube', 'twitter'].includes(source))) {
-      const cacheKey = getCacheKey('brave-social', `${brand}-${days}`);
+      const cacheKey = getCacheKey('brave-social', `${brand}-${category}-${days}`);
       let braveMentions = getCache<Mention[]>(cacheKey);
 
       if (!braveMentions) {
@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch from YouTube if API key is configured
     if (process.env.YOUTUBE_API_KEY && (!source || source === 'all' || source === 'youtube')) {
-      const cacheKey = getCacheKey('youtube', brand);
+      const cacheKey = getCacheKey('youtube', `${brand}-${category}`);
       let ytMentions = getCache<Mention[]>(cacheKey);
 
       if (!ytMentions) {
@@ -199,7 +199,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch from News API if API key is configured
     if (process.env.NEWS_API_KEY && (!source || source === 'all' || source === 'news')) {
-      const cacheKey = getCacheKey('news', brand);
+      const cacheKey = getCacheKey('news', `${brand}-${category}`);
       let newsMentions = getCache<Mention[]>(cacheKey);
 
       if (!newsMentions) {
