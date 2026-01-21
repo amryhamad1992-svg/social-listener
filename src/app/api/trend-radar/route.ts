@@ -68,6 +68,30 @@ const CATEGORIES: Record<string, {
     amazonCategory: 'Natural & Organic Beauty',
     trendingTerms: ['clean girl aesthetic', 'minimalist skincare', 'skin minimalism', 'less is more'],
   },
+  hairdryers: {
+    name: 'Hair Dryers',
+    keywords: ['hair dryer', 'blow dryer', 'ionic dryer', 'professional dryer', 'travel dryer', 'diffuser', 'concentrator nozzle', 'ceramic dryer', 'tourmaline dryer', 'lightweight dryer'],
+    amazonCategory: 'Hair Dryers',
+    trendingTerms: ['best hair dryer', 'salon blowout', 'fast drying', 'frizz free blowout'],
+  },
+  straighteners: {
+    name: 'Hair Straighteners',
+    keywords: ['flat iron', 'hair straightener', 'titanium plates', 'ceramic straightener', 'steam straightener', 'wide plate', 'mini straightener', 'digital straightener', 'floating plates'],
+    amazonCategory: 'Flat Irons',
+    trendingTerms: ['glass hair', 'silk press', 'straightening tips', 'heat damage free'],
+  },
+  curlingirons: {
+    name: 'Curling Irons',
+    keywords: ['curling iron', 'curling wand', 'marcel iron', 'clampless curler', 'interchangeable barrels', 'automatic curler', 'beach waves', 'spiral curls', 'loose waves'],
+    amazonCategory: 'Curling Irons',
+    trendingTerms: ['heatless curls', 'beach waves', 'bouncy blowout', 'curl tutorial'],
+  },
+  hotairbrushes: {
+    name: 'Hot Air Brushes',
+    keywords: ['hot air brush', 'blow dry brush', 'one step dryer', 'volumizer brush', 'rotating brush', 'air styler', 'round brush dryer', 'styling brush', 'blowout brush'],
+    amazonCategory: 'Hot Air Brushes',
+    trendingTerms: ['salon blowout at home', 'volume brush', 'bouncy hair', 'one step styling'],
+  },
 };
 
 interface TrendItem {
@@ -384,6 +408,10 @@ function generateDemoTrends(category: string, timeRange: string): TrendItem[] {
     beautytech: ['gua sha routine', 'led mask', 'ice roller', 'microcurrent', 'facial steamer', 'dermaplaning'],
     kbeauty: ['glass skin', 'snail mucin', 'rice toner', 'centella', 'mugwort', '7 skin method'],
     cleanbeauty: ['clean girl aesthetic', 'skin minimalism', 'less is more', 'barrier repair', 'gentle actives', 'mushroom skincare'],
+    hairdryers: ['ionic technology', 'salon blowout', 'babyliss pro', 'diffuser attachment', 'quick dry', 'frizz control'],
+    straighteners: ['glass hair', 'silk press', 'steam straightener', 'titanium plates', 'no damage styling', 'babyliss flat iron'],
+    curlingirons: ['beach waves', 'bouncy curls', 'curling wand', 'heatless vs heat', 'long lasting curls', 'barrel size guide'],
+    hotairbrushes: ['one step blowout', 'volumizing brush', 'babyliss big hair', 'blow dry brush', 'salon at home', 'round brush styling'],
   };
 
   const terms = demoTerms[category] || demoTerms.skincare;
