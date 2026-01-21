@@ -135,8 +135,10 @@ export default function MentionsPage() {
     return brandMap[settings.selectedBrand] || 'Revlon';
   }, [isLoaded, settings.selectedBrand]);
 
-  // Get category from settings
-  const selectedCategory = settings.selectedCategory || 'all';
+  // Get category from settings (memoized to ensure proper dependency tracking)
+  const selectedCategory = useMemo(() => {
+    return settings.selectedCategory || 'all';
+  }, [settings.selectedCategory]);
 
   // Fetch mentions from API
   const fetchMentions = useCallback(async () => {
@@ -183,7 +185,7 @@ export default function MentionsPage() {
     }
   }, [isLoaded, selectedBrand, selectedCategory, days]);
 
-  // Apply settings from storage and fetch data
+  // Apply settings from storage on initial load
   useEffect(() => {
     if (isLoaded && !settingsApplied) {
       setDays(settings.defaultDays);
@@ -191,12 +193,13 @@ export default function MentionsPage() {
     }
   }, [isLoaded, settings.defaultDays, settingsApplied]);
 
-  // Fetch when dependencies change
+  // Fetch when brand, category, or days change
   useEffect(() => {
-    if (settingsApplied) {
+    if (isLoaded && settingsApplied) {
+      console.log('[Mentions] Fetching for brand:', selectedBrand, 'category:', selectedCategory);
       fetchMentions();
     }
-  }, [settingsApplied, selectedBrand, selectedCategory, days, fetchMentions]);
+  }, [isLoaded, settingsApplied, selectedBrand, selectedCategory, days, fetchMentions]);
 
   const toggleSource = (id: string) => {
     setSources(prev => prev.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
