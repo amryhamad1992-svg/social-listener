@@ -135,13 +135,11 @@ export default function MentionsPage() {
     return brandMap[settings.selectedBrand] || 'Revlon';
   }, [isLoaded, settings.selectedBrand]);
 
-  // Get category from settings (memoized to ensure proper dependency tracking)
-  const selectedCategory = useMemo(() => {
-    return settings.selectedCategory || 'all';
-  }, [settings.selectedCategory]);
+  // Get category directly from settings
+  const selectedCategory = settings.selectedCategory || 'all';
 
   // Fetch mentions from API
-  const fetchMentions = useCallback(async () => {
+  const fetchMentions = useCallback(async (brand: string, category: string) => {
     if (!isLoaded) return;
 
     setLoading(true);
@@ -149,13 +147,16 @@ export default function MentionsPage() {
 
     try {
       const params = new URLSearchParams({
-        brand: selectedBrand,
-        category: selectedCategory,
+        brand: brand,
+        category: category,
         days: days.toString(),
         limit: '50',
+        _t: Date.now().toString(), // Cache buster
       });
 
-      const response = await fetch(`/api/mentions?${params}`);
+      const response = await fetch(`/api/mentions?${params}`, {
+        cache: 'no-store',
+      });
       const data = await response.json();
 
       if (data.success) {
@@ -183,7 +184,7 @@ export default function MentionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [isLoaded, selectedBrand, selectedCategory, days]);
+  }, [isLoaded, days]);
 
   // Apply settings from storage on initial load
   useEffect(() => {
@@ -193,11 +194,10 @@ export default function MentionsPage() {
     }
   }, [isLoaded, settings.defaultDays, settingsApplied]);
 
-  // Fetch when brand, category, or days change
+  // Fetch when brand or category changes
   useEffect(() => {
     if (isLoaded && settingsApplied) {
-      console.log('[Mentions] Fetching for brand:', selectedBrand, 'category:', selectedCategory);
-      fetchMentions();
+      fetchMentions(selectedBrand, selectedCategory);
     }
   }, [isLoaded, settingsApplied, selectedBrand, selectedCategory, days, fetchMentions]);
 
@@ -340,7 +340,7 @@ export default function MentionsPage() {
 
               {/* Refresh Button */}
               <button
-                onClick={fetchMentions}
+                onClick={() => fetchMentions(selectedBrand, selectedCategory)}
                 disabled={loading}
                 className="p-2 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition-colors disabled:opacity-50"
                 title="Refresh data"

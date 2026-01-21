@@ -8,11 +8,13 @@ import {
   Settings,
   LogOut,
   Radar,
+  Users,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Trend Radar', href: '/trend-radar', icon: Radar },
   { name: 'Mentions', href: '/mentions', icon: Search },
+  { name: 'Audience Builder', href: '/audience-builder', icon: Users },
 ];
 
 interface SidebarProps {
