@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ExternalLink, ThumbsUp, MessageSquare, Flame, Clock, Users, TrendingUp, Filter, LayoutGrid, List, ArrowUpDown, Download, Calendar, Wifi, WifiOff } from 'lucide-react';
+import { Loader2, ExternalLink, ThumbsUp, MessageSquare, Flame, Clock, Users, TrendingUp, Filter, LayoutGrid, List, ArrowUpDown, RefreshCw, Calendar, Wifi, WifiOff } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { PurchaseIntentSignals } from '@/components/PurchaseIntentSignals';
 import { BrandSelector } from '@/components/BrandSelector';
@@ -335,14 +335,14 @@ export default function MentionsPage() {
                 </select>
               </div>
 
-              {/* Export Button */}
+              {/* Refresh Button */}
               <button
-                className="flex items-center gap-2 px-4 py-2 bg-[#1E293B] text-white rounded-lg text-[13px] font-medium hover:bg-[#334155] transition-colors"
-                style={{ fontFamily: 'Roboto, sans-serif' }}
-                onClick={() => alert('Export feature coming soon')}
+                onClick={fetchMentions}
+                disabled={loading}
+                className="p-2 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition-colors disabled:opacity-50"
+                title="Refresh data"
               >
-                <Download className="w-4 h-4" />
-                Export
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               </button>
             </div>
           </div>
