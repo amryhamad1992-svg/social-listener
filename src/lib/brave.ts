@@ -459,7 +459,41 @@ function extractSpecificTrends(text: string): string[] {
   return trends;
 }
 
-// Get trending topics for a category - REWRITTEN for specific actionable trends
+// Helper to process search results and add to trend map
+function processSearchResults(
+  results: BraveWebResult[],
+  trendMap: Map<string, { count: number; sources: SourceInfo[]; platformCounts: Record<string, number> }>
+) {
+  for (const result of results) {
+    const fullText = `${result.title} ${result.description}`;
+    const extractedTrends = extractSpecificTrends(fullText);
+    const platform = detectPlatform(result.url, result.title, result.description);
+
+    for (const trend of extractedTrends) {
+      const normalized = trend.toLowerCase().trim();
+      const existing = trendMap.get(normalized) || { count: 0, sources: [], platformCounts: {} };
+      existing.count++;
+
+      // Track platform counts
+      existing.platformCounts[platform] = (existing.platformCounts[platform] || 0) + 1;
+
+      if (existing.sources.length < 5 && result.url) {
+        const isDuplicate = existing.sources.some(s => s.url === result.url);
+        if (!isDuplicate) {
+          existing.sources.push({
+            snippet: result.description?.slice(0, 150) || '',
+            url: result.url,
+            title: result.title || '',
+            platform: platform,
+          });
+        }
+      }
+      trendMap.set(normalized, existing);
+    }
+  }
+}
+
+// Get trending topics for a category - searches ACTUAL social platforms
 export async function braveTrendingTopics(
   category: string,
   keywords: string[],
@@ -470,92 +504,103 @@ export async function braveTrendingTopics(
 
   console.log(`[Brave Trends] Searching for ${category} trends${platformFilter ? ` (filtered by ${platformFilter})` : ''}...`);
 
-  // Add platform-specific site filter if requested
-  const platformSiteFilter = platformFilter && platformFilter !== 'all' ? {
+  // Platform site filters for getting ACTUAL social media content
+  const PLATFORM_SITES = {
     tiktok: 'site:tiktok.com',
-    instagram: 'site:instagram.com',
     youtube: 'site:youtube.com',
     reddit: 'site:reddit.com',
+    instagram: 'site:instagram.com',
     twitter: 'site:twitter.com OR site:x.com',
-    web: '-site:tiktok.com -site:instagram.com -site:youtube.com -site:reddit.com -site:twitter.com -site:x.com',
-  }[platformFilter] || '' : '';
+  };
 
-  // Run multiple targeted searches
-  for (const searchQuery of searches.slice(0, 4)) { // Limit to 4 searches to save API quota
+  // If filtering by specific platform, only search that platform
+  if (platformFilter && platformFilter !== 'all' && platformFilter !== 'web') {
+    const siteFilter = PLATFORM_SITES[platformFilter as keyof typeof PLATFORM_SITES];
+    if (siteFilter) {
+      // Search with platform filter
+      for (const searchQuery of searches.slice(0, 3)) {
+        try {
+          const results = await braveWebSearch(`${searchQuery} ${siteFilter}`, { count: 15, freshness: 'pw' });
+          processSearchResults(results, trendMap);
+          await new Promise(r => setTimeout(r, 100));
+        } catch (err) {
+          console.error(`[Brave Trends] Platform search error:`, err);
+        }
+      }
+    }
+  } else if (platformFilter === 'web') {
+    // Web only - exclude social platforms
+    const excludeSocial = '-site:tiktok.com -site:youtube.com -site:reddit.com -site:instagram.com -site:twitter.com -site:x.com';
+    for (const searchQuery of searches.slice(0, 3)) {
+      try {
+        const results = await braveWebSearch(`${searchQuery} ${excludeSocial}`, { count: 15, freshness: 'pw' });
+        processSearchResults(results, trendMap);
+        await new Promise(r => setTimeout(r, 100));
+      } catch (err) {
+        console.error(`[Brave Trends] Web search error:`, err);
+      }
+    }
+  } else {
+    // ALL platforms - do targeted searches on each major platform
+    const categoryTerm = category.toLowerCase();
+
+    // 1. Search TikTok directly (most important for beauty trends)
     try {
-      const fullQuery = platformSiteFilter ? `${searchQuery} ${platformSiteFilter}` : searchQuery;
-      const results = await braveWebSearch(fullQuery, { count: 10, freshness: 'pw' });
-
-      for (const result of results) {
-        const fullText = `${result.title} ${result.description}`;
-        const extractedTrends = extractSpecificTrends(fullText);
-        const platform = detectPlatform(result.url, result.title, result.description);
-
-        for (const trend of extractedTrends) {
-          const normalized = trend.toLowerCase().trim();
-          const existing = trendMap.get(normalized) || { count: 0, sources: [], platformCounts: {} };
-          existing.count++;
-
-          // Track platform counts
-          existing.platformCounts[platform] = (existing.platformCounts[platform] || 0) + 1;
-
-          if (existing.sources.length < 5 && result.url) {
-            const isDuplicate = existing.sources.some(s => s.url === result.url);
-            if (!isDuplicate) {
-              existing.sources.push({
-                snippet: result.description?.slice(0, 150) || '',
-                url: result.url,
-                title: result.title || '',
-                platform: platform,
-              });
-            }
-          }
-          trendMap.set(normalized, existing);
-        }
-      }
-
-      // Small delay between searches
-      await new Promise(r => setTimeout(r, 100));
+      const tiktokQuery = `${categoryTerm} viral trend site:tiktok.com`;
+      const tiktokResults = await braveWebSearch(tiktokQuery, { count: 10, freshness: 'pw' });
+      processSearchResults(tiktokResults, trendMap);
+      console.log(`[Brave Trends] TikTok: found ${tiktokResults.length} results`);
     } catch (err) {
-      console.error(`[Brave Trends] Search error:`, err);
+      console.error(`[Brave Trends] TikTok search error:`, err);
     }
-  }
 
-  // Also search for the category + viral specifically
-  try {
-    const viralQuery = platformSiteFilter
-      ? `${category} viral ingredient product 2026 ${platformSiteFilter}`
-      : `${category} viral ingredient product 2026 TikTok`;
-    const viralSearch = await braveWebSearch(viralQuery, { count: 15, freshness: 'pw' });
-    for (const result of viralSearch) {
-      const fullText = `${result.title} ${result.description}`;
-      const extractedTrends = extractSpecificTrends(fullText);
-      const platform = detectPlatform(result.url, result.title, result.description);
+    await new Promise(r => setTimeout(r, 100));
 
-      for (const trend of extractedTrends) {
-        const normalized = trend.toLowerCase().trim();
-        const existing = trendMap.get(normalized) || { count: 0, sources: [], platformCounts: {} };
-        existing.count++;
-
-        // Track platform counts
-        existing.platformCounts[platform] = (existing.platformCounts[platform] || 0) + 1;
-
-        if (existing.sources.length < 5 && result.url) {
-          const isDuplicate = existing.sources.some(s => s.url === result.url);
-          if (!isDuplicate) {
-            existing.sources.push({
-              snippet: result.description?.slice(0, 150) || '',
-              url: result.url,
-              title: result.title || '',
-              platform: platform,
-            });
-          }
-        }
-        trendMap.set(normalized, existing);
-      }
+    // 2. Search YouTube
+    try {
+      const youtubeQuery = `${categoryTerm} review tutorial site:youtube.com`;
+      const youtubeResults = await braveWebSearch(youtubeQuery, { count: 10, freshness: 'pw' });
+      processSearchResults(youtubeResults, trendMap);
+      console.log(`[Brave Trends] YouTube: found ${youtubeResults.length} results`);
+    } catch (err) {
+      console.error(`[Brave Trends] YouTube search error:`, err);
     }
-  } catch (err) {
-    console.error(`[Brave Trends] Viral search error:`, err);
+
+    await new Promise(r => setTimeout(r, 100));
+
+    // 3. Search Reddit
+    try {
+      const redditQuery = `${categoryTerm} recommendation site:reddit.com`;
+      const redditResults = await braveWebSearch(redditQuery, { count: 10, freshness: 'pw' });
+      processSearchResults(redditResults, trendMap);
+      console.log(`[Brave Trends] Reddit: found ${redditResults.length} results`);
+    } catch (err) {
+      console.error(`[Brave Trends] Reddit search error:`, err);
+    }
+
+    await new Promise(r => setTimeout(r, 100));
+
+    // 4. Search Instagram
+    try {
+      const instagramQuery = `${categoryTerm} viral site:instagram.com`;
+      const instagramResults = await braveWebSearch(instagramQuery, { count: 8, freshness: 'pw' });
+      processSearchResults(instagramResults, trendMap);
+      console.log(`[Brave Trends] Instagram: found ${instagramResults.length} results`);
+    } catch (err) {
+      console.error(`[Brave Trends] Instagram search error:`, err);
+    }
+
+    await new Promise(r => setTimeout(r, 100));
+
+    // 5. General web search for trend articles (but fewer)
+    try {
+      const webQuery = searches[0] || `${categoryTerm} viral trend 2026`;
+      const webResults = await braveWebSearch(webQuery, { count: 8, freshness: 'pw' });
+      processSearchResults(webResults, trendMap);
+      console.log(`[Brave Trends] Web: found ${webResults.length} results`);
+    } catch (err) {
+      console.error(`[Brave Trends] Web search error:`, err);
+    }
   }
 
   // Convert to array and sort by frequency
