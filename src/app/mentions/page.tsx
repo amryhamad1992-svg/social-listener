@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ExternalLink, ThumbsUp, MessageSquare, Flame, Clock, Users, TrendingUp, Filter, LayoutGrid, List, ArrowUpDown, RefreshCw, Calendar, Wifi, WifiOff } from 'lucide-react';
+import { Loader2, ExternalLink, ThumbsUp, MessageSquare, Flame, Clock, Users, TrendingUp, TrendingDown, Filter, LayoutGrid, List, ArrowUpDown, RefreshCw, Calendar, Wifi, WifiOff, Sparkles, Brain } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { PurchaseIntentSignals } from '@/components/PurchaseIntentSignals';
 import { BrandSelector } from '@/components/BrandSelector';
@@ -36,6 +36,14 @@ interface SourceFilter {
   enabled: boolean;
   color: string;
   bgColor: string;
+}
+
+interface BrandSentiment {
+  overallScore: number;
+  summary: string;
+  positiveThemes: string[];
+  negativeThemes: string[];
+  neutralThemes: string[];
 }
 
 // Updated sources: Reddit, Instagram, X, Meta, TikTok, YouTube (using Stackline colors)
@@ -123,6 +131,8 @@ export default function MentionsPage() {
   const [isLiveData, setIsLiveData] = useState(false);
   const [dataSources, setDataSources] = useState<string[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [brandSentiment, setBrandSentiment] = useState<BrandSentiment | null>(null);
+  const [sentimentLoading, setSentimentLoading] = useState(false);
 
   // Get brand from settings
   const selectedBrand = useMemo(() => {
@@ -200,6 +210,43 @@ export default function MentionsPage() {
       fetchMentions(selectedBrand, selectedCategory);
     }
   }, [isLoaded, settingsApplied, selectedBrand, selectedCategory, days, fetchMentions]);
+
+  // Fetch AI-powered brand sentiment analysis
+  const fetchBrandSentiment = useCallback(async (brand: string, mentionsData: UnifiedMention[]) => {
+    if (mentionsData.length === 0) return;
+
+    setSentimentLoading(true);
+    try {
+      const response = await fetch('/api/brand-sentiment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brand,
+          mentions: mentionsData.map(m => ({
+            title: m.title,
+            body: m.body,
+            sentiment: m.sentiment,
+          })),
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setBrandSentiment(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching brand sentiment:', error);
+    } finally {
+      setSentimentLoading(false);
+    }
+  }, []);
+
+  // Fetch sentiment when mentions change
+  useEffect(() => {
+    if (mentions.length > 0 && !loading) {
+      fetchBrandSentiment(selectedBrand, mentions);
+    }
+  }, [mentions, loading, selectedBrand, fetchBrandSentiment]);
 
   const toggleSource = (id: string) => {
     setSources(prev => prev.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
@@ -402,6 +449,101 @@ export default function MentionsPage() {
                 <p className="text-[9px] text-[#94A3B8] mb-1">Activity (14 days)</p>
                 <ActivityChart data={activityData} />
               </div>
+            </div>
+          </div>
+
+          {/* AI-Powered Brand Sentiment Summary */}
+          <div className="bg-gradient-to-r from-[#0F172A] to-[#1E293B] rounded-xl p-5 text-white">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-3">
+                  <Brain className="w-5 h-5 text-[#0EA5E9]" />
+                  <h3 className="text-[14px] font-semibold">AI Brand Sentiment</h3>
+                  <span className="px-2 py-0.5 bg-[#0EA5E9]/20 text-[#0EA5E9] rounded text-[9px] font-medium">
+                    Powered by GPT
+                  </span>
+                </div>
+
+                {sentimentLoading ? (
+                  <div className="flex items-center gap-2 text-white/60">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-[13px]">Analyzing brand sentiment...</span>
+                  </div>
+                ) : brandSentiment ? (
+                  <div className="space-y-4">
+                    {/* Summary */}
+                    <p className="text-[13px] text-white/90 leading-relaxed">
+                      {brandSentiment.summary}
+                    </p>
+
+                    {/* Themes */}
+                    <div className="grid grid-cols-3 gap-4">
+                      {/* Positive Themes */}
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="text-[11px] font-medium text-emerald-400">Positive Drivers</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {brandSentiment.positiveThemes.map((theme, i) => (
+                            <span key={i} className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded text-[10px]">
+                              {theme}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Negative Themes */}
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <TrendingDown className="w-3.5 h-3.5 text-red-400" />
+                          <span className="text-[11px] font-medium text-red-400">Pain Points</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {brandSentiment.negativeThemes.map((theme, i) => (
+                            <span key={i} className="px-2 py-0.5 bg-red-500/20 text-red-300 rounded text-[10px]">
+                              {theme}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Neutral Themes */}
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
+                          <span className="text-[11px] font-medium text-slate-400">Discussion Topics</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {brandSentiment.neutralThemes.map((theme, i) => (
+                            <span key={i} className="px-2 py-0.5 bg-slate-500/20 text-slate-300 rounded text-[10px]">
+                              {theme}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[13px] text-white/60">
+                    No sentiment analysis available yet.
+                  </p>
+                )}
+              </div>
+
+              {/* Sentiment Score */}
+              {brandSentiment && !sentimentLoading && (
+                <div className="ml-6 flex flex-col items-center">
+                  <div className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold ${
+                    brandSentiment.overallScore >= 60 ? 'bg-emerald-500/20 text-emerald-400' :
+                    brandSentiment.overallScore >= 40 ? 'bg-amber-500/20 text-amber-400' :
+                    'bg-red-500/20 text-red-400'
+                  }`}>
+                    {brandSentiment.overallScore}
+                  </div>
+                  <span className="text-[10px] text-white/60 mt-2">Sentiment Score</span>
+                </div>
+              )}
             </div>
           </div>
 

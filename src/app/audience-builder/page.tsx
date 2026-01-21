@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Calendar, Download, Copy, Check, Filter, TrendingUp, TrendingDown, Minus, Hash, MessageSquare, RefreshCw } from 'lucide-react';
+import { Loader2, Calendar, Download, Copy, Check, Filter, TrendingUp, TrendingDown, Minus, Hash, MessageSquare, RefreshCw, Sparkles, Plus, Ban } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { useSettings } from '@/lib/SettingsContext';
 
@@ -24,6 +24,13 @@ interface SourceFilter {
   id: string;
   name: string;
   enabled: boolean;
+}
+
+interface AISuggestions {
+  longTail: string[];
+  questions: string[];
+  related: string[];
+  negative: string[];
 }
 
 const SOURCE_FILTERS: SourceFilter[] = [
@@ -93,6 +100,9 @@ export default function AudienceBuilderPage() {
   const [keywords, setKeywords] = useState<KeywordData[]>([]);
   const [copied, setCopied] = useState(false);
   const [sortBy, setSortBy] = useState<'frequency' | 'recent'>('frequency');
+  const [aiSuggestions, setAiSuggestions] = useState<AISuggestions | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showAiSuggestions, setShowAiSuggestions] = useState(false);
 
   // Get available sub-categories based on selected main category
   const availableSubCategories = useMemo(() => {
@@ -148,6 +158,34 @@ export default function AudienceBuilderPage() {
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
   };
+
+  // Fetch AI-powered keyword suggestions
+  const fetchAiSuggestions = useCallback(async () => {
+    if (keywords.length === 0) return;
+
+    setAiLoading(true);
+    setShowAiSuggestions(true);
+    try {
+      const response = await fetch('/api/ai-keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          keywords: keywords.map(k => k.keyword),
+          category: CATEGORIES[selectedMainCategory]?.name || 'Beauty',
+          subCategory: availableSubCategories.find(s => s.id === selectedSubCategory)?.name || 'General',
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setAiSuggestions(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching AI suggestions:', error);
+    } finally {
+      setAiLoading(false);
+    }
+  }, [keywords, selectedMainCategory, selectedSubCategory, availableSubCategories]);
 
   // Sort keywords
   const sortedKeywords = useMemo(() => {
@@ -286,6 +324,20 @@ export default function AudienceBuilderPage() {
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               </button>
 
+              {/* AI Suggestions */}
+              <button
+                onClick={fetchAiSuggestions}
+                disabled={keywords.length === 0 || aiLoading}
+                className="flex items-center gap-2 px-3 py-2 text-[13px] text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-lg transition-all disabled:opacity-50 shadow-sm"
+              >
+                {aiLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4" />
+                )}
+                AI Suggest
+              </button>
+
               {/* Copy */}
               <button
                 onClick={handleCopy}
@@ -401,6 +453,119 @@ export default function AudienceBuilderPage() {
               </div>
             </div>
           </div>
+
+          {/* AI-Powered Suggestions Panel */}
+          {showAiSuggestions && (
+            <div className="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-xl p-5 text-white">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-purple-300" />
+                  <h3 className="text-[14px] font-semibold">AI-Powered Suggestions</h3>
+                  <span className="px-2 py-0.5 bg-purple-500/30 text-purple-200 rounded text-[9px] font-medium">
+                    GPT Generated
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowAiSuggestions(false)}
+                  className="text-white/60 hover:text-white text-[12px]"
+                >
+                  Hide
+                </button>
+              </div>
+
+              {aiLoading ? (
+                <div className="flex items-center gap-2 text-white/60 py-8 justify-center">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span className="text-[13px]">Generating keyword suggestions...</span>
+                </div>
+              ) : aiSuggestions ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Long-tail Keywords */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <TrendingUp className="w-4 h-4 text-emerald-400" />
+                      <span className="text-[12px] font-medium text-emerald-400">Long-tail Keywords</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {aiSuggestions.longTail.map((kw, i) => (
+                        <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 rounded text-[11px] text-white/90">
+                          <Plus className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+                          <span className="truncate">{kw}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Question Keywords */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <MessageSquare className="w-4 h-4 text-blue-400" />
+                      <span className="text-[12px] font-medium text-blue-400">Question-based</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {aiSuggestions.questions.map((kw, i) => (
+                        <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 rounded text-[11px] text-white/90">
+                          <Plus className="w-3 h-3 text-blue-400 flex-shrink-0" />
+                          <span className="truncate">{kw}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Related Keywords */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <Hash className="w-4 h-4 text-amber-400" />
+                      <span className="text-[12px] font-medium text-amber-400">Related Terms</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {aiSuggestions.related.map((kw, i) => (
+                        <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 rounded text-[11px] text-white/90">
+                          <Plus className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                          <span className="truncate">{kw}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Negative Keywords */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <Ban className="w-4 h-4 text-red-400" />
+                      <span className="text-[12px] font-medium text-red-400">Negative Keywords</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {aiSuggestions.negative.map((kw, i) => (
+                        <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 rounded text-[11px] text-white/90">
+                          <Minus className="w-3 h-3 text-red-400 flex-shrink-0" />
+                          <span className="truncate">{kw}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[13px] text-white/60 text-center py-4">
+                  Click "AI Suggest" to generate keyword suggestions.
+                </p>
+              )}
+
+              {aiSuggestions && !aiLoading && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
+                  <p className="text-[11px] text-white/50">
+                    {aiSuggestions.longTail.length + aiSuggestions.questions.length + aiSuggestions.related.length} suggestions generated
+                  </p>
+                  <button
+                    onClick={fetchAiSuggestions}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded text-[11px] text-white/80 transition-colors"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    Regenerate
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Keywords Grid */}
           {loading ? (
