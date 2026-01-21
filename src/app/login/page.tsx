@@ -38,8 +38,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Redirect to dashboard
-      router.push('/dashboard');
+      // Redirect to trend radar
+      router.push('/trend-radar');
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -177,7 +177,7 @@ export default function LoginPage() {
 
           {/* Demo Mode Button */}
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push('/trend-radar')}
             className="mt-4 w-full py-2 px-4 border border-[#E2E8F0] text-[#1E293B] rounded text-[13px] font-medium hover:bg-[#F8FAFC] transition-colors"
           >
             View Demo (Mock Data)
