@@ -158,32 +158,104 @@ function classifyKeyword(keyword: string): string {
 function generateMockKeywords(mainCategory: string, subCategory: string, days: number): KeywordData[] {
   const categoryKeywordSets: Record<string, Record<string, string[]>> = {
     skin: {
-      all_skin: ['vitamin c serum', 'hyaluronic acid', 'retinol cream', 'niacinamide', 'moisturizer spf', 'double cleanse', 'skin barrier', 'glass skin', 'slugging', 'skin cycling'],
-      skincare: ['gentle cleanser', 'hydrating toner', 'exfoliating acid', 'face oil', 'night cream', 'eye cream', 'sheet mask', 'essence', 'ampoule', 'spot treatment'],
-      suncare: ['mineral sunscreen', 'spf 50', 'reef safe', 'tinted sunscreen', 'sunscreen stick', 'reapply sunscreen', 'uva protection', 'water resistant', 'daily spf', 'sun damage'],
-      kbeauty: ['snail mucin', 'centella asiatica', 'rice water', 'ginseng', 'propolis', 'mugwort', 'bamboo water', 'green tea', 'honey mask', 'fermented'],
-      cleanbeauty: ['clean ingredients', 'non-toxic', 'paraben free', 'sulfate free', 'fragrance free', 'plant based', 'sustainable packaging', 'reef safe', 'vegan formula', 'organic certified'],
+      all_skin: [
+        'vitamin c serum', 'hyaluronic acid', 'retinol cream', 'niacinamide', 'moisturizer spf', 'double cleanse', 'skin barrier', 'glass skin', 'slugging', 'skin cycling',
+        'ceramide cream', 'peptide serum', 'bakuchiol', 'azelaic acid', 'tranexamic acid', 'centella asiatica', 'squalane oil', 'zinc sunscreen', 'chemical exfoliant', 'physical exfoliant',
+        'anti aging serum', 'dark spot corrector', 'pore minimizer', 'oil control', 'dewy skin', 'skin flooding', 'barrier repair', 'moisture barrier', 'skinimalism', 'skip care'
+      ],
+      skincare: [
+        'gentle cleanser', 'hydrating toner', 'exfoliating acid', 'face oil', 'night cream', 'eye cream', 'sheet mask', 'essence', 'ampoule', 'spot treatment',
+        'micellar water', 'oil cleanser', 'foam cleanser', 'gel moisturizer', 'sleeping mask', 'clay mask', 'peel off mask', 'face mist', 'facial spray', 'skin serum',
+        'aha bha', 'glycolic acid', 'lactic acid', 'mandelic acid', 'salicylic acid', 'benzoyl peroxide', 'adapalene', 'tretinoin', 'retinaldehyde', 'vitamin e'
+      ],
+      suncare: [
+        'mineral sunscreen', 'spf 50', 'reef safe', 'tinted sunscreen', 'sunscreen stick', 'reapply sunscreen', 'uva protection', 'water resistant', 'daily spf', 'sun damage',
+        'chemical sunscreen', 'hybrid sunscreen', 'sunscreen primer', 'spf moisturizer', 'sunscreen serum', 'invisible sunscreen', 'no white cast', 'korean sunscreen', 'japanese sunscreen', 'european sunscreen',
+        'pa++++', 'broad spectrum', 'sun protection factor', 'uv filter', 'photostable', 'antioxidant sunscreen', 'after sun care', 'sun repair', 'sunburn relief', 'tan removal'
+      ],
+      kbeauty: [
+        'snail mucin', 'centella asiatica', 'rice water', 'ginseng', 'propolis', 'mugwort', 'bamboo water', 'green tea', 'honey mask', 'fermented',
+        'korean skincare', 'glass skin routine', '10 step routine', '7 skin method', 'skip care', 'essence toner', 'ampoule serum', 'cushion compact', 'bb cream', 'cc cream',
+        'cica cream', 'heartleaf', 'birch juice', 'yuzu', 'soybean', 'lotus extract', 'galactomyces', 'bifida ferment', 'saccharomyces', 'natto gum'
+      ],
+      cleanbeauty: [
+        'clean ingredients', 'non-toxic', 'paraben free', 'sulfate free', 'fragrance free', 'plant based', 'sustainable packaging', 'reef safe', 'vegan formula', 'organic certified',
+        'ewa certified', 'leaping bunny', 'cruelty free', 'zero waste beauty', 'refillable packaging', 'biodegradable', 'natural preservatives', 'essential oils', 'botanical extracts', 'mineral makeup',
+        'silicone free', 'phthalate free', 'synthetic free', 'chemical free', 'green beauty', 'eco beauty', 'conscious beauty', 'ethical beauty', 'transparency', 'clean label'
+      ],
     },
     makeup: {
-      all_makeup: ['full coverage', 'natural finish', 'long wearing', 'transfer proof', 'buildable coverage', 'skin like finish', 'dewy look', 'matte lipstick', 'cream blush', 'setting spray'],
-      colorcosmetics: ['liquid lipstick', 'eyeshadow palette', 'bronzer contour', 'highlighter glow', 'blush palette', 'lip liner', 'brow gel', 'mascara waterproof', 'concealer brightening', 'primer pore'],
-      nails: ['gel polish', 'nail art', 'press on nails', 'nail strengthener', 'cuticle oil', 'base coat', 'top coat', 'nail lamp', 'dip powder', 'chrome nails'],
+      all_makeup: [
+        'full coverage', 'natural finish', 'long wearing', 'transfer proof', 'buildable coverage', 'skin like finish', 'dewy look', 'matte lipstick', 'cream blush', 'setting spray',
+        'makeup primer', 'color corrector', 'contour stick', 'highlight palette', 'bronzer drops', 'lip oil', 'lip stain', 'tinted moisturizer', 'skin tint', 'bb cream',
+        'baking powder', 'translucent powder', 'setting powder', 'fixing spray', 'makeup remover', 'micellar makeup', 'waterproof makeup', 'smudge proof', 'crease proof', 'fade resistant'
+      ],
+      colorcosmetics: [
+        'liquid lipstick', 'eyeshadow palette', 'bronzer contour', 'highlighter glow', 'blush palette', 'lip liner', 'brow gel', 'mascara waterproof', 'concealer brightening', 'primer pore',
+        'velvet lipstick', 'satin finish', 'shimmer eyeshadow', 'matte eyeshadow', 'glitter makeup', 'duochrome', 'multichrome', 'cream contour', 'powder contour', 'liquid blush',
+        'brow pencil', 'brow pomade', 'lash primer', 'tubing mascara', 'fiber mascara', 'kohl eyeliner', 'gel eyeliner', 'felt tip liner', 'graphic liner', 'wing liner'
+      ],
+      nails: [
+        'gel polish', 'nail art', 'press on nails', 'nail strengthener', 'cuticle oil', 'base coat', 'top coat', 'nail lamp', 'dip powder', 'chrome nails',
+        'builder gel', 'polygel', 'acrylic nails', 'nail tips', 'nail forms', 'nail glue', 'nail dehydrator', 'nail primer', 'slip solution', 'nail drill',
+        'french manicure', 'ombre nails', 'marble nails', 'foil nails', 'stamping plates', 'nail stickers', 'water decals', 'rhinestones', 'nail charms', 'encapsulated nails'
+      ],
     },
     hair: {
-      all_hair: ['hair growth', 'damage repair', 'frizz control', 'heat protection', 'scalp treatment', 'bond repair', 'protein treatment', 'deep conditioning', 'leave in', 'hair oil'],
-      haircare: ['sulfate free shampoo', 'hydrating conditioner', 'hair mask', 'scalp scrub', 'dry shampoo', 'purple shampoo', 'curl cream', 'smoothing serum', 'split end', 'keratin treatment'],
-      hairdryers: ['ionic dryer', 'fast drying', 'lightweight dryer', 'professional dryer', 'quiet motor', 'multiple heat', 'cool shot', 'diffuser attachment', 'concentrator nozzle', 'salon quality'],
-      straighteners: ['flat iron', 'ceramic plates', 'titanium straightener', 'temperature control', 'floating plates', 'steam straightener', 'frizz free', 'silk press', 'keratin flat iron', 'travel straightener'],
-      curlingirons: ['curling wand', 'barrel size', 'clipless curler', 'beach waves', 'tight curls', 'loose waves', 'auto curler', 'rotating barrel', 'ceramic curler', 'tourmaline curler'],
-      hotairbrushes: ['blow dry brush', 'one step dryer', 'volumizing brush', 'round brush dryer', 'rotating brush', 'styling brush', 'root lift', 'smooth blowout', 'salon blowout', 'paddle brush dryer'],
+      all_hair: [
+        'hair growth', 'damage repair', 'frizz control', 'heat protection', 'scalp treatment', 'bond repair', 'protein treatment', 'deep conditioning', 'leave in', 'hair oil',
+        'hair serum', 'hair mask', 'scalp serum', 'root volumizer', 'anti breakage', 'split end repair', 'color protection', 'blonde toning', 'curl definition', 'straightening treatment',
+        'keratin treatment', 'brazilian blowout', 'hair botox', 'olaplex dupe', 'rice water', 'rosemary oil', 'castor oil hair', 'argan oil', 'coconut oil hair', 'hair slugging'
+      ],
+      haircare: [
+        'sulfate free shampoo', 'hydrating conditioner', 'hair mask', 'scalp scrub', 'dry shampoo', 'purple shampoo', 'curl cream', 'smoothing serum', 'split end', 'keratin treatment',
+        'clarifying shampoo', 'co wash', 'pre poo', 'detangling spray', 'heat protectant spray', 'anti frizz serum', 'volumizing mousse', 'texturizing spray', 'sea salt spray', 'hair gel',
+        'edge control', 'pomade', 'hair wax', 'hair clay', 'finishing cream', 'shine spray', 'gloss treatment', 'bond builder', 'protein mask', 'moisture balance'
+      ],
+      hairdryers: [
+        'ionic dryer', 'fast drying', 'lightweight dryer', 'professional dryer', 'quiet motor', 'multiple heat', 'cool shot', 'diffuser attachment', 'concentrator nozzle', 'salon quality',
+        'ceramic dryer', 'tourmaline dryer', 'titanium dryer', 'infrared dryer', 'dual voltage', 'travel dryer', 'compact dryer', 'powerful motor', 'ac motor', 'dc motor',
+        'negative ions', 'frizz reduction', 'shine boost', 'quick dry time', 'heat settings', 'speed settings', 'ergonomic design', 'long cord', 'hanging loop', 'dyson dupe'
+      ],
+      straighteners: [
+        'flat iron', 'ceramic plates', 'titanium straightener', 'temperature control', 'floating plates', 'steam straightener', 'frizz free', 'silk press', 'keratin flat iron', 'travel straightener',
+        'tourmaline plates', 'infrared straightener', 'wet to dry', 'wide plates', 'narrow plates', 'rounded edges', 'digital display', 'auto shut off', 'dual voltage iron', 'cordless straightener',
+        'ghd dupe', 'professional flat iron', 'salon straightener', 'one pass straight', 'heat recovery', 'even heat', 'no snag plates', 'smooth glide', 'babyliss straightener', 'chi flat iron'
+      ],
+      curlingirons: [
+        'curling wand', 'barrel size', 'clipless curler', 'beach waves', 'tight curls', 'loose waves', 'auto curler', 'rotating barrel', 'ceramic curler', 'tourmaline curler',
+        'titanium curler', 'interchangeable barrels', 'tapered wand', 'bubble wand', 'triple barrel', 'spiral curler', 'conical wand', '1 inch curler', '1.5 inch curler', '2 inch curler',
+        'cool tip', 'heat glove', 'spring clamp', 'marcel iron', 'long lasting curls', 'heatless alternative', 'overnight curls', 'flexi rods', 'curl formers', 'babyliss curler'
+      ],
+      hotairbrushes: [
+        'blow dry brush', 'one step dryer', 'volumizing brush', 'round brush dryer', 'rotating brush', 'styling brush', 'root lift', 'smooth blowout', 'salon blowout', 'paddle brush dryer',
+        'ionic brush', 'ceramic brush', 'boar bristle', 'nylon bristle', 'detachable brush', 'cool setting', 'multiple speeds', 'swivel cord', 'oval brush', 'round barrel',
+        'revlon one step', 'dyson airwrap dupe', 'hot tools brush', 'babyliss big hair', 'double shot dryer', 'anti static', 'volume boost', 'smooth finish', 'frizz free blowout', 'at home blowout'
+      ],
     },
     body: {
-      all_body: ['body lotion', 'body oil', 'body scrub', 'cellulite treatment', 'stretch marks', 'firming cream', 'self tanner', 'body butter', 'dry brushing', 'body mist'],
-      bodycare: ['moisturizing body', 'exfoliating scrub', 'shower oil', 'body serum', 'hand cream', 'foot cream', 'body acne', 'keratosis pilaris', 'ingrown hair', 'rough skin'],
-      fragrance: ['eau de parfum', 'long lasting scent', 'signature scent', 'perfume layering', 'fragrance notes', 'unisex perfume', 'niche fragrance', 'designer perfume', 'body spray', 'perfume oil'],
+      all_body: [
+        'body lotion', 'body oil', 'body scrub', 'cellulite treatment', 'stretch marks', 'firming cream', 'self tanner', 'body butter', 'dry brushing', 'body mist',
+        'body serum', 'body moisturizer', 'shower gel', 'body wash', 'exfoliating gloves', 'konjac sponge', 'loofah', 'body polish', 'sugar scrub', 'salt scrub',
+        'in shower lotion', 'after shower oil', 'body glow', 'shimmer lotion', 'gradual tan', 'bronzing drops', 'fake tan', 'tan eraser', 'body acne wash', 'kp treatment'
+      ],
+      bodycare: [
+        'moisturizing body', 'exfoliating scrub', 'shower oil', 'body serum', 'hand cream', 'foot cream', 'body acne', 'keratosis pilaris', 'ingrown hair', 'rough skin',
+        'chicken skin', 'strawberry legs', 'back acne', 'butt acne', 'body breakouts', 'eczema cream', 'psoriasis treatment', 'dry skin patches', 'cracked heels', 'rough elbows',
+        'hand mask', 'foot peel', 'callus remover', 'cuticle cream', 'nail oil', 'body whitening', 'dark spot body', 'underarm care', 'intimate care', 'deodorant natural'
+      ],
+      fragrance: [
+        'eau de parfum', 'long lasting scent', 'signature scent', 'perfume layering', 'fragrance notes', 'unisex perfume', 'niche fragrance', 'designer perfume', 'body spray', 'perfume oil',
+        'eau de toilette', 'parfum', 'cologne', 'fragrance mist', 'hair perfume', 'solid perfume', 'rollerball perfume', 'travel perfume', 'decant', 'perfume sample',
+        'top notes', 'heart notes', 'base notes', 'sillage', 'projection', 'longevity', 'skin scent', 'beast mode', 'compliment getter', 'dupe fragrance'
+      ],
     },
     beautytech: {
-      beautytech: ['led mask', 'microcurrent device', 'facial steamer', 'derma roller', 'ice roller', 'gua sha tool', 'facial massager', 'cleansing brush', 'hair removal', 'skin analyzer'],
+      beautytech: [
+        'led mask', 'microcurrent device', 'facial steamer', 'derma roller', 'ice roller', 'gua sha tool', 'facial massager', 'cleansing brush', 'hair removal', 'skin analyzer',
+        'red light therapy', 'blue light acne', 'rf device', 'ems device', 'ultrasonic spatula', 'blackhead vacuum', 'pore extractor', 'jade roller', 'rose quartz roller', 'cryo stick',
+        'nuface dupe', 'foreo dupe', 'at home laser', 'ipl device', 'dermaplaning tool', 'face shaver', 'eyebrow trimmer', 'nose trimmer', 'heated lash curler', 'lash lift kit'
+      ],
     },
   };
 
