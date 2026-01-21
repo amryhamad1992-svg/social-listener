@@ -453,26 +453,26 @@ export default function MentionsPage() {
           </div>
 
           {/* AI-Powered Brand Sentiment Summary */}
-          <div className="bg-[#031425] rounded-xl p-5 text-white">
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-5">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-3">
-                  <Brain className="w-5 h-5 text-[#16949b]" />
-                  <h3 className="text-[14px] font-semibold">AI Brand Sentiment</h3>
-                  <span className="px-2 py-0.5 bg-[#16949b]/20 text-[#16949b] rounded text-[9px] font-medium">
+                  <Brain className="w-5 h-5 text-[#0F172A]" />
+                  <h3 className="text-[14px] font-semibold text-[#0F172A]">AI Brand Sentiment</h3>
+                  <span className="px-2 py-0.5 bg-[#0F172A] text-white rounded text-[9px] font-medium">
                     Powered by GPT
                   </span>
                 </div>
 
                 {sentimentLoading ? (
-                  <div className="flex items-center gap-2 text-white/60">
+                  <div className="flex items-center gap-2 text-[#64748B]">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span className="text-[13px]">Analyzing brand sentiment...</span>
                   </div>
                 ) : brandSentiment ? (
                   <div className="space-y-4">
                     {/* Summary */}
-                    <p className="text-[13px] text-white/90 leading-relaxed">
+                    <p className="text-[13px] text-[#1E293B] leading-relaxed">
                       {brandSentiment.summary}
                     </p>
 
@@ -482,11 +482,11 @@ export default function MentionsPage() {
                       <div>
                         <div className="flex items-center gap-1.5 mb-2">
                           <TrendingUp className="w-3.5 h-3.5 text-[#71c184]" />
-                          <span className="text-[11px] font-medium text-[#71c184]">Positive Drivers</span>
+                          <span className="text-[11px] font-medium text-[#1E293B]">Positive Drivers</span>
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {brandSentiment.positiveThemes.map((theme, i) => (
-                            <span key={i} className="px-2 py-0.5 bg-[#71c184]/20 text-[#71c184] rounded text-[10px]">
+                            <span key={i} className="px-2 py-0.5 bg-[#F8FAFC] border border-[#E2E8F0] text-[#1E293B] rounded text-[10px]">
                               {theme}
                             </span>
                           ))}
@@ -497,11 +497,11 @@ export default function MentionsPage() {
                       <div>
                         <div className="flex items-center gap-1.5 mb-2">
                           <TrendingDown className="w-3.5 h-3.5 text-[#ff534a]" />
-                          <span className="text-[11px] font-medium text-[#ff534a]">Pain Points</span>
+                          <span className="text-[11px] font-medium text-[#1E293B]">Pain Points</span>
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {brandSentiment.negativeThemes.map((theme, i) => (
-                            <span key={i} className="px-2 py-0.5 bg-[#ff534a]/20 text-[#ff534a] rounded text-[10px]">
+                            <span key={i} className="px-2 py-0.5 bg-[#F8FAFC] border border-[#E2E8F0] text-[#1E293B] rounded text-[10px]">
                               {theme}
                             </span>
                           ))}
@@ -512,11 +512,11 @@ export default function MentionsPage() {
                       <div>
                         <div className="flex items-center gap-1.5 mb-2">
                           <MessageSquare className="w-3.5 h-3.5 text-[#64748B]" />
-                          <span className="text-[11px] font-medium text-[#64748B]">Discussion Topics</span>
+                          <span className="text-[11px] font-medium text-[#1E293B]">Discussion Topics</span>
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {brandSentiment.neutralThemes.map((theme, i) => (
-                            <span key={i} className="px-2 py-0.5 bg-[#64748B]/20 text-[#94A3B8] rounded text-[10px]">
+                            <span key={i} className="px-2 py-0.5 bg-[#F8FAFC] border border-[#E2E8F0] text-[#1E293B] rounded text-[10px]">
                               {theme}
                             </span>
                           ))}
@@ -525,7 +525,7 @@ export default function MentionsPage() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-[13px] text-white/60">
+                  <p className="text-[13px] text-[#64748B]">
                     No sentiment analysis available yet.
                   </p>
                 )}
@@ -534,14 +534,14 @@ export default function MentionsPage() {
               {/* Sentiment Score */}
               {brandSentiment && !sentimentLoading && (
                 <div className="ml-6 flex flex-col items-center">
-                  <div className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold ${
-                    brandSentiment.overallScore >= 60 ? 'bg-[#71c184]/20 text-[#71c184]' :
-                    brandSentiment.overallScore >= 40 ? 'bg-[#F59E0B]/20 text-[#F59E0B]' :
-                    'bg-[#ff534a]/20 text-[#ff534a]'
+                  <div className={`w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold border-2 ${
+                    brandSentiment.overallScore >= 60 ? 'border-[#71c184] text-[#71c184] bg-[#71c184]/10' :
+                    brandSentiment.overallScore >= 40 ? 'border-[#F59E0B] text-[#F59E0B] bg-[#F59E0B]/10' :
+                    'border-[#ff534a] text-[#ff534a] bg-[#ff534a]/10'
                   }`}>
                     {brandSentiment.overallScore}
                   </div>
-                  <span className="text-[10px] text-white/60 mt-2">Sentiment Score</span>
+                  <span className="text-[10px] text-[#64748B] mt-2">Sentiment Score</span>
                 </div>
               )}
             </div>

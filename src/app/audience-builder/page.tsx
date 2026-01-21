@@ -515,25 +515,25 @@ export default function AudienceBuilderPage() {
 
           {/* AI-Powered Suggestions Panel */}
           {showAiSuggestions && (
-            <div className="bg-[#031425] rounded-xl p-5 text-white">
+            <div className="bg-white rounded-xl border border-[#E2E8F0] p-5">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-[#16949b]" />
-                  <h3 className="text-[14px] font-semibold">AI-Powered Suggestions</h3>
-                  <span className="px-2 py-0.5 bg-[#16949b]/20 text-[#16949b] rounded text-[9px] font-medium">
+                  <Sparkles className="w-5 h-5 text-[#0F172A]" />
+                  <h3 className="text-[14px] font-semibold text-[#0F172A]">AI-Powered Suggestions</h3>
+                  <span className="px-2 py-0.5 bg-[#0F172A] text-white rounded text-[9px] font-medium">
                     GPT Generated
                   </span>
                 </div>
                 <button
                   onClick={() => setShowAiSuggestions(false)}
-                  className="text-white/60 hover:text-white text-[12px]"
+                  className="text-[#64748B] hover:text-[#0F172A] text-[12px]"
                 >
                   Hide
                 </button>
               </div>
 
               {aiLoading ? (
-                <div className="flex items-center gap-2 text-white/60 py-8 justify-center">
+                <div className="flex items-center gap-2 text-[#64748B] py-8 justify-center">
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span className="text-[13px]">Generating keyword suggestions...</span>
                 </div>
@@ -543,11 +543,11 @@ export default function AudienceBuilderPage() {
                   <div>
                     <div className="flex items-center gap-1.5 mb-3">
                       <TrendingUp className="w-4 h-4 text-[#71c184]" />
-                      <span className="text-[12px] font-medium text-[#71c184]">Long-tail Keywords</span>
+                      <span className="text-[12px] font-medium text-[#1E293B]">Long-tail Keywords</span>
                     </div>
                     <div className="space-y-1.5">
                       {aiSuggestions.longTail.map((kw, i) => (
-                        <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 rounded text-[11px] text-white/90">
+                        <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded text-[11px] text-[#1E293B]">
                           <Plus className="w-3 h-3 text-[#71c184] flex-shrink-0" />
                           <span className="truncate">{kw}</span>
                         </div>
@@ -559,11 +559,11 @@ export default function AudienceBuilderPage() {
                   <div>
                     <div className="flex items-center gap-1.5 mb-3">
                       <MessageSquare className="w-4 h-4 text-[#0EA5E9]" />
-                      <span className="text-[12px] font-medium text-[#0EA5E9]">Question-based</span>
+                      <span className="text-[12px] font-medium text-[#1E293B]">Question-based</span>
                     </div>
                     <div className="space-y-1.5">
                       {aiSuggestions.questions.map((kw, i) => (
-                        <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 rounded text-[11px] text-white/90">
+                        <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded text-[11px] text-[#1E293B]">
                           <Plus className="w-3 h-3 text-[#0EA5E9] flex-shrink-0" />
                           <span className="truncate">{kw}</span>
                         </div>
@@ -575,11 +575,11 @@ export default function AudienceBuilderPage() {
                   <div>
                     <div className="flex items-center gap-1.5 mb-3">
                       <Hash className="w-4 h-4 text-[#16949b]" />
-                      <span className="text-[12px] font-medium text-[#16949b]">Related Terms</span>
+                      <span className="text-[12px] font-medium text-[#1E293B]">Related Terms</span>
                     </div>
                     <div className="space-y-1.5">
                       {aiSuggestions.related.map((kw, i) => (
-                        <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 rounded text-[11px] text-white/90">
+                        <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded text-[11px] text-[#1E293B]">
                           <Plus className="w-3 h-3 text-[#16949b] flex-shrink-0" />
                           <span className="truncate">{kw}</span>
                         </div>
@@ -591,11 +591,11 @@ export default function AudienceBuilderPage() {
                   <div>
                     <div className="flex items-center gap-1.5 mb-3">
                       <Ban className="w-4 h-4 text-[#ff534a]" />
-                      <span className="text-[12px] font-medium text-[#ff534a]">Negative Keywords</span>
+                      <span className="text-[12px] font-medium text-[#1E293B]">Negative Keywords</span>
                     </div>
                     <div className="space-y-1.5">
                       {aiSuggestions.negative.map((kw, i) => (
-                        <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 rounded text-[11px] text-white/90">
+                        <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded text-[11px] text-[#1E293B]">
                           <Minus className="w-3 h-3 text-[#ff534a] flex-shrink-0" />
                           <span className="truncate">{kw}</span>
                         </div>
@@ -604,19 +604,19 @@ export default function AudienceBuilderPage() {
                   </div>
                 </div>
               ) : (
-                <p className="text-[13px] text-white/60 text-center py-4">
+                <p className="text-[13px] text-[#64748B] text-center py-4">
                   Click "AI Suggest" to generate keyword suggestions.
                 </p>
               )}
 
               {aiSuggestions && !aiLoading && (
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
-                  <p className="text-[11px] text-white/50">
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#E2E8F0]">
+                  <p className="text-[11px] text-[#94A3B8]">
                     {aiSuggestions.longTail.length + aiSuggestions.questions.length + aiSuggestions.related.length} suggestions generated
                   </p>
                   <button
                     onClick={fetchAiSuggestions}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded text-[11px] text-white/80 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F1F5F9] hover:bg-[#E2E8F0] rounded text-[11px] text-[#1E293B] transition-colors"
                   >
                     <RefreshCw className="w-3 h-3" />
                     Regenerate
