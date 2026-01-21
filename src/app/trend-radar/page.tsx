@@ -41,10 +41,18 @@ interface TrendItem {
   }>;
 }
 
-interface CategoryInfo {
+interface MainCategoryInfo {
+  id: string;
+  name: string;
+  emoji: string;
+  subCategories: string[];
+}
+
+interface SubCategoryInfo {
   id: string;
   name: string;
   amazonCategory: string;
+  parentCategory: string;
 }
 
 interface TrendSummary {
@@ -59,10 +67,12 @@ interface TrendSummary {
 interface TrendData {
   category: string;
   amazonCategory: string;
+  parentCategory: string;
   timeRange: string;
   summary: TrendSummary;
   trends: TrendItem[];
-  categories: CategoryInfo[];
+  mainCategories: MainCategoryInfo[];
+  subCategories: SubCategoryInfo[];
 }
 
 const PLATFORM_COLORS: Record<string, string> = {
@@ -105,11 +115,20 @@ export default function TrendRadarPage() {
   const [data, setData] = useState<TrendData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState('skincare');
+  const [selectedMainCategory, setSelectedMainCategory] = useState('skin');
+  const [selectedSubCategory, setSelectedSubCategory] = useState('all_skin');
   const [timeRange, setTimeRange] = useState('7d');
   const [platformFilter, setPlatformFilter] = useState('all');
   const [selectedTrend, setSelectedTrend] = useState<TrendItem | null>(null);
   const [source, setSource] = useState('');
+
+  // Get available sub-categories for the selected main category
+  const getAvailableSubCategories = useCallback(() => {
+    if (!data?.mainCategories || !data?.subCategories) return [];
+    const mainCat = data.mainCategories.find(c => c.id === selectedMainCategory);
+    if (!mainCat) return [];
+    return data.subCategories.filter(sub => mainCat.subCategories.includes(sub.id));
+  }, [data, selectedMainCategory]);
 
   const fetchTrendData = useCallback(async () => {
     setLoading(true);
@@ -117,7 +136,7 @@ export default function TrendRadarPage() {
 
     try {
       const params = new URLSearchParams({
-        category: selectedCategory,
+        category: selectedSubCategory,
         timeRange,
         platform: platformFilter,
       });
@@ -142,7 +161,7 @@ export default function TrendRadarPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory, timeRange, platformFilter]);
+  }, [selectedSubCategory, timeRange, platformFilter]);
 
   useEffect(() => {
     fetchTrendData();
@@ -187,16 +206,36 @@ export default function TrendRadarPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Category Selector */}
+              {/* Main Category Selector */}
               <select
-                value={selectedCategory}
+                value={selectedMainCategory}
                 onChange={(e) => {
-                  setSelectedCategory(e.target.value);
+                  const newMainCat = e.target.value;
+                  setSelectedMainCategory(newMainCat);
+                  // Auto-select the "All" option for the new main category
+                  const mainCat = data?.mainCategories.find(c => c.id === newMainCat);
+                  if (mainCat && mainCat.subCategories.length > 0) {
+                    setSelectedSubCategory(mainCat.subCategories[0]);
+                  }
                   setSelectedTrend(null);
                 }}
                 className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:border-[#0F172A]"
               >
-                {data?.categories.map((cat) => (
+                {data?.mainCategories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.emoji} {cat.name}</option>
+                ))}
+              </select>
+
+              {/* Sub-Category Selector */}
+              <select
+                value={selectedSubCategory}
+                onChange={(e) => {
+                  setSelectedSubCategory(e.target.value);
+                  setSelectedTrend(null);
+                }}
+                className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:border-[#0F172A]"
+              >
+                {getAvailableSubCategories().map((cat) => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>

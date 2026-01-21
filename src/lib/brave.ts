@@ -275,6 +275,58 @@ function detectPlatform(url: string, title?: string, description?: string): stri
 
 // Category-specific search queries to find REAL viral trends - Beauty focused
 const CATEGORY_SEARCHES: Record<string, string[]> = {
+  // Combined "All" categories
+  all_skin: [
+    'viral skincare TikTok 2026',
+    'skincare trend viral',
+    'sunscreen viral TikTok',
+    'korean skincare trend',
+    'clean beauty viral',
+    'glass skin routine viral',
+    'spf trend TikTok',
+    'skincare ingredient viral',
+  ],
+  all_makeup: [
+    'viral makeup TikTok 2026',
+    'makeup trend viral',
+    'nail trend TikTok viral',
+    'lipstick viral product',
+    'foundation trend viral',
+    'chrome nails viral',
+    'makeup tutorial viral',
+    'nail art TikTok trend',
+  ],
+  all_hair: [
+    'hair trend viral TikTok 2026',
+    'hair dryer review viral',
+    'straightener trend viral',
+    'curling iron tutorial viral',
+    'hot air brush review',
+    'hair styling viral',
+    'blowout tutorial TikTok',
+    'hair tool trend viral',
+  ],
+  all_body: [
+    'body care viral TikTok 2026',
+    'perfume viral trend',
+    'everything shower routine',
+    'fragrance TikTok viral',
+    'body lotion trend',
+    'vanilla perfume viral',
+    'body care routine viral',
+    'signature scent trend',
+  ],
+  all_tools: [
+    'beauty tool viral TikTok 2026',
+    'led mask trend viral',
+    'gua sha tutorial viral',
+    'beauty device TikTok',
+    'skincare tool trend',
+    'facial massage viral',
+    'beauty tech trend',
+    'at home facial device',
+  ],
+  // Sub-categories
   skincare: [
     'viral skincare ingredient TikTok 2026',
     'skincare trend TikTok viral',
@@ -285,7 +337,7 @@ const CATEGORY_SEARCHES: Record<string, string[]> = {
     'barrier repair skincare trend',
     'anti aging ingredient viral',
   ],
-  makeup: [
+  colorcosmetics: [
     'makeup trend viral TikTok 2026',
     'viral makeup product TikTok',
     'makeup hack going viral',

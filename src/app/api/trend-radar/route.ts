@@ -1,96 +1,188 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { braveTrendingTopics, isBraveConfigured } from '@/lib/brave';
 
-// Categories available for trend tracking - Beauty focused
-const CATEGORIES: Record<string, {
+// Main categories with their sub-categories
+export const MAIN_CATEGORIES: Record<string, {
+  name: string;
+  emoji: string;
+  subCategories: string[];
+}> = {
+  skin: {
+    name: 'Skin',
+    emoji: '✨',
+    subCategories: ['all_skin', 'skincare', 'suncare', 'kbeauty', 'cleanbeauty'],
+  },
+  makeup: {
+    name: 'Makeup',
+    emoji: '💄',
+    subCategories: ['all_makeup', 'colorcosmetics', 'nails'],
+  },
+  hair: {
+    name: 'Hair',
+    emoji: '💇',
+    subCategories: ['all_hair', 'haircare', 'hairdryers', 'straighteners', 'curlingirons', 'hotairbrushes'],
+  },
+  body: {
+    name: 'Body',
+    emoji: '🧴',
+    subCategories: ['all_body', 'bodycare', 'fragrance'],
+  },
+  tools: {
+    name: 'Tools',
+    emoji: '🔧',
+    subCategories: ['all_tools', 'beautytech'],
+  },
+};
+
+// Sub-categories with their details
+const SUB_CATEGORIES: Record<string, {
   name: string;
   keywords: string[];
   amazonCategory: string;
   trendingTerms: string[];
+  parentCategory: string;
 }> = {
-  skincare: {
-    name: 'Skincare',
-    keywords: ['serum', 'moisturizer', 'cleanser', 'toner', 'essence', 'mask', 'retinol', 'hyaluronic acid', 'vitamin c', 'niacinamide', 'sunscreen', 'exfoliant'],
+  // Skin sub-categories
+  all_skin: {
+    name: 'All Skin',
+    keywords: ['skincare', 'sunscreen', 'korean skincare', 'clean beauty', 'serum', 'moisturizer', 'spf', 'glass skin'],
     amazonCategory: 'Skin Care',
     trendingTerms: ['skincare routine', 'glass skin', 'skin cycling', 'barrier repair'],
+    parentCategory: 'skin',
   },
-  makeup: {
-    name: 'Makeup & Color Cosmetics',
-    keywords: ['foundation', 'concealer', 'lipstick', 'lip gloss', 'eyeshadow', 'mascara', 'blush', 'bronzer', 'highlighter', 'primer', 'setting spray', 'eyeliner'],
-    amazonCategory: 'Makeup',
-    trendingTerms: ['makeup tutorial', 'viral makeup', 'clean girl makeup', 'latte makeup'],
-  },
-  haircare: {
-    name: 'Haircare',
-    keywords: ['shampoo', 'conditioner', 'hair oil', 'hair mask', 'scalp treatment', 'hair serum', 'leave-in', 'heat protectant', 'styling cream', 'dry shampoo'],
-    amazonCategory: 'Hair Care',
-    trendingTerms: ['hair growth', 'rosemary oil hair', 'scalp care', 'hair oiling'],
-  },
-  nails: {
-    name: 'Nails & Nail Art',
-    keywords: ['nail polish', 'gel nails', 'press-on nails', 'nail art', 'cuticle oil', 'nail strengthener', 'dip powder', 'nail stickers', 'chrome nails', 'builder gel'],
-    amazonCategory: 'Nail Art & Polish',
-    trendingTerms: ['nail trends', 'chrome nails', 'jelly nails', 'glazed donut nails'],
-  },
-  fragrance: {
-    name: 'Fragrance & Perfume',
-    keywords: ['perfume', 'eau de parfum', 'body mist', 'fragrance oil', 'cologne', 'scent', 'vanilla perfume', 'oud', 'musk', 'niche fragrance'],
-    amazonCategory: 'Fragrance',
-    trendingTerms: ['perfume dupes', 'viral fragrance', 'signature scent', 'layering perfume'],
-  },
-  bodycare: {
-    name: 'Body Care',
-    keywords: ['body lotion', 'body butter', 'body scrub', 'body wash', 'deodorant', 'body oil', 'self tanner', 'body mist', 'hand cream', 'foot care'],
-    amazonCategory: 'Body Care',
-    trendingTerms: ['everything shower', 'body care routine', 'soft skin', 'brazilian bum bum'],
+  skincare: {
+    name: 'Skincare',
+    keywords: ['serum', 'moisturizer', 'cleanser', 'toner', 'essence', 'mask', 'retinol', 'hyaluronic acid', 'vitamin c', 'niacinamide', 'exfoliant'],
+    amazonCategory: 'Skin Care',
+    trendingTerms: ['skincare routine', 'glass skin', 'skin cycling', 'barrier repair'],
+    parentCategory: 'skin',
   },
   suncare: {
     name: 'Sun Care & SPF',
     keywords: ['sunscreen', 'spf', 'tinted sunscreen', 'mineral sunscreen', 'chemical sunscreen', 'sun protection', 'after sun', 'sunscreen stick', 'spf moisturizer'],
     amazonCategory: 'Sun Care',
     trendingTerms: ['spf every day', 'sunscreen reapply', 'no white cast', 'korean sunscreen'],
-  },
-  beautytech: {
-    name: 'Beauty Tech',
-    keywords: ['led mask', 'gua sha', 'jade roller', 'ice roller', 'dermaplaning', 'microcurrent', 'facial steamer', 'makeup brushes', 'beauty blender', 'eyelash curler'],
-    amazonCategory: 'Beauty Tools',
-    trendingTerms: ['red light therapy', 'facial massage', 'lymphatic drainage', 'at home facial'],
+    parentCategory: 'skin',
   },
   kbeauty: {
     name: 'K-Beauty & J-Beauty',
     keywords: ['korean skincare', 'japanese skincare', 'snail mucin', 'essence', 'sheet mask', 'cushion compact', 'bb cream', 'centella', 'rice toner', 'mugwort'],
     amazonCategory: 'K-Beauty',
     trendingTerms: ['glass skin', 'korean skincare routine', 'j-beauty', 'slugging'],
+    parentCategory: 'skin',
   },
   cleanbeauty: {
-    name: 'Clean & Natural Beauty',
+    name: 'Clean & Natural',
     keywords: ['clean beauty', 'organic skincare', 'natural makeup', 'vegan beauty', 'cruelty free', 'sustainable beauty', 'non-toxic', 'reef safe', 'plant based'],
     amazonCategory: 'Natural & Organic Beauty',
     trendingTerms: ['clean girl aesthetic', 'minimalist skincare', 'skin minimalism', 'less is more'],
+    parentCategory: 'skin',
+  },
+
+  // Makeup sub-categories
+  all_makeup: {
+    name: 'All Makeup',
+    keywords: ['makeup', 'lipstick', 'foundation', 'nail polish', 'eyeshadow', 'mascara', 'blush', 'nail art'],
+    amazonCategory: 'Makeup',
+    trendingTerms: ['makeup tutorial', 'viral makeup', 'clean girl makeup', 'nail trends'],
+    parentCategory: 'makeup',
+  },
+  colorcosmetics: {
+    name: 'Color Cosmetics',
+    keywords: ['foundation', 'concealer', 'lipstick', 'lip gloss', 'eyeshadow', 'mascara', 'blush', 'bronzer', 'highlighter', 'primer', 'setting spray', 'eyeliner'],
+    amazonCategory: 'Makeup',
+    trendingTerms: ['makeup tutorial', 'viral makeup', 'clean girl makeup', 'latte makeup'],
+    parentCategory: 'makeup',
+  },
+  nails: {
+    name: 'Nails & Nail Art',
+    keywords: ['nail polish', 'gel nails', 'press-on nails', 'nail art', 'cuticle oil', 'nail strengthener', 'dip powder', 'nail stickers', 'chrome nails', 'builder gel'],
+    amazonCategory: 'Nail Art & Polish',
+    trendingTerms: ['nail trends', 'chrome nails', 'jelly nails', 'glazed donut nails'],
+    parentCategory: 'makeup',
+  },
+
+  // Hair sub-categories
+  all_hair: {
+    name: 'All Hair',
+    keywords: ['hair', 'hair dryer', 'straightener', 'curling iron', 'shampoo', 'hair oil', 'blowout', 'hair styling'],
+    amazonCategory: 'Hair Care',
+    trendingTerms: ['hair growth', 'salon blowout', 'beach waves', 'hair routine'],
+    parentCategory: 'hair',
+  },
+  haircare: {
+    name: 'Hair Products',
+    keywords: ['shampoo', 'conditioner', 'hair oil', 'hair mask', 'scalp treatment', 'hair serum', 'leave-in', 'heat protectant', 'styling cream', 'dry shampoo'],
+    amazonCategory: 'Hair Care',
+    trendingTerms: ['hair growth', 'rosemary oil hair', 'scalp care', 'hair oiling'],
+    parentCategory: 'hair',
   },
   hairdryers: {
     name: 'Hair Dryers',
     keywords: ['hair dryer', 'blow dryer', 'ionic dryer', 'professional dryer', 'travel dryer', 'diffuser', 'concentrator nozzle', 'ceramic dryer', 'tourmaline dryer', 'lightweight dryer'],
     amazonCategory: 'Hair Dryers',
     trendingTerms: ['best hair dryer', 'salon blowout', 'fast drying', 'frizz free blowout'],
+    parentCategory: 'hair',
   },
   straighteners: {
-    name: 'Hair Straighteners',
+    name: 'Straighteners',
     keywords: ['flat iron', 'hair straightener', 'titanium plates', 'ceramic straightener', 'steam straightener', 'wide plate', 'mini straightener', 'digital straightener', 'floating plates'],
     amazonCategory: 'Flat Irons',
     trendingTerms: ['glass hair', 'silk press', 'straightening tips', 'heat damage free'],
+    parentCategory: 'hair',
   },
   curlingirons: {
     name: 'Curling Irons',
     keywords: ['curling iron', 'curling wand', 'marcel iron', 'clampless curler', 'interchangeable barrels', 'automatic curler', 'beach waves', 'spiral curls', 'loose waves'],
     amazonCategory: 'Curling Irons',
     trendingTerms: ['heatless curls', 'beach waves', 'bouncy blowout', 'curl tutorial'],
+    parentCategory: 'hair',
   },
   hotairbrushes: {
     name: 'Hot Air Brushes',
     keywords: ['hot air brush', 'blow dry brush', 'one step dryer', 'volumizer brush', 'rotating brush', 'air styler', 'round brush dryer', 'styling brush', 'blowout brush'],
     amazonCategory: 'Hot Air Brushes',
     trendingTerms: ['salon blowout at home', 'volume brush', 'bouncy hair', 'one step styling'],
+    parentCategory: 'hair',
+  },
+
+  // Body sub-categories
+  all_body: {
+    name: 'All Body',
+    keywords: ['body care', 'fragrance', 'perfume', 'body lotion', 'body oil', 'self tanner', 'deodorant'],
+    amazonCategory: 'Body Care',
+    trendingTerms: ['everything shower', 'body care routine', 'signature scent', 'soft skin'],
+    parentCategory: 'body',
+  },
+  bodycare: {
+    name: 'Body Care',
+    keywords: ['body lotion', 'body butter', 'body scrub', 'body wash', 'deodorant', 'body oil', 'self tanner', 'body mist', 'hand cream', 'foot care'],
+    amazonCategory: 'Body Care',
+    trendingTerms: ['everything shower', 'body care routine', 'soft skin', 'brazilian bum bum'],
+    parentCategory: 'body',
+  },
+  fragrance: {
+    name: 'Fragrance & Perfume',
+    keywords: ['perfume', 'eau de parfum', 'body mist', 'fragrance oil', 'cologne', 'scent', 'vanilla perfume', 'oud', 'musk', 'niche fragrance'],
+    amazonCategory: 'Fragrance',
+    trendingTerms: ['perfume dupes', 'viral fragrance', 'signature scent', 'layering perfume'],
+    parentCategory: 'body',
+  },
+
+  // Tools sub-categories
+  all_tools: {
+    name: 'All Tools',
+    keywords: ['beauty tools', 'led mask', 'gua sha', 'facial tools', 'skincare device', 'beauty tech'],
+    amazonCategory: 'Beauty Tools',
+    trendingTerms: ['red light therapy', 'facial massage', 'at home facial', 'beauty device'],
+    parentCategory: 'tools',
+  },
+  beautytech: {
+    name: 'Beauty Tech',
+    keywords: ['led mask', 'gua sha', 'jade roller', 'ice roller', 'dermaplaning', 'microcurrent', 'facial steamer', 'makeup brushes', 'beauty blender', 'eyelash curler'],
+    amazonCategory: 'Beauty Tools',
+    trendingTerms: ['red light therapy', 'facial massage', 'lymphatic drainage', 'at home facial'],
+    parentCategory: 'tools',
   },
 };
 
@@ -194,7 +286,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const categoryInfo = CATEGORIES[category] || CATEGORIES.skincare;
+    const categoryInfo = SUB_CATEGORIES[category] || SUB_CATEGORIES.skincare;
     const trends: TrendItem[] = [];
     let source = 'demo';
 
@@ -334,13 +426,22 @@ export async function GET(request: NextRequest) {
     const responseData = {
       category: categoryInfo.name,
       amazonCategory: categoryInfo.amazonCategory,
+      parentCategory: categoryInfo.parentCategory,
       timeRange,
       summary,
       trends,
-      categories: Object.entries(CATEGORIES).map(([id, cat]) => ({
+      // Return hierarchical category structure
+      mainCategories: Object.entries(MAIN_CATEGORIES).map(([id, cat]) => ({
+        id,
+        name: cat.name,
+        emoji: cat.emoji,
+        subCategories: cat.subCategories,
+      })),
+      subCategories: Object.entries(SUB_CATEGORIES).map(([id, cat]) => ({
         id,
         name: cat.name,
         amazonCategory: cat.amazonCategory,
+        parentCategory: cat.parentCategory,
       })),
     };
 
@@ -395,23 +496,33 @@ function getTopPlatform(trends: TrendItem[]): string {
 
 // Generate demo trends when APIs are unavailable
 function generateDemoTrends(category: string, timeRange: string): TrendItem[] {
-  const cat = CATEGORIES[category] || CATEGORIES.skincare;
+  const cat = SUB_CATEGORIES[category] || SUB_CATEGORIES.skincare;
 
   const demoTerms: Record<string, string[]> = {
+    // Skin
+    all_skin: ['glass skin', 'skin cycling', 'snail mucin', 'korean sunscreen', 'clean beauty', 'barrier repair'],
     skincare: ['glazed donut skin', 'skin cycling', 'snail mucin', 'retinol sandwich', 'barrier repair', 'glass skin'],
-    makeup: ['latte makeup', 'cold girl makeup', 'lip combo', 'mob wife aesthetic', 'clean girl look', 'strawberry girl'],
-    haircare: ['rosemary oil', 'hair oiling', 'rice water rinse', 'scalp care', 'castor oil growth', 'protein treatment'],
-    nails: ['chrome nails', 'glazed donut nails', 'jelly nails', 'aura nails', 'lip gloss nails', 'milk bath nails'],
-    fragrance: ['vanilla perfume', 'perfume layering', 'clean girl scent', 'cozy fragrance', 'dupe finds', 'niche discovery'],
-    bodycare: ['everything shower', 'soft skin routine', 'body slugging', 'dry brushing', 'glow oil', 'self tan routine'],
     suncare: ['korean sunscreen', 'tinted spf', 'sunscreen stick', 'no white cast', 'spf reapply', 'beauty of joseon'],
-    beautytech: ['gua sha routine', 'led mask', 'ice roller', 'microcurrent', 'facial steamer', 'dermaplaning'],
     kbeauty: ['glass skin', 'snail mucin', 'rice toner', 'centella', 'mugwort', '7 skin method'],
     cleanbeauty: ['clean girl aesthetic', 'skin minimalism', 'less is more', 'barrier repair', 'gentle actives', 'mushroom skincare'],
+    // Makeup
+    all_makeup: ['latte makeup', 'chrome nails', 'clean girl look', 'glazed donut nails', 'viral lipstick', 'mob wife aesthetic'],
+    colorcosmetics: ['latte makeup', 'cold girl makeup', 'lip combo', 'mob wife aesthetic', 'clean girl look', 'strawberry girl'],
+    nails: ['chrome nails', 'glazed donut nails', 'jelly nails', 'aura nails', 'lip gloss nails', 'milk bath nails'],
+    // Hair
+    all_hair: ['rosemary oil', 'salon blowout', 'beach waves', 'babyliss pro', 'hair oiling', 'volumizing brush'],
+    haircare: ['rosemary oil', 'hair oiling', 'rice water rinse', 'scalp care', 'castor oil growth', 'protein treatment'],
     hairdryers: ['ionic technology', 'salon blowout', 'babyliss pro', 'diffuser attachment', 'quick dry', 'frizz control'],
     straighteners: ['glass hair', 'silk press', 'steam straightener', 'titanium plates', 'no damage styling', 'babyliss flat iron'],
     curlingirons: ['beach waves', 'bouncy curls', 'curling wand', 'heatless vs heat', 'long lasting curls', 'barrel size guide'],
     hotairbrushes: ['one step blowout', 'volumizing brush', 'babyliss big hair', 'blow dry brush', 'salon at home', 'round brush styling'],
+    // Body
+    all_body: ['everything shower', 'vanilla perfume', 'soft skin routine', 'perfume layering', 'body slugging', 'signature scent'],
+    bodycare: ['everything shower', 'soft skin routine', 'body slugging', 'dry brushing', 'glow oil', 'self tan routine'],
+    fragrance: ['vanilla perfume', 'perfume layering', 'clean girl scent', 'cozy fragrance', 'dupe finds', 'niche discovery'],
+    // Tools
+    all_tools: ['gua sha routine', 'led mask', 'ice roller', 'microcurrent', 'facial steamer', 'dermaplaning'],
+    beautytech: ['gua sha routine', 'led mask', 'ice roller', 'microcurrent', 'facial steamer', 'dermaplaning'],
   };
 
   const terms = demoTerms[category] || demoTerms.skincare;
