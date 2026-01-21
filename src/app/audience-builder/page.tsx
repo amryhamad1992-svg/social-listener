@@ -216,6 +216,9 @@ export default function AudienceBuilderPage() {
     text += `Generated: ${new Date().toLocaleDateString()}\n`;
     text += `${'='.repeat(50)}\n\n`;
 
+    // Harvested Keywords
+    text += `HARVESTED KEYWORDS (${sortedKeywords.length} total)\n`;
+    text += `${'-'.repeat(30)}\n\n`;
     Object.entries(groupedForExport).forEach(([category, kws]) => {
       text += `## ${category}\n`;
       kws.forEach(kw => {
@@ -223,6 +226,44 @@ export default function AudienceBuilderPage() {
       });
       text += '\n';
     });
+
+    // AI Suggestions
+    if (aiSuggestions) {
+      text += `\nAI-GENERATED SUGGESTIONS\n`;
+      text += `${'-'.repeat(30)}\n\n`;
+
+      if (aiSuggestions.longTail.length > 0) {
+        text += `## Long-tail Keywords\n`;
+        aiSuggestions.longTail.forEach(kw => {
+          text += `- ${kw}\n`;
+        });
+        text += '\n';
+      }
+
+      if (aiSuggestions.questions.length > 0) {
+        text += `## Question-based Keywords\n`;
+        aiSuggestions.questions.forEach(kw => {
+          text += `- ${kw}\n`;
+        });
+        text += '\n';
+      }
+
+      if (aiSuggestions.related.length > 0) {
+        text += `## Related Terms\n`;
+        aiSuggestions.related.forEach(kw => {
+          text += `- ${kw}\n`;
+        });
+        text += '\n';
+      }
+
+      if (aiSuggestions.negative.length > 0) {
+        text += `## Negative Keywords (exclude these)\n`;
+        aiSuggestions.negative.forEach(kw => {
+          text += `- ${kw}\n`;
+        });
+        text += '\n';
+      }
+    }
 
     return text;
   };
@@ -237,13 +278,31 @@ export default function AudienceBuilderPage() {
 
   // Download as CSV
   const handleDownload = () => {
-    let csv = 'Keyword,Frequency,Category,Sentiment,Top Source,Last Seen\n';
+    let csv = 'Keyword,Type,Frequency,Category,Sentiment,Top Source,Last Seen\n';
+
+    // Harvested keywords
     sortedKeywords.forEach(kw => {
       const topSource = Object.entries(kw.sources).sort(([,a], [,b]) => b - a)[0]?.[0] || 'N/A';
       const sentiment = kw.sentiment.positive > kw.sentiment.negative ? 'Positive' :
                        kw.sentiment.negative > kw.sentiment.positive ? 'Negative' : 'Neutral';
-      csv += `"${kw.keyword}",${kw.frequency},"${kw.category}","${sentiment}","${topSource}","${new Date(kw.lastSeen).toLocaleDateString()}"\n`;
+      csv += `"${kw.keyword}","Harvested",${kw.frequency},"${kw.category}","${sentiment}","${topSource}","${new Date(kw.lastSeen).toLocaleDateString()}"\n`;
     });
+
+    // AI Suggestions
+    if (aiSuggestions) {
+      aiSuggestions.longTail.forEach(kw => {
+        csv += `"${kw}","AI - Long-tail","","","","",""\n`;
+      });
+      aiSuggestions.questions.forEach(kw => {
+        csv += `"${kw}","AI - Question","","","","",""\n`;
+      });
+      aiSuggestions.related.forEach(kw => {
+        csv += `"${kw}","AI - Related","","","","",""\n`;
+      });
+      aiSuggestions.negative.forEach(kw => {
+        csv += `"${kw}","AI - Negative (exclude)","","","","",""\n`;
+      });
+    }
 
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -256,20 +315,20 @@ export default function AudienceBuilderPage() {
 
   // Get trend icon
   const TrendIcon = ({ trend }: { trend: string }) => {
-    if (trend === 'rising') return <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />;
-    if (trend === 'falling') return <TrendingDown className="w-3.5 h-3.5 text-red-500" />;
-    return <Minus className="w-3.5 h-3.5 text-gray-400" />;
+    if (trend === 'rising') return <TrendingUp className="w-3.5 h-3.5 text-[#71c184]" />;
+    if (trend === 'falling') return <TrendingDown className="w-3.5 h-3.5 text-[#ff534a]" />;
+    return <Minus className="w-3.5 h-3.5 text-[#94A3B8]" />;
   };
 
   // Get dominant sentiment color
   const getSentimentColor = (sentiment: KeywordData['sentiment']) => {
     const total = sentiment.positive + sentiment.neutral + sentiment.negative;
-    if (total === 0) return 'bg-gray-100 text-gray-600';
+    if (total === 0) return 'bg-[#F1F5F9] text-[#64748B]';
     const positiveRatio = sentiment.positive / total;
     const negativeRatio = sentiment.negative / total;
-    if (positiveRatio > 0.5) return 'bg-emerald-50 text-emerald-700';
-    if (negativeRatio > 0.5) return 'bg-red-50 text-red-700';
-    return 'bg-gray-100 text-gray-600';
+    if (positiveRatio > 0.5) return 'bg-[#71c184]/15 text-[#71c184]';
+    if (negativeRatio > 0.5) return 'bg-[#ff534a]/15 text-[#ff534a]';
+    return 'bg-[#F1F5F9] text-[#64748B]';
   };
 
   const formatDate = (dateStr: string) => {
@@ -328,7 +387,7 @@ export default function AudienceBuilderPage() {
               <button
                 onClick={fetchAiSuggestions}
                 disabled={keywords.length === 0 || aiLoading}
-                className="flex items-center gap-2 px-3 py-2 text-[13px] text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-lg transition-all disabled:opacity-50 shadow-sm"
+                className="flex items-center gap-2 px-3 py-2 text-[13px] text-white bg-[#16949b] hover:bg-[#138085] rounded-lg transition-all disabled:opacity-50 shadow-sm"
               >
                 {aiLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -456,12 +515,12 @@ export default function AudienceBuilderPage() {
 
           {/* AI-Powered Suggestions Panel */}
           {showAiSuggestions && (
-            <div className="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-xl p-5 text-white">
+            <div className="bg-[#031425] rounded-xl p-5 text-white">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-purple-300" />
+                  <Sparkles className="w-5 h-5 text-[#16949b]" />
                   <h3 className="text-[14px] font-semibold">AI-Powered Suggestions</h3>
-                  <span className="px-2 py-0.5 bg-purple-500/30 text-purple-200 rounded text-[9px] font-medium">
+                  <span className="px-2 py-0.5 bg-[#16949b]/20 text-[#16949b] rounded text-[9px] font-medium">
                     GPT Generated
                   </span>
                 </div>
@@ -483,13 +542,13 @@ export default function AudienceBuilderPage() {
                   {/* Long-tail Keywords */}
                   <div>
                     <div className="flex items-center gap-1.5 mb-3">
-                      <TrendingUp className="w-4 h-4 text-emerald-400" />
-                      <span className="text-[12px] font-medium text-emerald-400">Long-tail Keywords</span>
+                      <TrendingUp className="w-4 h-4 text-[#71c184]" />
+                      <span className="text-[12px] font-medium text-[#71c184]">Long-tail Keywords</span>
                     </div>
                     <div className="space-y-1.5">
                       {aiSuggestions.longTail.map((kw, i) => (
                         <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 rounded text-[11px] text-white/90">
-                          <Plus className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+                          <Plus className="w-3 h-3 text-[#71c184] flex-shrink-0" />
                           <span className="truncate">{kw}</span>
                         </div>
                       ))}
@@ -499,13 +558,13 @@ export default function AudienceBuilderPage() {
                   {/* Question Keywords */}
                   <div>
                     <div className="flex items-center gap-1.5 mb-3">
-                      <MessageSquare className="w-4 h-4 text-blue-400" />
-                      <span className="text-[12px] font-medium text-blue-400">Question-based</span>
+                      <MessageSquare className="w-4 h-4 text-[#0EA5E9]" />
+                      <span className="text-[12px] font-medium text-[#0EA5E9]">Question-based</span>
                     </div>
                     <div className="space-y-1.5">
                       {aiSuggestions.questions.map((kw, i) => (
                         <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 rounded text-[11px] text-white/90">
-                          <Plus className="w-3 h-3 text-blue-400 flex-shrink-0" />
+                          <Plus className="w-3 h-3 text-[#0EA5E9] flex-shrink-0" />
                           <span className="truncate">{kw}</span>
                         </div>
                       ))}
@@ -515,13 +574,13 @@ export default function AudienceBuilderPage() {
                   {/* Related Keywords */}
                   <div>
                     <div className="flex items-center gap-1.5 mb-3">
-                      <Hash className="w-4 h-4 text-amber-400" />
-                      <span className="text-[12px] font-medium text-amber-400">Related Terms</span>
+                      <Hash className="w-4 h-4 text-[#16949b]" />
+                      <span className="text-[12px] font-medium text-[#16949b]">Related Terms</span>
                     </div>
                     <div className="space-y-1.5">
                       {aiSuggestions.related.map((kw, i) => (
                         <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 rounded text-[11px] text-white/90">
-                          <Plus className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                          <Plus className="w-3 h-3 text-[#16949b] flex-shrink-0" />
                           <span className="truncate">{kw}</span>
                         </div>
                       ))}
@@ -531,13 +590,13 @@ export default function AudienceBuilderPage() {
                   {/* Negative Keywords */}
                   <div>
                     <div className="flex items-center gap-1.5 mb-3">
-                      <Ban className="w-4 h-4 text-red-400" />
-                      <span className="text-[12px] font-medium text-red-400">Negative Keywords</span>
+                      <Ban className="w-4 h-4 text-[#ff534a]" />
+                      <span className="text-[12px] font-medium text-[#ff534a]">Negative Keywords</span>
                     </div>
                     <div className="space-y-1.5">
                       {aiSuggestions.negative.map((kw, i) => (
                         <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 rounded text-[11px] text-white/90">
-                          <Minus className="w-3 h-3 text-red-400 flex-shrink-0" />
+                          <Minus className="w-3 h-3 text-[#ff534a] flex-shrink-0" />
                           <span className="truncate">{kw}</span>
                         </div>
                       ))}
