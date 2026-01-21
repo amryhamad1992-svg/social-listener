@@ -5,12 +5,10 @@ import { useSettings } from '@/lib/SettingsContext';
 // Brand and category structure
 export const BRAND_CATEGORIES: Record<string, {
   name: string;
-  emoji: string;
   categories: { id: string; name: string }[];
 }> = {
   babyliss: {
     name: 'Babyliss',
-    emoji: '💨',
     categories: [
       { id: 'all', name: 'All Products' },
       { id: 'hairdryers', name: 'Hair Dryers' },
@@ -21,7 +19,6 @@ export const BRAND_CATEGORIES: Record<string, {
   },
   revlon: {
     name: 'Revlon',
-    emoji: '💄',
     categories: [
       { id: 'all', name: 'All Products' },
       { id: 'lipstick', name: 'Lipstick & Lips' },
@@ -32,7 +29,6 @@ export const BRAND_CATEGORIES: Record<string, {
   },
   weleda: {
     name: 'Weleda',
-    emoji: '🌿',
     categories: [
       { id: 'all', name: 'All Products' },
       { id: 'facecare', name: 'Face Care' },
@@ -61,37 +57,32 @@ export function BrandSelector() {
   return (
     <div className="flex items-center gap-2">
       {/* Brand Selector */}
-      <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#E2E8F0] rounded-lg">
-        <span className="text-sm">{currentBrand.emoji}</span>
-        <select
-          value={settings.selectedBrand}
-          onChange={(e) => handleBrandChange(e.target.value)}
-          className="text-[13px] text-[#1E293B] bg-transparent border-none focus:outline-none cursor-pointer font-medium"
-          style={{ fontFamily: 'Roboto, sans-serif' }}
-        >
-          {Object.entries(BRAND_CATEGORIES).map(([id, brand]) => (
-            <option key={id} value={id}>
-              {brand.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      <select
+        value={settings.selectedBrand}
+        onChange={(e) => handleBrandChange(e.target.value)}
+        className="px-3 py-2 text-[13px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium"
+        style={{ fontFamily: 'Roboto, sans-serif' }}
+      >
+        {Object.entries(BRAND_CATEGORIES).map(([id, brand]) => (
+          <option key={id} value={id}>
+            {brand.name}
+          </option>
+        ))}
+      </select>
 
       {/* Category Selector */}
-      <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#E2E8F0] rounded-lg">
-        <select
-          value={settings.selectedCategory || 'all'}
-          onChange={(e) => handleCategoryChange(e.target.value)}
-          className="text-[13px] text-[#1E293B] bg-transparent border-none focus:outline-none cursor-pointer font-medium"
-          style={{ fontFamily: 'Roboto, sans-serif' }}
-        >
-          {currentBrand.categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      <select
+        value={settings.selectedCategory || 'all'}
+        onChange={(e) => handleCategoryChange(e.target.value)}
+        className="px-3 py-2 text-[13px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium"
+        style={{ fontFamily: 'Roboto, sans-serif' }}
+      >
+        {currentBrand.categories.map((cat) => (
+          <option key={cat.id} value={cat.id}>
+            {cat.name}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

@@ -316,16 +316,6 @@ const CATEGORY_SEARCHES: Record<string, string[]> = {
     'body care routine viral',
     'signature scent trend',
   ],
-  all_tools: [
-    'beauty tool viral TikTok 2026',
-    'led mask trend viral',
-    'gua sha tutorial viral',
-    'beauty device TikTok',
-    'skincare tool trend',
-    'facial massage viral',
-    'beauty tech trend',
-    'at home facial device',
-  ],
   // Sub-categories
   skincare: [
     'viral skincare ingredient TikTok 2026',

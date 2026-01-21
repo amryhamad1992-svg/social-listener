@@ -44,7 +44,6 @@ interface TrendItem {
 interface MainCategoryInfo {
   id: string;
   name: string;
-  emoji: string;
   subCategories: string[];
 }
 
@@ -222,7 +221,7 @@ export default function TrendRadarPage() {
                 className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:border-[#0F172A]"
               >
                 {data?.mainCategories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.emoji} {cat.name}</option>
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
 

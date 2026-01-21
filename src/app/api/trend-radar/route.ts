@@ -4,33 +4,27 @@ import { braveTrendingTopics, isBraveConfigured } from '@/lib/brave';
 // Main categories with their sub-categories
 export const MAIN_CATEGORIES: Record<string, {
   name: string;
-  emoji: string;
   subCategories: string[];
 }> = {
   skin: {
     name: 'Skin',
-    emoji: '✨',
     subCategories: ['all_skin', 'skincare', 'suncare', 'kbeauty', 'cleanbeauty'],
   },
   makeup: {
     name: 'Makeup',
-    emoji: '💄',
     subCategories: ['all_makeup', 'colorcosmetics', 'nails'],
   },
   hair: {
     name: 'Hair',
-    emoji: '💇',
     subCategories: ['all_hair', 'haircare', 'hairdryers', 'straighteners', 'curlingirons', 'hotairbrushes'],
   },
   body: {
     name: 'Body',
-    emoji: '🧴',
     subCategories: ['all_body', 'bodycare', 'fragrance'],
   },
-  tools: {
-    name: 'Tools',
-    emoji: '🔧',
-    subCategories: ['all_tools', 'beautytech'],
+  beautytech: {
+    name: 'Beauty Tech',
+    subCategories: ['beautytech'],
   },
 };
 
@@ -169,20 +163,13 @@ const SUB_CATEGORIES: Record<string, {
     parentCategory: 'body',
   },
 
-  // Tools sub-categories
-  all_tools: {
-    name: 'All Tools',
-    keywords: ['beauty tools', 'led mask', 'gua sha', 'facial tools', 'skincare device', 'beauty tech'],
-    amazonCategory: 'Beauty Tools',
-    trendingTerms: ['red light therapy', 'facial massage', 'at home facial', 'beauty device'],
-    parentCategory: 'tools',
-  },
+  // Beauty Tech (standalone category)
   beautytech: {
     name: 'Beauty Tech',
-    keywords: ['led mask', 'gua sha', 'jade roller', 'ice roller', 'dermaplaning', 'microcurrent', 'facial steamer', 'makeup brushes', 'beauty blender', 'eyelash curler'],
+    keywords: ['led mask', 'gua sha', 'jade roller', 'ice roller', 'dermaplaning', 'microcurrent', 'facial steamer', 'makeup brushes', 'beauty blender', 'eyelash curler', 'beauty tools', 'facial tools', 'skincare device'],
     amazonCategory: 'Beauty Tools',
     trendingTerms: ['red light therapy', 'facial massage', 'lymphatic drainage', 'at home facial'],
-    parentCategory: 'tools',
+    parentCategory: 'beautytech',
   },
 };
 
@@ -434,7 +421,6 @@ export async function GET(request: NextRequest) {
       mainCategories: Object.entries(MAIN_CATEGORIES).map(([id, cat]) => ({
         id,
         name: cat.name,
-        emoji: cat.emoji,
         subCategories: cat.subCategories,
       })),
       subCategories: Object.entries(SUB_CATEGORIES).map(([id, cat]) => ({
@@ -520,8 +506,7 @@ function generateDemoTrends(category: string, timeRange: string): TrendItem[] {
     all_body: ['everything shower', 'vanilla perfume', 'soft skin routine', 'perfume layering', 'body slugging', 'signature scent'],
     bodycare: ['everything shower', 'soft skin routine', 'body slugging', 'dry brushing', 'glow oil', 'self tan routine'],
     fragrance: ['vanilla perfume', 'perfume layering', 'clean girl scent', 'cozy fragrance', 'dupe finds', 'niche discovery'],
-    // Tools
-    all_tools: ['gua sha routine', 'led mask', 'ice roller', 'microcurrent', 'facial steamer', 'dermaplaning'],
+    // Beauty Tech
     beautytech: ['gua sha routine', 'led mask', 'ice roller', 'microcurrent', 'facial steamer', 'dermaplaning'],
   };
 
