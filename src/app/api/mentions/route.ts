@@ -23,13 +23,36 @@ interface Mention {
   thumbnailUrl?: string;
 }
 
-// Brand keywords for searching
-const BRAND_KEYWORDS: Record<string, string[]> = {
-  'Revlon': ['Revlon makeup', 'Revlon lipstick', 'Revlon ColorStay', 'Revlon foundation'],
-  'e.l.f.': ['elf cosmetics', 'elf makeup', 'elf halo glow', 'elf primer'],
-  'Maybelline': ['Maybelline mascara', 'Maybelline foundation', 'Maybelline sky high'],
-  'Weleda': ['Weleda Skin Food', 'Weleda skincare', 'Weleda body oil', 'Weleda rosemary'],
+// Brand + Category keywords for searching
+const BRAND_CATEGORY_KEYWORDS: Record<string, Record<string, string[]>> = {
+  'Babyliss': {
+    'all': ['Babyliss', 'Babyliss Pro', 'Babyliss hair tools'],
+    'hairdryers': ['Babyliss hair dryer', 'Babyliss blow dryer', 'Babyliss Pro dryer'],
+    'straighteners': ['Babyliss straightener', 'Babyliss flat iron', 'Babyliss steam straight'],
+    'curlingirons': ['Babyliss curling iron', 'Babyliss curler', 'Babyliss wand'],
+    'hotairbrushes': ['Babyliss hot air brush', 'Babyliss air styler', 'Babyliss Big Hair'],
+  },
+  'Revlon': {
+    'all': ['Revlon makeup', 'Revlon cosmetics', 'Revlon beauty'],
+    'lipstick': ['Revlon lipstick', 'Revlon Super Lustrous', 'Revlon lip color'],
+    'foundation': ['Revlon foundation', 'Revlon ColorStay', 'Revlon face makeup'],
+    'eyemakeup': ['Revlon mascara', 'Revlon eyeshadow', 'Revlon eyeliner'],
+    'nailpolish': ['Revlon nail polish', 'Revlon nail color', 'Revlon nails'],
+  },
+  'Weleda': {
+    'all': ['Weleda skincare', 'Weleda natural', 'Weleda organic'],
+    'facecare': ['Weleda Skin Food', 'Weleda face cream', 'Weleda facial oil'],
+    'bodycare': ['Weleda body oil', 'Weleda body lotion', 'Weleda citrus body oil'],
+    'babycare': ['Weleda baby', 'Weleda calendula baby', 'Weleda diaper cream'],
+    'haircare': ['Weleda rosemary', 'Weleda hair oil', 'Weleda hair tonic'],
+  },
 };
+
+// Helper to get keywords for brand + category
+function getBrandKeywords(brand: string, category: string = 'all'): string[] {
+  const brandKeywords = BRAND_CATEGORY_KEYWORDS[brand] || BRAND_CATEGORY_KEYWORDS['Revlon'];
+  return brandKeywords[category] || brandKeywords['all'];
+}
 
 // Cache TTL: 2 hours for fresh data
 const CACHE_TTL = 2 * 60 * 60 * 1000;
@@ -51,6 +74,7 @@ export async function GET(request: NextRequest) {
     const sentiment = searchParams.get('sentiment');
     const source = searchParams.get('source'); // youtube, news, reddit, tiktok, twitter, all
     const brand = searchParams.get('brand') || 'Revlon';
+    const category = searchParams.get('category') || 'all';
     const limit = parseInt(searchParams.get('limit') || '50', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
     const useMock = searchParams.get('mock') === 'true';
@@ -58,11 +82,11 @@ export async function GET(request: NextRequest) {
     const mentions: Mention[] = [];
     const sources: string[] = [];
     const cachedSources: string[] = [];
-    const keywords = BRAND_KEYWORDS[brand] || BRAND_KEYWORDS['Revlon'];
+    const keywords = getBrandKeywords(brand, category);
 
     // If explicitly requesting mock data, return mock
     if (useMock) {
-      return getMockResponse(days, sentiment, limit, offset, brand);
+      return getMockResponse(days, sentiment, limit, offset, brand, category);
     }
 
     // Determine freshness based on days
@@ -219,7 +243,7 @@ export async function GET(request: NextRequest) {
 
     // If no real data was fetched, fall back to mock
     if (mentions.length === 0) {
-      return getMockResponse(days, sentiment, limit, offset, brand);
+      return getMockResponse(days, sentiment, limit, offset, brand, category);
     }
 
     // Sort by date (newest first)
@@ -323,8 +347,8 @@ function estimateEngagement(platform: string, rank: number): number {
   }
 }
 
-function getMockResponse(days: number, sentiment: string | null, limit: number, offset: number, brand: string = 'Revlon') {
-  let mockPosts = generateMockPosts(100, days, brand);
+function getMockResponse(days: number, sentiment: string | null, limit: number, offset: number, brand: string = 'Revlon', category: string = 'all') {
+  let mockPosts = generateMockPosts(100, days, brand, category);
 
   if (sentiment) {
     mockPosts = mockPosts.filter(p => p.sentiment === sentiment);

@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 
 export interface AppSettings {
   selectedBrand: string;
+  selectedCategory: string;
   defaultDays: number;
   dataSources: {
     youtube: boolean;
@@ -14,6 +15,7 @@ export interface AppSettings {
 
 const DEFAULT_SETTINGS: AppSettings = {
   selectedBrand: 'revlon',
+  selectedCategory: 'all',
   defaultDays: 7,
   dataSources: {
     youtube: true,
@@ -68,24 +70,45 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   // Get brand display name
   const getBrandName = useCallback(() => {
     const brandMap: Record<string, string> = {
+      'babyliss': 'Babyliss',
       'revlon': 'Revlon',
-      'elf': 'e.l.f.',
-      'maybelline': 'Maybelline',
       'weleda': 'Weleda',
     };
     return brandMap[settings.selectedBrand] || 'Revlon';
   }, [settings.selectedBrand]);
 
-  // Get brand search keywords
+  // Get brand search keywords (includes category-specific keywords)
   const getBrandKeywords = useCallback(() => {
-    const keywordMap: Record<string, string[]> = {
-      'revlon': ['revlon', 'revlon lipstick', 'revlon foundation', 'revlon makeup', 'colorstay', 'super lustrous'],
-      'elf': ['e.l.f.', 'elf cosmetics', 'elf makeup', 'elf beauty', 'e.l.f. cosmetics'],
-      'maybelline': ['maybelline', 'maybelline new york', 'maybelline lipstick', 'maybelline mascara', 'lash sensational', 'fit me'],
-      'weleda': ['weleda', 'weleda skin food', 'weleda skincare', 'weleda body oil', 'weleda rosemary'],
+    const category = settings.selectedCategory || 'all';
+
+    // Brand + Category specific keywords
+    const keywordMap: Record<string, Record<string, string[]>> = {
+      'babyliss': {
+        'all': ['babyliss', 'babyliss pro', 'babyliss hair'],
+        'hairdryers': ['babyliss hair dryer', 'babyliss blow dryer', 'babyliss pro dryer'],
+        'straighteners': ['babyliss straightener', 'babyliss flat iron', 'babyliss steam straightener'],
+        'curlingirons': ['babyliss curling iron', 'babyliss curler', 'babyliss curl'],
+        'hotairbrushes': ['babyliss hot air brush', 'babyliss air styler', 'babyliss rotating brush'],
+      },
+      'revlon': {
+        'all': ['revlon', 'revlon makeup', 'revlon cosmetics'],
+        'lipstick': ['revlon lipstick', 'revlon super lustrous', 'revlon lip color', 'revlon lip'],
+        'foundation': ['revlon foundation', 'revlon colorstay', 'revlon face makeup', 'revlon concealer'],
+        'eyemakeup': ['revlon mascara', 'revlon eyeshadow', 'revlon eyeliner', 'revlon eye makeup'],
+        'nailpolish': ['revlon nail polish', 'revlon nail color', 'revlon nails'],
+      },
+      'weleda': {
+        'all': ['weleda', 'weleda skincare', 'weleda natural'],
+        'facecare': ['weleda skin food', 'weleda face cream', 'weleda facial oil', 'weleda face'],
+        'bodycare': ['weleda body oil', 'weleda body lotion', 'weleda body butter', 'weleda body'],
+        'babycare': ['weleda baby', 'weleda calendula baby', 'weleda baby oil', 'weleda diaper cream'],
+        'haircare': ['weleda rosemary', 'weleda hair oil', 'weleda hair tonic', 'weleda shampoo'],
+      },
     };
-    return keywordMap[settings.selectedBrand] || keywordMap['revlon'];
-  }, [settings.selectedBrand]);
+
+    const brandKeywords = keywordMap[settings.selectedBrand] || keywordMap['revlon'];
+    return brandKeywords[category] || brandKeywords['all'];
+  }, [settings.selectedBrand, settings.selectedCategory]);
 
   return (
     <SettingsContext.Provider value={{ settings, isLoaded, saveSettings, getBrandName, getBrandKeywords }}>

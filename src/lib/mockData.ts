@@ -3,61 +3,148 @@
 
 const YOUTUBE_CHANNELS = ['Beauty Guru', 'Makeup Tutorial', 'Skincare Expert', 'Drugstore Beauty', 'Glam Reviews'];
 
-// Brand-specific content
-const BRAND_CONTENT: Record<string, { keywords: string[]; titles: string[] }> = {
+// Brand and category-specific content
+const BRAND_CATEGORY_CONTENT: Record<string, Record<string, { keywords: string[]; titles: string[] }>> = {
+  'Babyliss': {
+    'all': {
+      keywords: ['babyliss', 'babyliss pro', 'babyliss hair'],
+      titles: [
+        "Babyliss tools transformed my hair routine!",
+        "Is Babyliss Pro worth the investment? Full review",
+        "My complete Babyliss collection - tools I can't live without",
+        "Babyliss vs Dyson - which brand is better for styling?",
+      ],
+    },
+    'hairdryers': {
+      keywords: ['babyliss hair dryer', 'babyliss blow dryer', 'babyliss pro dryer'],
+      titles: [
+        "Babyliss Pro hair dryer review - salon quality at home!",
+        "Best Babyliss hair dryer for thick hair - comparison",
+        "Babyliss blow dryer cut my drying time in half",
+        "Is the Babyliss Pro Rapido worth $200? Honest review",
+      ],
+    },
+    'straighteners': {
+      keywords: ['babyliss straightener', 'babyliss flat iron', 'babyliss steam'],
+      titles: [
+        "Babyliss straightener gave me glass hair!",
+        "Babyliss steam straightener vs regular flat iron",
+        "Best Babyliss flat iron for damaged hair",
+        "Babyliss Pro Nano Titanium - 6 month review",
+      ],
+    },
+    'curlingirons': {
+      keywords: ['babyliss curling iron', 'babyliss curler', 'babyliss wand'],
+      titles: [
+        "Babyliss curling wand tutorial - perfect curls every time",
+        "Babyliss Pro curling iron review - worth the hype?",
+        "Best Babyliss curler for long lasting curls",
+        "Babyliss vs GHD curling iron comparison",
+      ],
+    },
+    'hotairbrushes': {
+      keywords: ['babyliss hot air brush', 'babyliss big hair', 'babyliss air styler'],
+      titles: [
+        "Babyliss Big Hair is a game changer for blowouts!",
+        "Babyliss hot air brush vs Revlon one step dryer",
+        "Getting salon blowout with Babyliss Air Styler",
+        "Babyliss rotating hot air brush review",
+      ],
+    },
+  },
   'Revlon': {
-    keywords: ['revlon', 'super lustrous', 'colorstay', 'revlon lipstick'],
-    titles: [
-      "Finally found my perfect everyday lipstick - Revlon Super Lustrous in Rose Velvet!",
-      "Drugstore foundation comparison: Revlon ColorStay vs L'Oreal vs Maybelline",
-      "Has anyone tried the new Revlon lip products? Full review!",
-      "My holy grail drugstore makeup routine featuring Revlon",
-      "Revlon ColorStay foundation oxidizing on me - help!",
-      "Best drugstore lipsticks for dry lips? Testing Revlon Super Lustrous",
-      "Unpopular opinion: Revlon is still one of the best drugstore brands",
-      "The staying power of Revlon ColorStay is unmatched for the price",
-    ],
-  },
-  'e.l.f.': {
-    keywords: ['elf', 'e.l.f.', 'halo glow', 'elf primer', 'elf cosmetics'],
-    titles: [
-      "e.l.f. Halo Glow is the best drugstore product of the year!",
-      "Full face using only e.l.f. products - affordable glam",
-      "Is e.l.f. really as good as high-end? Testing viral products",
-      "e.l.f. Power Grip Primer vs high-end alternatives",
-      "My top 10 e.l.f. products you need to try",
-      "e.l.f. dupes for expensive makeup - side by side comparison",
-      "Why e.l.f. is taking over the beauty industry",
-      "Honest review: e.l.f. Camo Concealer after 1 month",
-    ],
-  },
-  'Maybelline': {
-    keywords: ['maybelline', 'sky high', 'fit me', 'superstay', 'lash sensational'],
-    titles: [
-      "Maybelline Sky High Mascara - worth the hype?",
-      "Drugstore foundation battle: Maybelline Fit Me review",
-      "Maybelline SuperStay Matte Ink - 24 hour wear test",
-      "My everyday makeup using Maybelline products",
-      "Maybelline Lash Sensational vs Sky High comparison",
-      "Best Maybelline products for beginners",
-      "Is Maybelline Fit Me good for oily skin? Honest review",
-      "Maybelline Color Sensational lipsticks swatches and review",
-    ],
+    'all': {
+      keywords: ['revlon', 'revlon makeup', 'revlon cosmetics'],
+      titles: [
+        "My holy grail drugstore makeup routine featuring Revlon",
+        "Revlon is still one of the best drugstore brands - here's why",
+        "Full face using only Revlon products",
+        "Best Revlon products in 2026 - complete guide",
+      ],
+    },
+    'lipstick': {
+      keywords: ['revlon lipstick', 'super lustrous', 'revlon lip'],
+      titles: [
+        "Revlon Super Lustrous is the best drugstore lipstick!",
+        "All my Revlon lipstick swatches - 15 shades compared",
+        "Revlon lip products ranked from worst to best",
+        "Best Revlon lipstick shades for every skin tone",
+      ],
+    },
+    'foundation': {
+      keywords: ['revlon foundation', 'colorstay', 'revlon face'],
+      titles: [
+        "Revlon ColorStay foundation - 12 hour wear test",
+        "Is Revlon ColorStay good for oily skin? Full review",
+        "Revlon foundation oxidizing on me - here's how I fixed it",
+        "Best drugstore foundation: Revlon ColorStay vs Maybelline Fit Me",
+      ],
+    },
+    'eyemakeup': {
+      keywords: ['revlon mascara', 'revlon eyeshadow', 'revlon eyeliner'],
+      titles: [
+        "Revlon volumizing mascara is underrated!",
+        "Revlon eyeshadow palette review - worth buying?",
+        "Best Revlon eye makeup products ranked",
+        "Revlon ColorStay eyeliner stays put all day",
+      ],
+    },
+    'nailpolish': {
+      keywords: ['revlon nail polish', 'revlon nails', 'revlon nail color'],
+      titles: [
+        "Revlon nail polish lasts 7 days without chipping!",
+        "Best Revlon nail colors for fall/winter",
+        "Revlon gel nail polish review - salon results at home?",
+        "My Revlon nail polish collection - favorite shades",
+      ],
+    },
   },
   'Weleda': {
-    keywords: ['weleda', 'skin food', 'weleda oil', 'weleda rosemary', 'natural skincare'],
-    titles: [
-      "Weleda Skin Food saved my dry winter skin - holy grail!",
-      "Is Weleda worth the price? Natural skincare review",
-      "Weleda Rosemary Hair Oil transformed my hair",
-      "My natural skincare routine featuring Weleda",
-      "Weleda body oils comparison - which one is best?",
-      "Why everyone is obsessed with Weleda Skin Food",
-      "Weleda vs other natural brands - honest comparison",
-      "Using Weleda products for 30 days - results",
-      "The best Weleda products for sensitive skin",
-      "Weleda calendula baby products review - gentle and effective",
-    ],
+    'all': {
+      keywords: ['weleda', 'weleda skincare', 'weleda natural'],
+      titles: [
+        "Why I switched to Weleda for all my skincare",
+        "Weleda natural skincare - worth the price?",
+        "My complete Weleda routine for glowing skin",
+        "Weleda products ranked from best to worst",
+      ],
+    },
+    'facecare': {
+      keywords: ['weleda skin food', 'weleda face', 'weleda facial'],
+      titles: [
+        "Weleda Skin Food saved my dry winter skin - holy grail!",
+        "Why everyone is obsessed with Weleda Skin Food",
+        "Weleda Skin Food Light vs Original - which is better?",
+        "Best Weleda face products for dry skin",
+      ],
+    },
+    'bodycare': {
+      keywords: ['weleda body oil', 'weleda body', 'weleda citrus'],
+      titles: [
+        "Weleda body oils comparison - which one is best?",
+        "Weleda Citrus body oil review - fresh and hydrating",
+        "My body care routine with Weleda products",
+        "Weleda body lotion vs body oil - which should you get?",
+      ],
+    },
+    'babycare': {
+      keywords: ['weleda baby', 'weleda calendula', 'weleda diaper'],
+      titles: [
+        "Weleda Calendula baby products are so gentle!",
+        "Best natural baby products - Weleda baby review",
+        "Weleda diaper cream saved us from rashes",
+        "Why I only use Weleda for my baby's skincare",
+      ],
+    },
+    'haircare': {
+      keywords: ['weleda rosemary', 'weleda hair oil', 'weleda hair'],
+      titles: [
+        "Weleda Rosemary Hair Oil transformed my hair growth!",
+        "Best Weleda hair products for thinning hair",
+        "Weleda hair tonic review - does it work for hair loss?",
+        "My hair growth journey with Weleda rosemary oil",
+      ],
+    },
   },
 };
 
@@ -125,14 +212,15 @@ export interface MockPost {
   matchedKeyword: string;
 }
 
-export function generateMockPosts(count: number = 50, daysBack: number = 30, brand: string = 'Revlon'): MockPost[] {
+export function generateMockPosts(count: number = 50, daysBack: number = 30, brand: string = 'Revlon', category: string = 'all'): MockPost[] {
   const posts: MockPost[] = [];
   const now = new Date();
 
-  // Get brand-specific content or fall back to Revlon
-  const brandContent = BRAND_CONTENT[brand] || BRAND_CONTENT['Revlon'];
-  const titles = brandContent.titles;
-  const keywords = brandContent.keywords;
+  // Get brand and category-specific content or fall back to Revlon
+  const brandContent = BRAND_CATEGORY_CONTENT[brand] || BRAND_CATEGORY_CONTENT['Revlon'];
+  const categoryContent = brandContent[category] || brandContent['all'];
+  const titles = categoryContent.titles;
+  const keywords = categoryContent.keywords;
 
   for (let i = 0; i < count; i++) {
     // Randomly determine sentiment (weighted: 45% positive, 35% neutral, 20% negative)

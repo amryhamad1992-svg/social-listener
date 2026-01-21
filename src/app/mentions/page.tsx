@@ -128,13 +128,15 @@ export default function MentionsPage() {
   const selectedBrand = useMemo(() => {
     if (!isLoaded) return 'Revlon';
     const brandMap: Record<string, string> = {
+      'babyliss': 'Babyliss',
       'revlon': 'Revlon',
-      'elf': 'e.l.f.',
-      'maybelline': 'Maybelline',
       'weleda': 'Weleda',
     };
     return brandMap[settings.selectedBrand] || 'Revlon';
   }, [isLoaded, settings.selectedBrand]);
+
+  // Get category from settings
+  const selectedCategory = settings.selectedCategory || 'all';
 
   // Fetch mentions from API
   const fetchMentions = useCallback(async () => {
@@ -146,6 +148,7 @@ export default function MentionsPage() {
     try {
       const params = new URLSearchParams({
         brand: selectedBrand,
+        category: selectedCategory,
         days: days.toString(),
         limit: '50',
       });
@@ -178,7 +181,7 @@ export default function MentionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [isLoaded, selectedBrand, days]);
+  }, [isLoaded, selectedBrand, selectedCategory, days]);
 
   // Apply settings from storage and fetch data
   useEffect(() => {
@@ -193,7 +196,7 @@ export default function MentionsPage() {
     if (settingsApplied) {
       fetchMentions();
     }
-  }, [settingsApplied, selectedBrand, days, fetchMentions]);
+  }, [settingsApplied, selectedBrand, selectedCategory, days, fetchMentions]);
 
   const toggleSource = (id: string) => {
     setSources(prev => prev.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));

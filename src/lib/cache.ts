@@ -16,7 +16,7 @@ interface MentionCache {
 const cache: MentionCache = {};
 
 // Cache version - bump this when adding new brands or changing keywords
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 
 // Cache TTL in milliseconds (default: 6 hours)
 const DEFAULT_TTL = 6 * 60 * 60 * 1000;
