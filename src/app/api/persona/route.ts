@@ -70,16 +70,28 @@ async function analyzeWithGPT(brand: string, product: string, searchData: BraveS
     throw new Error('OpenAI API key not configured');
   }
 
-  const searchContext = searchData
-    .map((r, i) => `${i + 1}. "${r.title}" - ${r.description}`)
-    .join('\n');
+  const hasSearchData = searchData.length > 0;
+  const searchContext = hasSearchData
+    ? searchData.map((r, i) => `${i + 1}. "${r.title}" - ${r.description}`).join('\n')
+    : '';
 
-  const prompt = `You are a market research analyst. Based on the following search results about "${brand} ${product}", create a detailed audience persona profile for the typical consumer of this product.
+  const prompt = hasSearchData
+    ? `You are a market research analyst. Based on the following search results about "${brand} ${product}", create a detailed audience persona profile for the typical consumer of this product.
 
 SEARCH RESULTS:
 ${searchContext}
 
-Analyze these results and provide a comprehensive audience persona in the following JSON format. Be specific and data-driven based on the search results, but also use your knowledge about this brand/product category to fill gaps:
+Analyze these results and provide a comprehensive audience persona in the following JSON format. Be specific and data-driven based on the search results, but also use your knowledge about this brand/product category to fill gaps:`
+    : `You are a market research analyst with deep knowledge of consumer brands. Create a detailed audience persona profile for the typical consumer of "${brand} ${product}".
+
+Use your extensive knowledge about this brand, product category, price point, brand positioning, and target market to create an accurate and detailed persona. Consider:
+- The brand's market positioning and values
+- The product category and typical consumers
+- Price point and what it implies about the target audience
+- Common purchase channels for this type of product
+- Typical lifestyle and values of consumers who choose this brand
+
+Provide a comprehensive audience persona in the following JSON format:
 
 {
   "demographics": {

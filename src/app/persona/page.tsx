@@ -296,9 +296,13 @@ export default function PersonaPage() {
                     <p className="text-[13px] text-white/80 leading-relaxed max-w-2xl">{persona.summary}</p>
                   </div>
                   <div className="text-right">
-                    <div className="flex items-center gap-1.5 text-[#16949b]">
+                    <div className="flex items-center gap-1.5 text-white/80">
                       <Target className="w-4 h-4" />
-                      <span className="text-[12px] font-medium">{data?.sourcesCount} sources analyzed</span>
+                      <span className="text-[12px] font-medium">
+                        {data?.sourcesCount && data.sourcesCount > 0
+                          ? `${data.sourcesCount} sources analyzed`
+                          : 'AI Knowledge-based'}
+                      </span>
                     </div>
                   </div>
                 </div>
