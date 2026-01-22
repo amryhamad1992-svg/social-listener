@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ExternalLink, ThumbsUp, MessageSquare, Flame, Clock, Users, TrendingUp, TrendingDown, LayoutGrid, List, RefreshCw, Calendar, Wifi, WifiOff, Brain, Search } from 'lucide-react';
+import { Loader2, ExternalLink, ThumbsUp, MessageSquare, Flame, Clock, Users, TrendingUp, TrendingDown, LayoutGrid, List, RefreshCw, Calendar, Wifi, WifiOff, Brain, Search, ChevronDown } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { PurchaseIntentSignals } from '@/components/PurchaseIntentSignals';
 
@@ -373,82 +373,91 @@ export default function MentionsPage() {
                   : 'Search for any brand or product to see mentions'}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              {/* Date Range */}
-              <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#E2E8F0] rounded-lg">
-                <Calendar className="w-4 h-4 text-[#64748B]" />
-                <select
-                  value={days}
-                  onChange={(e) => setDays(parseInt(e.target.value, 10))}
-                  className="text-[13px] text-[#1E293B] bg-transparent border-none focus:outline-none cursor-pointer font-medium"
-                  style={{ fontFamily: 'Roboto, sans-serif' }}
-                >
-                  <option value={1}>Yesterday</option>
-                  <option value={7}>Last 7 days</option>
-                  <option value={30}>Last 30 days</option>
-                </select>
-              </div>
-
-              {/* Refresh Button */}
-              <button
-                onClick={() => fetchMentions(brand, product)}
-                disabled={loading || !brand.trim()}
-                className="p-2 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition-colors disabled:opacity-50"
-                title="Refresh data"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
+            {/* Refresh Button */}
+            <button
+              onClick={() => fetchMentions(brand, product)}
+              disabled={loading || !brand.trim()}
+              className="p-2 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition-colors disabled:opacity-50"
+              title="Refresh data"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
           </div>
 
-          {/* Search Input Section */}
-          <div className="bg-white rounded-xl border border-[#E2E8F0] p-5">
-            <div className="flex items-end gap-4">
-              <div className="flex-1">
-                <label className="block text-[11px] text-[#64748B] font-medium mb-1.5">Brand</label>
+          {/* Filters - Matching Audience Builder Style */}
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
+            <div className="flex items-center gap-6 flex-wrap">
+              {/* Brand Input */}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-[#64748B] font-medium">Brand:</span>
                 <input
                   type="text"
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="e.g., Weleda, Revlon, CeraVe"
-                  className="w-full px-3 py-2 text-[13px] text-[#1E293B] border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A]"
+                  placeholder="e.g., Weleda"
+                  className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] font-medium w-40"
                 />
               </div>
-              <div className="flex-1">
-                <label className="block text-[11px] text-[#64748B] font-medium mb-1.5">Product (optional)</label>
+
+              {/* Product Input */}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-[#64748B] font-medium">Product:</span>
                 <input
                   type="text"
                   value={product}
                   onChange={(e) => setProduct(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="e.g., Skin Food, ColorStay Foundation"
-                  className="w-full px-3 py-2 text-[13px] text-[#1E293B] border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A]"
+                  placeholder="e.g., Skin Food"
+                  className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] font-medium w-48"
                 />
               </div>
+
+              <div className="w-px h-6 bg-[#E2E8F0]" />
+
+              {/* Date Range - Inline */}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-[#64748B] font-medium">Period:</span>
+                <div className="relative">
+                  <select
+                    value={days}
+                    onChange={(e) => setDays(parseInt(e.target.value, 10))}
+                    className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium"
+                  >
+                    <option value={1}>Yesterday</option>
+                    <option value={7}>Last 7 days</option>
+                    <option value={30}>Last 30 days</option>
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B] pointer-events-none" />
+                </div>
+              </div>
+
+              <div className="w-px h-6 bg-[#E2E8F0]" />
+
+              {/* Search Button */}
               <button
                 onClick={handleSearch}
                 disabled={loading || !brand.trim()}
-                className="flex items-center gap-2 px-5 py-2 text-[13px] text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-lg transition-colors disabled:opacity-50 font-medium"
+                className="flex items-center gap-2 px-4 py-1.5 text-[12px] text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-lg transition-colors disabled:opacity-50 font-medium"
               >
                 {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <Search className="w-4 h-4" />
+                  <Search className="w-3.5 h-3.5" />
                 )}
-                Search
+                Search Mentions
               </button>
-            </div>
 
-            {/* Suggestions */}
-            <div className="mt-4 pt-4 border-t border-[#E2E8F0]">
-              <p className="text-[11px] text-[#94A3B8] mb-2">Try these examples:</p>
-              <div className="flex flex-wrap gap-2">
-                {SUGGESTED_SEARCHES.map((s, i) => (
+              <div className="w-px h-6 bg-[#E2E8F0]" />
+
+              {/* Suggestions */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] text-[#94A3B8]">Try:</span>
+                {SUGGESTED_SEARCHES.slice(0, 4).map((s, i) => (
                   <button
                     key={i}
                     onClick={() => handleSuggestionClick(s)}
-                    className="px-2.5 py-1 text-[11px] text-[#64748B] bg-[#F8FAFC] border border-[#E2E8F0] rounded hover:border-[#0F172A] hover:text-[#0F172A] transition-colors"
+                    className="px-2 py-1 text-[10px] text-[#64748B] bg-[#F8FAFC] border border-[#E2E8F0] rounded hover:border-[#0F172A] hover:text-[#0F172A] transition-colors"
                   >
                     {s.brand} {s.product}
                   </button>
