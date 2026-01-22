@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isBraveConfigured } from '@/lib/brave';
+
+const BRAVE_API_KEY = process.env.BRAVE_API_KEY;
 
 // Brand data with categories, subcategories, and competitors
 const BRAND_DATA: Record<string, {
@@ -148,23 +149,153 @@ const BRAND_DATA: Record<string, {
   },
 };
 
-// Relevant domains for beauty/personal care
-const DOMAIN_CATEGORIES = {
-  beautyBlogs: ['allure.com', 'byrdie.com', 'temptalia.com', 'beautylish.com', 'makeupandbeautyblog.com', 'musingsofamuse.com', 'thebeautylookbook.com', 'reallyree.com'],
-  reviewSites: ['makeupalley.com', 'influenster.com', 'totalbeauty.com', 'beautypedia.com', 'skincarisma.com'],
-  retailers: ['ulta.com', 'sephora.com', 'target.com', 'walmart.com', 'amazon.com', 'walgreens.com', 'cvs.com', 'boots.com', 'superdrug.com'],
-  socialMedia: ['reddit.com/r/SkincareAddiction', 'reddit.com/r/MakeupAddiction', 'reddit.com/r/HaircareScience', 'youtube.com', 'tiktok.com', 'instagram.com'],
-  magazines: ['vogue.com', 'elle.com', 'cosmopolitan.com', 'glamour.com', 'harpersbazaar.com', 'marieclaire.com', 'instyle.com', 'refinery29.com', 'whowhatwear.com'],
-  naturalBeauty: ['mindbodygreen.com', 'wellandgood.com', 'thethirty.com', 'treehugger.com', 'organicauthority.com'],
+// Targetable domains for beauty/personal care (NO walled gardens like YouTube, Amazon, TikTok, Instagram, Facebook)
+const TARGETABLE_DOMAINS = {
+  beautyBlogs: [
+    'allure.com',
+    'byrdie.com',
+    'temptalia.com',
+    'beautylish.com',
+    'makeupandbeautyblog.com',
+    'musingsofamuse.com',
+    'thebeautylookbook.com',
+    'reallyree.com',
+    'intothegloss.com',
+    'thecut.com/beauty',
+    'coveteur.com',
+    'manrepeller.com',
+  ],
+  reviewSites: [
+    'makeupalley.com',
+    'influenster.com',
+    'totalbeauty.com',
+    'beautypedia.com',
+    'skincarisma.com',
+    'beautylish.com',
+    'trustpilot.com',
+    'goodhousekeeping.com',
+  ],
+  magazines: [
+    'vogue.com',
+    'elle.com',
+    'cosmopolitan.com',
+    'glamour.com',
+    'harpersbazaar.com',
+    'marieclaire.com',
+    'instyle.com',
+    'refinery29.com',
+    'whowhatwear.com',
+    'popsugar.com',
+    'self.com',
+    'shape.com',
+    'womenshealthmag.com',
+  ],
+  lifestyle: [
+    'mindbodygreen.com',
+    'wellandgood.com',
+    'thethirty.com',
+    'theeverygirl.com',
+    'cupcakesandcashmere.com',
+    'apartmenttherapy.com',
+    'mydomaine.com',
+    'thespruce.com',
+  ],
+  hairSpecific: [
+    'naturallycurly.com',
+    'hairromance.com',
+    'therighthair.com',
+    'latest-hairstyles.com',
+    'hairfinder.com',
+    'behindthechair.com',
+    'modernsalon.com',
+    'hairdresser-models.eu',
+  ],
+  skincareSpecific: [
+    'paulaschoice.com/expert-advice',
+    'dermstore.com/blog',
+    'skincareaddiction.com',
+    'thekindedit.com',
+    'beautifulwithbrains.com',
+    'labmuffin.com',
+    'simpleskincarescience.com',
+  ],
+  naturalBeauty: [
+    'organicauthority.com',
+    'treehugger.com',
+    'thegoodtrade.com',
+    'leapingbunny.org',
+    'ewg.org',
+    'safecosmetics.org',
+    'greenmatters.com',
+  ],
+  menGrooming: [
+    'gq.com',
+    'esquire.com',
+    'menshealth.com',
+    'askmen.com',
+    'toolsofmen.com',
+    'baldingbeards.com',
+    'themanual.com',
+    'mensjournal.com',
+  ],
 };
 
+// Fetch real keywords from Brave Search API
+async function fetchBraveKeywords(query: string, count: number = 10): Promise<string[]> {
+  if (!BRAVE_API_KEY) return [];
+
+  try {
+    const response = await fetch(
+      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${count}`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'X-Subscription-Token': BRAVE_API_KEY,
+        },
+      }
+    );
+
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    const keywords: string[] = [];
+
+    // Extract keywords from titles and descriptions
+    if (data.web?.results) {
+      for (const result of data.web.results) {
+        // Extract from title
+        if (result.title) {
+          const titleWords = result.title.toLowerCase()
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .split(/\s+/)
+            .filter((w: string) => w.length > 3);
+          keywords.push(...titleWords.slice(0, 3));
+        }
+        // Extract meaningful phrases from description
+        if (result.description) {
+          const desc = result.description.toLowerCase();
+          // Look for brand mentions and product terms
+          const matches = desc.match(/\b[a-z]+\s+[a-z]+\b/g) || [];
+          keywords.push(...matches.slice(0, 2));
+        }
+      }
+    }
+
+    // Deduplicate and return
+    return [...new Set(keywords)].slice(0, 20);
+  } catch (error) {
+    console.error('Brave API error:', error);
+    return [];
+  }
+}
+
 // Generate keywords based on brand, category, subcategory, and targeting type
-function generateKeywords(
+async function generateKeywords(
   brand: string,
   category: string,
   subCategory: string,
   targetingType: 'branded' | 'generic' | 'competitor'
-): string[] {
+): Promise<string[]> {
   const brandData = BRAND_DATA[brand.toLowerCase()];
   if (!brandData) return [];
 
@@ -177,7 +308,7 @@ function generateKeywords(
   switch (targetingType) {
     case 'branded':
       // Brand + category/subcategory combinations
-      return [
+      const brandedKeywords = [
         `${brandName} ${categoryData.name.toLowerCase()}`,
         `${brandName} ${subCatLower}`,
         `${brandName} ${subCatLower} review`,
@@ -188,53 +319,80 @@ function generateKeywords(
         `${brandName} pro ${subCatLower}`,
         `${brandName} ${subCatLower} price`,
         `${brandName} ${subCatLower} sale`,
-        `${brandName} ${subCatLower} amazon`,
-        `${brandName} ${subCatLower} ulta`,
-        `${brandName} ${subCatLower} target`,
-        `${brandName} ${subCatLower} walmart`,
         `buy ${brandName} ${subCatLower}`,
         `${brandName} ${subCatLower} vs`,
         `is ${brandName} ${subCatLower} good`,
         `${brandName} ${subCatLower} worth it`,
         `${brandName} ${subCatLower} tutorial`,
         `how to use ${brandName} ${subCatLower}`,
+        `${brandName} ${subCatLower} for thick hair`,
+        `${brandName} ${subCatLower} for fine hair`,
+        `${brandName} ${subCatLower} settings`,
+        `${brandName} ${subCatLower} comparison`,
       ];
+
+      // Try to enrich with Brave API
+      if (BRAVE_API_KEY) {
+        const braveKeywords = await fetchBraveKeywords(`${brandName} ${subCatLower} review`, 5);
+        brandedKeywords.push(...braveKeywords.filter(k => k.includes(brandName.toLowerCase())));
+      }
+
+      return [...new Set(brandedKeywords)];
 
     case 'generic':
       // Generic category terms
-      return categoryData.genericTerms.flatMap(term => [
+      const genericBase = categoryData.genericTerms.flatMap(term => [
         term,
         `best ${term}`,
         `${term} review`,
-        `${term} 2024`,
         `${term} 2025`,
         `top ${term}`,
         `${term} for beginners`,
         `affordable ${term}`,
         `professional ${term}`,
-        `${term} tips`,
-      ]).slice(0, 30);
+      ]);
+
+      // Try to enrich with Brave API
+      if (BRAVE_API_KEY) {
+        const braveGeneric = await fetchBraveKeywords(`best ${categoryData.name.toLowerCase()} 2025`, 5);
+        genericBase.push(...braveGeneric);
+      }
+
+      return [...new Set(genericBase)].slice(0, 30);
 
     case 'competitor':
-      // Competitor brand + category combinations
-      return categoryData.competitors.flatMap(comp => [
-        `${comp} ${subCatLower}`,
-        `${comp} ${categoryData.name.toLowerCase()}`,
-        `${comp} ${subCatLower} review`,
-        `${comp} vs ${brandName}`,
-        `${brandName} vs ${comp}`,
-      ]).slice(0, 30);
+      // Fetch real competitor data from Brave API
+      const competitorKeywords: string[] = [];
+
+      for (const comp of categoryData.competitors.slice(0, 5)) {
+        competitorKeywords.push(
+          `${comp} ${subCatLower}`,
+          `${comp} ${categoryData.name.toLowerCase()}`,
+          `${comp} ${subCatLower} review`,
+          `${comp} vs ${brandName}`,
+          `${brandName} vs ${comp}`,
+          `${comp} ${subCatLower} price`,
+          `best ${comp} ${subCatLower}`,
+        );
+
+        // Try to get real competitor data from Brave
+        if (BRAVE_API_KEY) {
+          const braveComp = await fetchBraveKeywords(`${comp} ${subCatLower}`, 3);
+          competitorKeywords.push(...braveComp);
+        }
+      }
+
+      return [...new Set(competitorKeywords)].slice(0, 40);
 
     default:
       return [];
   }
 }
 
-// Generate domains based on targeting type
+// Generate targetable domains based on brand category
 function generateDomains(
   brand: string,
   category: string,
-  subCategory: string,
   targetingType: 'branded' | 'generic' | 'competitor'
 ): string[] {
   const brandData = BRAND_DATA[brand.toLowerCase()];
@@ -243,31 +401,65 @@ function generateDomains(
   const categoryData = brandData.categories[category];
   if (!categoryData) return [];
 
+  // Determine which domain categories to include based on the brand/category
+  const isHairCategory = ['hairdryers', 'straighteners', 'curlingirons', 'hotairbrushes', 'haircare', 'haircolor', 'hairtools'].includes(category);
+  const isSkinCategory = ['facecare', 'bodycare', 'skincare'].includes(category);
+  const isNaturalBrand = brand.toLowerCase() === 'weleda';
+  const isMensCategory = ['clippers', 'mensgrooming', 'menscare'].includes(category);
+
   switch (targetingType) {
     case 'branded':
-      // Sites that would mention the brand (blogs, retailers, review sites)
-      return [
-        ...DOMAIN_CATEGORIES.beautyBlogs,
-        ...DOMAIN_CATEGORIES.reviewSites,
-        ...DOMAIN_CATEGORIES.retailers,
-        ...DOMAIN_CATEGORIES.magazines.slice(0, 5),
-        ...DOMAIN_CATEGORIES.socialMedia.slice(0, 3),
+      // Sites that would review/mention the brand
+      const brandedDomains = [
+        ...TARGETABLE_DOMAINS.beautyBlogs,
+        ...TARGETABLE_DOMAINS.reviewSites,
+        ...TARGETABLE_DOMAINS.magazines.slice(0, 8),
       ];
+
+      if (isHairCategory) {
+        brandedDomains.push(...TARGETABLE_DOMAINS.hairSpecific);
+      }
+      if (isSkinCategory) {
+        brandedDomains.push(...TARGETABLE_DOMAINS.skincareSpecific);
+      }
+      if (isNaturalBrand) {
+        brandedDomains.push(...TARGETABLE_DOMAINS.naturalBeauty);
+      }
+      if (isMensCategory) {
+        brandedDomains.push(...TARGETABLE_DOMAINS.menGrooming);
+      }
+
+      return [...new Set(brandedDomains)];
 
     case 'generic':
-      // General beauty/category sites
-      const isNaturalBrand = brand.toLowerCase() === 'weleda';
-      return [
-        ...DOMAIN_CATEGORIES.beautyBlogs,
-        ...DOMAIN_CATEGORIES.magazines,
-        ...DOMAIN_CATEGORIES.socialMedia,
-        ...(isNaturalBrand ? DOMAIN_CATEGORIES.naturalBeauty : []),
+      // General beauty/category content sites
+      const genericDomains = [
+        ...TARGETABLE_DOMAINS.beautyBlogs,
+        ...TARGETABLE_DOMAINS.magazines,
+        ...TARGETABLE_DOMAINS.lifestyle,
       ];
 
+      if (isHairCategory) {
+        genericDomains.push(...TARGETABLE_DOMAINS.hairSpecific);
+      }
+      if (isSkinCategory) {
+        genericDomains.push(...TARGETABLE_DOMAINS.skincareSpecific);
+      }
+      if (isNaturalBrand) {
+        genericDomains.push(...TARGETABLE_DOMAINS.naturalBeauty);
+      }
+      if (isMensCategory) {
+        genericDomains.push(...TARGETABLE_DOMAINS.menGrooming);
+      }
+
+      return [...new Set(genericDomains)];
+
     case 'competitor':
-      // Competitor brand domains
+      // Competitor brand domains (actual brand websites)
       return categoryData.competitors.map(comp => {
-        const cleanName = comp.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const cleanName = comp.toLowerCase()
+          .replace(/['\s]/g, '')
+          .replace('é', 'e');
         return `${cleanName}.com`;
       });
 
@@ -276,7 +468,7 @@ function generateDomains(
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Return brand structure for the UI
     const brands = Object.entries(BRAND_DATA).map(([id, data]) => ({
@@ -305,7 +497,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { brand, category, subCategory, outputType, targetingTypes } = body;
+    const { brand, category, subCategory, targetingTypes } = body;
 
     if (!brand || !category || !subCategory) {
       return NextResponse.json(
@@ -318,20 +510,13 @@ export async function POST(request: NextRequest) {
 
     // Generate results for each targeting type
     for (const targetingType of targetingTypes || ['branded', 'generic', 'competitor']) {
-      const keywords = generateKeywords(brand, category, subCategory, targetingType);
-      const domains = generateDomains(brand, category, subCategory, targetingType);
+      const keywords = await generateKeywords(brand, category, subCategory, targetingType);
+      const domains = generateDomains(brand, category, targetingType);
 
       results[targetingType] = {
         keywords,
         domains,
       };
-    }
-
-    // If Brave API is configured, try to enrich with real search data
-    let enrichedWithBrave = false;
-    if (isBraveConfigured()) {
-      // Could add Brave API enrichment here for real-time domain discovery
-      enrichedWithBrave = true;
     }
 
     return NextResponse.json({
@@ -340,10 +525,9 @@ export async function POST(request: NextRequest) {
         brand: BRAND_DATA[brand.toLowerCase()]?.name || brand,
         category,
         subCategory,
-        outputType,
         results,
       },
-      enrichedWithBrave,
+      usedBraveAPI: !!BRAVE_API_KEY,
     });
   } catch (error) {
     console.error('Audience Builder 2.0 POST error:', error);
