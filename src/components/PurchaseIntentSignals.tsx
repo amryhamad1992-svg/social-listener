@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { ShoppingCart, ExternalLink, TrendingUp, Clock, Loader2, WifiOff } from 'lucide-react';
-import { useSettings } from '@/lib/SettingsContext';
 
 interface IntentSignal {
   id: string;
@@ -24,11 +23,12 @@ const intentStyles: Record<string, { bg: string; text: string; label: string }> 
 
 interface PurchaseIntentSignalsProps {
   days?: number;
+  brand: string;
+  product?: string;
 }
 
-export function PurchaseIntentSignals({ days = 7 }: PurchaseIntentSignalsProps) {
-  const { getBrandName } = useSettings();
-  const brandName = getBrandName();
+export function PurchaseIntentSignals({ days = 7, brand, product = '' }: PurchaseIntentSignalsProps) {
+  const displayName = product ? `${brand} ${product}` : brand;
 
   const [signals, setSignals] = useState<IntentSignal[]>([]);
   const [intentCounts, setIntentCounts] = useState<Record<string, number>>({});
@@ -36,15 +36,21 @@ export function PurchaseIntentSignals({ days = 7 }: PurchaseIntentSignalsProps) 
   const [error, setError] = useState<string | null>(null);
 
   const fetchSignals = useCallback(async () => {
+    if (!brand) return;
+
     setLoading(true);
     setError(null);
 
     try {
       const params = new URLSearchParams({
-        brand: brandName,
+        brand: brand,
         days: days.toString(),
         limit: '10',
       });
+
+      if (product) {
+        params.set('product', product);
+      }
 
       const response = await fetch(`/api/purchase-intent?${params}`);
       const data = await response.json();
@@ -61,7 +67,7 @@ export function PurchaseIntentSignals({ days = 7 }: PurchaseIntentSignalsProps) 
     } finally {
       setLoading(false);
     }
-  }, [brandName, days]);
+  }, [brand, product, days]);
 
   useEffect(() => {
     fetchSignals();
@@ -76,7 +82,7 @@ export function PurchaseIntentSignals({ days = 7 }: PurchaseIntentSignalsProps) 
           <div>
             <h2 className="text-sm font-medium text-[#1E293B]">Purchase Intent Signals</h2>
             <p className="text-[10px] text-[#64748B]">
-              Real-time buying signals for {brandName}
+              Real-time buying signals for {displayName}
             </p>
           </div>
         </div>

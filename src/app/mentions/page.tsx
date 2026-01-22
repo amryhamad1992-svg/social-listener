@@ -461,7 +461,7 @@ export default function MentionsPage() {
           {hasSearched && mentions.length > 0 && (
             <>
           {/* Purchase Intent Signals - Moved from Dashboard */}
-          <PurchaseIntentSignals days={days} />
+          <PurchaseIntentSignals days={days} brand={brand} product={product} />
 
           {/* Summary Stats Bar */}
           <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
