@@ -9,7 +9,6 @@ import {
   Heart,
   ShoppingBag,
   Sparkles,
-  Target,
   TrendingUp,
   MapPin,
   DollarSign,
@@ -24,6 +23,7 @@ import {
   Copy,
   Check,
   Download,
+  ChevronDown,
 } from 'lucide-react';
 
 interface PersonaProfile {
@@ -104,7 +104,7 @@ export default function PersonaPage() {
       } else {
         setError(result.error || 'Failed to generate persona');
       }
-    } catch (err) {
+    } catch {
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);
@@ -119,14 +119,6 @@ export default function PersonaPage() {
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
-  };
-
-  const handleCopy = async () => {
-    if (!data) return;
-    const text = generateExportText();
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const generateExportText = () => {
@@ -166,6 +158,13 @@ export default function PersonaPage() {
     return text;
   };
 
+  const handleCopy = async () => {
+    const text = generateExportText();
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const handleDownload = () => {
     if (!data) return;
     const text = generateExportText();
@@ -192,75 +191,86 @@ export default function PersonaPage() {
                 Persona
               </h1>
               <p className="text-[13px] text-[#64748B] mt-0.5" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                AI-powered audience profiling using search data analysis
+                AI-powered audience profiling for any brand or product
               </p>
             </div>
-            {data && (
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleCopy}
-                  className="flex items-center gap-2 px-3 py-2 text-[13px] text-[#64748B] hover:text-[#0F172A] bg-white border border-[#E2E8F0] hover:border-[#0F172A] rounded-lg transition-colors"
-                >
-                  {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                  {copied ? 'Copied' : 'Copy'}
-                </button>
-                <button
-                  onClick={handleDownload}
-                  className="flex items-center gap-2 px-3 py-2 text-[13px] text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-lg transition-colors"
-                >
-                  <Download className="w-4 h-4" />
-                  Export
-                </button>
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              {data && (
+                <>
+                  <button
+                    onClick={handleCopy}
+                    className="flex items-center gap-2 px-3 py-2 text-[13px] text-[#64748B] hover:text-[#0F172A] bg-white border border-[#E2E8F0] hover:border-[#0F172A] rounded-lg transition-colors"
+                  >
+                    {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
+                  <button
+                    onClick={handleDownload}
+                    className="flex items-center gap-2 px-3 py-2 text-[13px] text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-lg transition-colors"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Input Section */}
-          <div className="bg-white rounded-xl border border-[#E2E8F0] p-5">
-            <div className="flex items-end gap-4">
-              <div className="flex-1">
-                <label className="block text-[11px] text-[#64748B] font-medium mb-1.5">Brand</label>
+          {/* Filters - Matching Audience Builder Style */}
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
+            <div className="flex items-center gap-6 flex-wrap">
+              {/* Brand Input */}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-[#64748B] font-medium">Brand:</span>
                 <input
                   type="text"
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
                   placeholder="e.g., Weleda"
-                  className="w-full px-3 py-2 text-[13px] text-[#1E293B] border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A]"
+                  className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] font-medium w-40"
                 />
               </div>
-              <div className="flex-1">
-                <label className="block text-[11px] text-[#64748B] font-medium mb-1.5">Product</label>
+
+              {/* Product Input */}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-[#64748B] font-medium">Product:</span>
                 <input
                   type="text"
                   value={product}
                   onChange={(e) => setProduct(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
                   placeholder="e.g., Skin Food"
-                  className="w-full px-3 py-2 text-[13px] text-[#1E293B] border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A]"
+                  className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] font-medium w-48"
                 />
               </div>
+
+              <div className="w-px h-6 bg-[#E2E8F0]" />
+
+              {/* Generate Button */}
               <button
                 onClick={handleGenerate}
                 disabled={loading || !brand.trim() || !product.trim()}
-                className="flex items-center gap-2 px-5 py-2 text-[13px] text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-lg transition-colors disabled:opacity-50 font-medium"
+                className="flex items-center gap-2 px-4 py-1.5 text-[12px] text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-lg transition-colors disabled:opacity-50 font-medium"
               >
                 {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <Sparkles className="w-4 h-4" />
+                  <Sparkles className="w-3.5 h-3.5" />
                 )}
                 Generate Persona
               </button>
-            </div>
 
-            {/* Suggestions */}
-            <div className="mt-4 pt-4 border-t border-[#E2E8F0]">
-              <p className="text-[11px] text-[#94A3B8] mb-2">Try these examples:</p>
-              <div className="flex flex-wrap gap-2">
-                {SUGGESTED_PRODUCTS.map((s, i) => (
+              <div className="w-px h-6 bg-[#E2E8F0]" />
+
+              {/* Suggestions */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] text-[#94A3B8]">Try:</span>
+                {SUGGESTED_PRODUCTS.slice(0, 4).map((s, i) => (
                   <button
                     key={i}
                     onClick={() => handleSuggestion(s)}
-                    className="px-2.5 py-1 text-[11px] text-[#64748B] bg-[#F8FAFC] border border-[#E2E8F0] rounded hover:border-[#0F172A] hover:text-[#0F172A] transition-colors"
+                    className="px-2 py-1 text-[10px] text-[#64748B] bg-[#F8FAFC] border border-[#E2E8F0] rounded hover:border-[#0F172A] hover:text-[#0F172A] transition-colors"
                   >
                     {s.brand} {s.product}
                   </button>
@@ -269,7 +279,7 @@ export default function PersonaPage() {
             </div>
 
             {error && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-[12px] text-red-600">
+              <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-[11px] text-red-600">
                 {error}
               </div>
             )}
@@ -277,114 +287,123 @@ export default function PersonaPage() {
 
           {/* Loading State */}
           {loading && (
-            <div className="bg-white rounded-xl border border-[#E2E8F0] p-12 text-center">
-              <Loader2 className="w-8 h-8 animate-spin text-[#16949b] mx-auto mb-4" />
-              <p className="text-[14px] font-medium text-[#1E293B]">Analyzing audience data...</p>
-              <p className="text-[12px] text-[#64748B] mt-1">Searching reviews, forums, and discussions</p>
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="w-6 h-6 animate-spin text-[#16949b]" />
             </div>
           )}
 
-          {/* Results */}
+          {/* Stats Bar */}
           {persona && !loading && (
-            <>
-              {/* Summary Card */}
-              <div className="bg-gradient-to-r from-[#0F172A] to-[#1E293B] rounded-xl p-6 text-white">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-[11px] text-white/60 uppercase tracking-wider mb-1">Audience Persona</p>
-                    <h2 className="text-[18px] font-semibold mb-3 !text-white" style={{ color: 'white' }}>{data?.brand} {data?.product}</h2>
-                    <p className="text-[13px] text-white/80 leading-relaxed max-w-2xl">{persona.summary}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-1.5 text-white/80">
-                      <Target className="w-4 h-4" />
-                      <span className="text-[12px] font-medium">
-                        {data?.sourcesCount && data.sourcesCount > 0
-                          ? `${data.sourcesCount} sources analyzed`
-                          : 'AI Knowledge-based'}
-                      </span>
-                    </div>
-                  </div>
+            <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
+              <div className="flex items-center gap-8">
+                <div>
+                  <p className="text-[18px] font-bold text-[#0F172A]">{data?.brand} {data?.product}</p>
+                  <p className="text-[11px] text-[#64748B]">Audience Persona</p>
+                </div>
+                <div className="w-px h-10 bg-[#E2E8F0]" />
+                <div>
+                  <p className="text-[22px] font-bold text-[#16949b]">{persona.psychographics.values.length}</p>
+                  <p className="text-[11px] text-[#64748B]">Core Values</p>
+                </div>
+                <div className="w-px h-10 bg-[#E2E8F0]" />
+                <div>
+                  <p className="text-[22px] font-bold text-[#0EA5E9]">{persona.interests.categories.length}</p>
+                  <p className="text-[11px] text-[#64748B]">Interest Categories</p>
+                </div>
+                <div className="w-px h-10 bg-[#E2E8F0]" />
+                <div>
+                  <p className="text-[22px] font-bold text-[#F59E0B]">{persona.lookalikeBrands.length}</p>
+                  <p className="text-[11px] text-[#64748B]">Lookalike Brands</p>
+                </div>
+                <div className="w-px h-10 bg-[#E2E8F0]" />
+                <div>
+                  <p className="text-[14px] font-medium text-[#64748B]">
+                    {data?.sourcesCount && data.sourcesCount > 0
+                      ? `${data.sourcesCount} sources`
+                      : 'AI Knowledge'}
+                  </p>
+                  <p className="text-[11px] text-[#64748B]">Data Source</p>
                 </div>
               </div>
+            </div>
+          )}
 
+          {/* Summary Card */}
+          {persona && !loading && (
+            <div className="bg-white rounded-xl border border-[#E2E8F0] p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <User className="w-5 h-5 text-[#0F172A]" />
+                <h3 className="text-[14px] font-semibold text-[#0F172A]">Summary</h3>
+              </div>
+              <p className="text-[13px] text-[#334155] leading-relaxed">{persona.summary}</p>
+            </div>
+          )}
+
+          {/* Results Grid - 3 columns like Audience Builder */}
+          {persona && !loading && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Demographics */}
-              <div className="bg-white rounded-xl border border-[#E2E8F0] p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <Users className="w-5 h-5 text-[#0F172A]" />
-                  <h3 className="text-[14px] font-semibold text-[#0F172A]">Demographics</h3>
+              <div className="bg-white rounded-xl border border-[#E2E8F0] overflow-hidden">
+                <div className="px-4 py-3 border-b bg-blue-50 border-blue-200 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-blue-600" />
+                  <span className="text-[13px] font-semibold text-blue-600">Demographics</span>
                 </div>
-                <div className="grid grid-cols-5 gap-4">
-                  <div className="p-3 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0]">
-                    <div className="flex items-center gap-2 mb-2">
-                      <User className="w-4 h-4 text-[#64748B]" />
-                      <span className="text-[10px] text-[#64748B] uppercase tracking-wider">Age Range</span>
-                    </div>
-                    <p className="text-[13px] font-medium text-[#1E293B]">{persona.demographics.ageRange}</p>
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-[#64748B]">Age Range</span>
+                    <span className="text-[12px] font-medium text-[#1E293B]">{persona.demographics.ageRange}</span>
                   </div>
-                  <div className="p-3 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0]">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Users className="w-4 h-4 text-[#64748B]" />
-                      <span className="text-[10px] text-[#64748B] uppercase tracking-wider">Gender</span>
-                    </div>
-                    <p className="text-[13px] font-medium text-[#1E293B]">{persona.demographics.genderSkew}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-[#64748B]">Gender</span>
+                    <span className="text-[12px] font-medium text-[#1E293B]">{persona.demographics.genderSkew}</span>
                   </div>
-                  <div className="p-3 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0]">
-                    <div className="flex items-center gap-2 mb-2">
-                      <DollarSign className="w-4 h-4 text-[#64748B]" />
-                      <span className="text-[10px] text-[#64748B] uppercase tracking-wider">Income</span>
-                    </div>
-                    <p className="text-[13px] font-medium text-[#1E293B]">{persona.demographics.incomeLevel}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-[#64748B]">Income</span>
+                    <span className="text-[12px] font-medium text-[#1E293B]">{persona.demographics.incomeLevel}</span>
                   </div>
-                  <div className="p-3 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0]">
-                    <div className="flex items-center gap-2 mb-2">
-                      <GraduationCap className="w-4 h-4 text-[#64748B]" />
-                      <span className="text-[10px] text-[#64748B] uppercase tracking-wider">Education</span>
-                    </div>
-                    <p className="text-[13px] font-medium text-[#1E293B]">{persona.demographics.education}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-[#64748B]">Education</span>
+                    <span className="text-[12px] font-medium text-[#1E293B]">{persona.demographics.education}</span>
                   </div>
-                  <div className="p-3 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0]">
-                    <div className="flex items-center gap-2 mb-2">
-                      <MapPin className="w-4 h-4 text-[#64748B]" />
-                      <span className="text-[10px] text-[#64748B] uppercase tracking-wider">Location</span>
-                    </div>
-                    <p className="text-[13px] font-medium text-[#1E293B]">{persona.demographics.location}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-[#64748B]">Location</span>
+                    <span className="text-[12px] font-medium text-[#1E293B]">{persona.demographics.location}</span>
                   </div>
                 </div>
               </div>
 
               {/* Psychographics */}
-              <div className="bg-white rounded-xl border border-[#E2E8F0] p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <Heart className="w-5 h-5 text-[#0F172A]" />
-                  <h3 className="text-[14px] font-semibold text-[#0F172A]">Psychographics</h3>
+              <div className="bg-white rounded-xl border border-[#E2E8F0] overflow-hidden">
+                <div className="px-4 py-3 border-b bg-emerald-50 border-emerald-200 flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-emerald-600" />
+                  <span className="text-[13px] font-semibold text-emerald-600">Psychographics</span>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="p-4 space-y-4 max-h-80 overflow-y-auto">
                   <div>
-                    <p className="text-[11px] text-[#64748B] font-medium mb-2 uppercase tracking-wider">Values</p>
+                    <p className="text-[10px] text-[#64748B] mb-2">VALUES</p>
                     <div className="flex flex-wrap gap-1.5">
                       {persona.psychographics.values.map((v, i) => (
-                        <span key={i} className="px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded text-[11px] text-emerald-700">
+                        <span key={i} className="px-2 py-1 bg-emerald-50 border border-emerald-200 rounded text-[10px] text-emerald-700">
                           {v}
                         </span>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <p className="text-[11px] text-[#64748B] font-medium mb-2 uppercase tracking-wider">Lifestyle</p>
+                    <p className="text-[10px] text-[#64748B] mb-2">LIFESTYLE</p>
                     <div className="flex flex-wrap gap-1.5">
                       {persona.psychographics.lifestyle.map((l, i) => (
-                        <span key={i} className="px-2.5 py-1 bg-blue-50 border border-blue-200 rounded text-[11px] text-blue-700">
+                        <span key={i} className="px-2 py-1 bg-blue-50 border border-blue-200 rounded text-[10px] text-blue-700">
                           {l}
                         </span>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <p className="text-[11px] text-[#64748B] font-medium mb-2 uppercase tracking-wider">Attitudes</p>
+                    <p className="text-[10px] text-[#64748B] mb-2">ATTITUDES</p>
                     <div className="flex flex-wrap gap-1.5">
                       {persona.psychographics.attitudes.map((a, i) => (
-                        <span key={i} className="px-2.5 py-1 bg-purple-50 border border-purple-200 rounded text-[11px] text-purple-700">
+                        <span key={i} className="px-2 py-1 bg-purple-50 border border-purple-200 rounded text-[10px] text-purple-700">
                           {a}
                         </span>
                       ))}
@@ -394,40 +413,37 @@ export default function PersonaPage() {
               </div>
 
               {/* Interests */}
-              <div className="bg-white rounded-xl border border-[#E2E8F0] p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <Compass className="w-5 h-5 text-[#0F172A]" />
-                  <h3 className="text-[14px] font-semibold text-[#0F172A]">Interests</h3>
+              <div className="bg-white rounded-xl border border-[#E2E8F0] overflow-hidden">
+                <div className="px-4 py-3 border-b bg-orange-50 border-orange-200 flex items-center gap-2">
+                  <Compass className="w-4 h-4 text-orange-600" />
+                  <span className="text-[13px] font-semibold text-orange-600">Interests</span>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="p-4 space-y-4 max-h-80 overflow-y-auto">
                   <div>
-                    <p className="text-[11px] text-[#64748B] font-medium mb-2 uppercase tracking-wider">Categories</p>
+                    <p className="text-[10px] text-[#64748B] mb-2">CATEGORIES</p>
                     <div className="flex flex-wrap gap-1.5">
                       {persona.interests.categories.map((c, i) => (
-                        <span key={i} className="px-2.5 py-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded text-[11px] text-[#334155]">
+                        <span key={i} className="px-2 py-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded text-[10px] text-[#334155]">
                           {c}
                         </span>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <p className="text-[11px] text-[#64748B] font-medium mb-2 uppercase tracking-wider">Hobbies</p>
+                    <p className="text-[10px] text-[#64748B] mb-2">HOBBIES</p>
                     <div className="flex flex-wrap gap-1.5">
                       {persona.interests.hobbies.map((h, i) => (
-                        <span key={i} className="px-2.5 py-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded text-[11px] text-[#334155]">
+                        <span key={i} className="px-2 py-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded text-[10px] text-[#334155]">
                           {h}
                         </span>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <Radio className="w-3.5 h-3.5 text-[#64748B]" />
-                      <p className="text-[11px] text-[#64748B] font-medium uppercase tracking-wider">Media Consumption</p>
-                    </div>
+                    <p className="text-[10px] text-[#64748B] mb-2">MEDIA</p>
                     <div className="flex flex-wrap gap-1.5">
                       {persona.interests.mediaConsumption.map((m, i) => (
-                        <span key={i} className="px-2.5 py-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded text-[11px] text-[#334155]">
+                        <span key={i} className="px-2 py-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded text-[10px] text-[#334155]">
                           {m}
                         </span>
                       ))}
@@ -435,77 +451,70 @@ export default function PersonaPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
 
+          {/* Shopping Behavior & Lookalike Brands */}
+          {persona && !loading && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Shopping Behavior */}
-              <div className="bg-white rounded-xl border border-[#E2E8F0] p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <ShoppingBag className="w-5 h-5 text-[#0F172A]" />
-                  <h3 className="text-[14px] font-semibold text-[#0F172A]">Shopping Behavior</h3>
+              <div className="bg-white rounded-xl border border-[#E2E8F0] overflow-hidden">
+                <div className="px-4 py-3 border-b bg-[#F8FAFC] flex items-center gap-2">
+                  <ShoppingBag className="w-4 h-4 text-[#0F172A]" />
+                  <span className="text-[13px] font-semibold text-[#0F172A]">Shopping Behavior</span>
                 </div>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex items-center gap-1.5 mb-2">
-                        <Store className="w-3.5 h-3.5 text-[#64748B]" />
-                        <p className="text-[11px] text-[#64748B] font-medium uppercase tracking-wider">Shopping Channels</p>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {persona.shoppingBehavior.channels.map((c, i) => (
-                          <span key={i} className="px-2.5 py-1 bg-orange-50 border border-orange-200 rounded text-[11px] text-orange-700">
-                            {c}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5 mb-2">
-                        <Zap className="w-3.5 h-3.5 text-[#64748B]" />
-                        <p className="text-[11px] text-[#64748B] font-medium uppercase tracking-wider">Purchase Drivers</p>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {persona.shoppingBehavior.purchaseDrivers.map((d, i) => (
-                          <span key={i} className="px-2.5 py-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded text-[11px] text-[#334155]">
-                            {d}
-                          </span>
-                        ))}
-                      </div>
+                <div className="p-4 space-y-4">
+                  <div>
+                    <p className="text-[10px] text-[#64748B] mb-2">SHOPPING CHANNELS</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {persona.shoppingBehavior.channels.map((c, i) => (
+                        <span key={i} className="px-2 py-1 bg-orange-50 border border-orange-200 rounded text-[10px] text-orange-700">
+                          {c}
+                        </span>
+                      ))}
                     </div>
                   </div>
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="p-3 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0]">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <Tag className="w-3.5 h-3.5 text-[#64748B]" />
-                        <p className="text-[10px] text-[#64748B] uppercase tracking-wider">Price Sensitivity</p>
-                      </div>
-                      <p className="text-[12px] text-[#1E293B]">{persona.shoppingBehavior.priceSensitivity}</p>
+                      <p className="text-[10px] text-[#64748B] mb-1">Price Sensitivity</p>
+                      <p className="text-[11px] text-[#1E293B]">{persona.shoppingBehavior.priceSensitivity}</p>
                     </div>
                     <div className="p-3 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0]">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <Award className="w-3.5 h-3.5 text-[#64748B]" />
-                        <p className="text-[10px] text-[#64748B] uppercase tracking-wider">Brand Loyalty</p>
-                      </div>
-                      <p className="text-[12px] text-[#1E293B]">{persona.shoppingBehavior.brandLoyalty}</p>
+                      <p className="text-[10px] text-[#64748B] mb-1">Brand Loyalty</p>
+                      <p className="text-[11px] text-[#1E293B]">{persona.shoppingBehavior.brandLoyalty}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-[#64748B] mb-2">PURCHASE DRIVERS</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {persona.shoppingBehavior.purchaseDrivers.map((d, i) => (
+                        <span key={i} className="px-2 py-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded text-[10px] text-[#334155]">
+                          {d}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Lookalike Brands */}
-              <div className="bg-white rounded-xl border border-[#E2E8F0] p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="w-5 h-5 text-[#0F172A]" />
-                  <h3 className="text-[14px] font-semibold text-[#0F172A]">Lookalike Brands</h3>
-                  <span className="text-[11px] text-[#64748B]">Brands this audience likely also purchases</span>
+              <div className="bg-white rounded-xl border border-[#E2E8F0] overflow-hidden">
+                <div className="px-4 py-3 border-b bg-[#0F172A] flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-white" />
+                  <span className="text-[13px] font-semibold text-white">Lookalike Brands</span>
+                  <span className="text-[10px] text-white/60 ml-2">Brands this audience likely also purchases</span>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {persona.lookalikeBrands.map((b, i) => (
-                    <span key={i} className="px-3 py-1.5 bg-[#0F172A] text-white rounded-lg text-[12px] font-medium">
-                      {b}
-                    </span>
-                  ))}
+                <div className="p-4">
+                  <div className="flex flex-wrap gap-2">
+                    {persona.lookalikeBrands.map((b, i) => (
+                      <span key={i} className="px-3 py-1.5 bg-[#0F172A] text-white rounded-lg text-[11px] font-medium">
+                        {b}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </>
+            </div>
           )}
 
           {/* Empty State */}
@@ -513,10 +522,19 @@ export default function PersonaPage() {
             <div className="bg-white rounded-xl border border-[#E2E8F0] p-12 text-center">
               <Users className="w-12 h-12 text-[#E2E8F0] mx-auto mb-4" />
               <h3 className="text-[15px] font-medium text-[#0F172A] mb-2">
-                Build Your Audience Persona
+                Generate Your Audience Persona
               </h3>
               <p className="text-[13px] text-[#64748B] max-w-md mx-auto">
                 Enter a brand and product to generate a detailed audience profile including demographics, psychographics, interests, and shopping behavior.
+              </p>
+            </div>
+          )}
+
+          {/* Footer */}
+          {data && !loading && (
+            <div className="text-center">
+              <p className="text-[11px] text-[#94A3B8]">
+                Persona generated for {data.brand} {data.product}
               </p>
             </div>
           )}
