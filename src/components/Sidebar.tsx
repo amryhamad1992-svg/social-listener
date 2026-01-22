@@ -8,12 +8,14 @@ import {
   LogOut,
   Radar,
   Users,
+  Sparkles,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Trend Radar', href: '/trend-radar', icon: Radar },
   { name: 'Mentions', href: '/mentions', icon: Search },
   { name: 'Audience Builder', href: '/audience-builder', icon: Users },
+  { name: 'Audience Builder 2.0', href: '/audience-builder-2', icon: Sparkles },
 ];
 
 interface SidebarProps {
