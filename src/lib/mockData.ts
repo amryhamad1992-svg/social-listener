@@ -212,15 +212,36 @@ export interface MockPost {
   matchedKeyword: string;
 }
 
-export function generateMockPosts(count: number = 50, daysBack: number = 30, brand: string = 'Revlon', category: string = 'all'): MockPost[] {
+export function generateMockPosts(count: number = 50, daysBack: number = 30, brand: string = 'Revlon', category: string = 'all', product: string = ''): MockPost[] {
   const posts: MockPost[] = [];
   const now = new Date();
 
-  // Get brand and category-specific content or fall back to Revlon
-  const brandContent = BRAND_CATEGORY_CONTENT[brand] || BRAND_CATEGORY_CONTENT['Revlon'];
-  const categoryContent = brandContent[category] || brandContent['all'];
-  const titles = categoryContent.titles;
-  const keywords = categoryContent.keywords;
+  // Check if we have specific content for this brand
+  const brandContent = BRAND_CATEGORY_CONTENT[brand];
+
+  let titles: string[];
+  let keywords: string[];
+
+  if (brandContent) {
+    // Use predefined content
+    const categoryContent = brandContent[category] || brandContent['all'];
+    titles = categoryContent.titles;
+    keywords = categoryContent.keywords;
+  } else {
+    // Generate dynamic content for unknown brands
+    const searchTerm = product ? `${brand} ${product}` : brand;
+    titles = [
+      `${searchTerm} review - is it worth it?`,
+      `My honest experience with ${searchTerm}`,
+      `${searchTerm} - full review after 1 month`,
+      `Trying ${searchTerm} for the first time!`,
+      `${searchTerm} vs competitors - which is better?`,
+      `Why everyone is talking about ${searchTerm}`,
+      `${searchTerm} changed my routine - here's why`,
+      `Is ${searchTerm} overrated? My honest thoughts`,
+    ];
+    keywords = [searchTerm, brand, product || brand].filter(Boolean);
+  }
 
   for (let i = 0; i < count; i++) {
     // Randomly determine sentiment (weighted: 45% positive, 35% neutral, 20% negative)

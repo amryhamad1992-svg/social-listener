@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
 
     // If explicitly requesting mock data, return mock
     if (useMock) {
-      return getMockResponse(days, sentiment, limit, offset, brand, category);
+      return getMockResponse(days, sentiment, limit, offset, brand, category, product);
     }
 
     // Determine freshness based on days
@@ -248,7 +248,7 @@ export async function GET(request: NextRequest) {
 
     // If no real data was fetched, fall back to mock
     if (mentions.length === 0) {
-      return getMockResponse(days, sentiment, limit, offset, brand, category);
+      return getMockResponse(days, sentiment, limit, offset, brand, category, product);
     }
 
     // Sort by date (newest first)
@@ -352,8 +352,8 @@ function estimateEngagement(platform: string, rank: number): number {
   }
 }
 
-function getMockResponse(days: number, sentiment: string | null, limit: number, offset: number, brand: string = 'Revlon', category: string = 'all') {
-  let mockPosts = generateMockPosts(100, days, brand, category);
+function getMockResponse(days: number, sentiment: string | null, limit: number, offset: number, brand: string = 'Revlon', category: string = 'all', product: string = '') {
+  let mockPosts = generateMockPosts(100, days, brand, category, product);
 
   if (sentiment) {
     mockPosts = mockPosts.filter(p => p.sentiment === sentiment);
