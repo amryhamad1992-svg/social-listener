@@ -292,7 +292,7 @@ export default function PersonaPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-[11px] text-white/60 uppercase tracking-wider mb-1">Audience Persona</p>
-                    <h2 className="text-[18px] font-semibold mb-3">{data?.brand} {data?.product}</h2>
+                    <h2 className="text-[18px] font-semibold mb-3 text-white">{data?.brand} {data?.product}</h2>
                     <p className="text-[13px] text-white/80 leading-relaxed max-w-2xl">{persona.summary}</p>
                   </div>
                   <div className="text-right">
