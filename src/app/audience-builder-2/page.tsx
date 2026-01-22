@@ -190,11 +190,11 @@ export default function AudienceBuilder2Page() {
     Object.entries(results).forEach(([targeting, data]) => {
       if (targetingTypes.includes(targeting)) {
         if (outputType === 'keywords') {
-          data?.keywords.forEach(kw => {
+          data?.keywords.forEach((kw: string) => {
             rows.push(['Keyword', targeting, kw]);
           });
         } else {
-          data?.domains.forEach(domain => {
+          data?.domains.forEach((domain: string) => {
             rows.push(['Domain', targeting, domain]);
           });
         }
@@ -203,10 +203,10 @@ export default function AudienceBuilder2Page() {
 
     // Add AI suggestions if available
     if (aiSuggestions) {
-      aiSuggestions.longTail.forEach(kw => rows.push(['AI - Long Tail', 'ai', kw]));
-      aiSuggestions.questions.forEach(kw => rows.push(['AI - Question', 'ai', kw]));
-      aiSuggestions.related.forEach(kw => rows.push(['AI - Related', 'ai', kw]));
-      aiSuggestions.negative.forEach(kw => rows.push(['AI - Negative', 'ai', kw]));
+      aiSuggestions.longTail.forEach((kw: string) => rows.push(['AI - Long Tail', 'ai', kw]));
+      aiSuggestions.questions.forEach((kw: string) => rows.push(['AI - Question', 'ai', kw]));
+      aiSuggestions.related.forEach((kw: string) => rows.push(['AI - Related', 'ai', kw]));
+      aiSuggestions.negative.forEach((kw: string) => rows.push(['AI - Negative', 'ai', kw]));
     }
 
     const csv = rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
