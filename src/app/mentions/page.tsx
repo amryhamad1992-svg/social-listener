@@ -1,12 +1,10 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ExternalLink, ThumbsUp, MessageSquare, Flame, Clock, Users, TrendingUp, TrendingDown, Filter, LayoutGrid, List, ArrowUpDown, RefreshCw, Calendar, Wifi, WifiOff, Sparkles, Brain } from 'lucide-react';
+import { Loader2, ExternalLink, ThumbsUp, MessageSquare, Flame, Clock, Users, TrendingUp, TrendingDown, LayoutGrid, List, RefreshCw, Calendar, Wifi, WifiOff, Brain, Search } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { PurchaseIntentSignals } from '@/components/PurchaseIntentSignals';
-import { BrandSelector } from '@/components/BrandSelector';
-import { useSettings } from '@/lib/SettingsContext';
 
 interface UnifiedMention {
   id: string;
@@ -117,16 +115,24 @@ function SourceLabel({ sourceName }: { sourceName: string }) {
   );
 }
 
+// Suggested searches for quick access
+const SUGGESTED_SEARCHES = [
+  { brand: 'Weleda', product: 'Skin Food' },
+  { brand: 'Revlon', product: 'ColorStay Foundation' },
+  { brand: 'Babyliss', product: 'Pro Ceramic Hair Dryer' },
+  { brand: 'CeraVe', product: 'Moisturizing Cream' },
+  { brand: 'The Ordinary', product: 'Niacinamide Serum' },
+  { brand: 'Olaplex', product: 'No. 3 Hair Perfector' },
+];
+
 export default function MentionsPage() {
   const router = useRouter();
-  const { settings, isLoaded, getDisplayName } = useSettings();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [days, setDays] = useState(7);
   const [sentiment, setSentiment] = useState<string>('');
   const [sources, setSources] = useState<SourceFilter[]>(SOURCE_FILTERS);
   const [sortBy, setSortBy] = useState<'recent' | 'engagement' | 'reach'>('recent');
   const [viewMode, setViewMode] = useState<'cards' | 'compact'>('cards');
-  const [settingsApplied, setSettingsApplied] = useState(false);
   const [mentions, setMentions] = useState<UnifiedMention[]>([]);
   const [isLiveData, setIsLiveData] = useState(false);
   const [dataSources, setDataSources] = useState<string[]>([]);
@@ -134,39 +140,29 @@ export default function MentionsPage() {
   const [brandSentiment, setBrandSentiment] = useState<BrandSentiment | null>(null);
   const [sentimentLoading, setSentimentLoading] = useState(false);
 
-  // Get brand from settings
-  const selectedBrand = useMemo(() => {
-    if (!isLoaded) return 'Revlon';
-    const brandMap: Record<string, string> = {
-      'babyliss': 'Babyliss',
-      'revlon': 'Revlon',
-      'weleda': 'Weleda',
-    };
-    return brandMap[settings.selectedBrand] || 'Revlon';
-  }, [isLoaded, settings.selectedBrand]);
-
-  // Get category and product directly from settings
-  const selectedCategory = settings.selectedCategory || 'all';
-  const selectedProduct = settings.selectedProduct || '';
+  // Simple text inputs for brand and product
+  const [brand, setBrand] = useState('');
+  const [product, setProduct] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
 
   // Fetch mentions from API
-  const fetchMentions = useCallback(async (brand: string, category: string, product: string) => {
-    if (!isLoaded) return;
+  const fetchMentions = useCallback(async (searchBrand: string, searchProduct: string) => {
+    if (!searchBrand.trim()) return;
 
     setLoading(true);
     setFetchError(null);
+    setHasSearched(true);
 
     try {
       const params = new URLSearchParams({
-        brand: brand,
-        category: category,
+        brand: searchBrand.trim(),
         days: days.toString(),
         limit: '50',
         _t: Date.now().toString(), // Cache buster
       });
 
-      if (product) {
-        params.set('product', product);
+      if (searchProduct.trim()) {
+        params.set('product', searchProduct.trim());
       }
 
       const response = await fetch(`/api/mentions?${params}`, {
@@ -199,22 +195,28 @@ export default function MentionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [isLoaded, days]);
+  }, [days]);
 
-  // Apply settings from storage on initial load
-  useEffect(() => {
-    if (isLoaded && !settingsApplied) {
-      setDays(settings.defaultDays);
-      setSettingsApplied(true);
+  // Handle search
+  const handleSearch = () => {
+    if (brand.trim()) {
+      fetchMentions(brand, product);
     }
-  }, [isLoaded, settings.defaultDays, settingsApplied]);
+  };
 
-  // Fetch when brand, category, or product changes
-  useEffect(() => {
-    if (isLoaded && settingsApplied) {
-      fetchMentions(selectedBrand, selectedCategory, selectedProduct);
-    }
-  }, [isLoaded, settingsApplied, selectedBrand, selectedCategory, selectedProduct, days, fetchMentions]);
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion: { brand: string; product: string }) => {
+    setBrand(suggestion.brand);
+    setProduct(suggestion.product);
+    fetchMentions(suggestion.brand, suggestion.product);
+  };
+
+  // Get display name for header
+  const getDisplayName = () => {
+    if (!brand.trim()) return 'Brand';
+    if (product.trim()) return `${brand} ${product}`;
+    return brand;
+  };
 
   // Fetch AI-powered brand sentiment analysis
   const fetchBrandSentiment = useCallback(async (brand: string, mentionsData: UnifiedMention[]) => {
@@ -248,10 +250,10 @@ export default function MentionsPage() {
 
   // Fetch sentiment when mentions change
   useEffect(() => {
-    if (mentions.length > 0 && !loading) {
-      fetchBrandSentiment(selectedBrand, mentions);
+    if (mentions.length > 0 && !loading && brand.trim()) {
+      fetchBrandSentiment(brand, mentions);
     }
-  }, [mentions, loading, selectedBrand, fetchBrandSentiment]);
+  }, [mentions, loading, brand, fetchBrandSentiment]);
 
   const toggleSource = (id: string) => {
     setSources(prev => prev.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
@@ -340,10 +342,10 @@ export default function MentionsPage() {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-xl font-medium text-[#1E293B]" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                  {getDisplayName()} Mentions
+                  {hasSearched ? `${getDisplayName()} Mentions` : 'Mentions'}
                 </h1>
                 {/* Live/Mock Data Indicator */}
-                {!loading && (
+                {hasSearched && !loading && (
                   <div
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${
                       isLiveData
@@ -366,16 +368,13 @@ export default function MentionsPage() {
                 )}
               </div>
               <p className="text-[13px] text-[#64748B] mt-0.5" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                {isLiveData && dataSources.length > 0
+                {hasSearched && isLiveData && dataSources.length > 0
                   ? `Real-time data from ${dataSources.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}`
-                  : 'All brand mentions & purchase intent signals'}
+                  : 'Search for any brand or product to see mentions'}
               </p>
             </div>
             <div className="flex items-center gap-3">
-              {/* Brand Selector */}
-              <BrandSelector />
-
-              {/* Global Date Range */}
+              {/* Date Range */}
               <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#E2E8F0] rounded-lg">
                 <Calendar className="w-4 h-4 text-[#64748B]" />
                 <select
@@ -392,8 +391,8 @@ export default function MentionsPage() {
 
               {/* Refresh Button */}
               <button
-                onClick={() => fetchMentions(selectedBrand, selectedCategory, selectedProduct)}
-                disabled={loading}
+                onClick={() => fetchMentions(brand, product)}
+                disabled={loading || !brand.trim()}
                 className="p-2 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition-colors disabled:opacity-50"
                 title="Refresh data"
               >
@@ -402,6 +401,65 @@ export default function MentionsPage() {
             </div>
           </div>
 
+          {/* Search Input Section */}
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-5">
+            <div className="flex items-end gap-4">
+              <div className="flex-1">
+                <label className="block text-[11px] text-[#64748B] font-medium mb-1.5">Brand</label>
+                <input
+                  type="text"
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  placeholder="e.g., Weleda, Revlon, CeraVe"
+                  className="w-full px-3 py-2 text-[13px] text-[#1E293B] border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A]"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-[11px] text-[#64748B] font-medium mb-1.5">Product (optional)</label>
+                <input
+                  type="text"
+                  value={product}
+                  onChange={(e) => setProduct(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  placeholder="e.g., Skin Food, ColorStay Foundation"
+                  className="w-full px-3 py-2 text-[13px] text-[#1E293B] border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A]"
+                />
+              </div>
+              <button
+                onClick={handleSearch}
+                disabled={loading || !brand.trim()}
+                className="flex items-center gap-2 px-5 py-2 text-[13px] text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-lg transition-colors disabled:opacity-50 font-medium"
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Search className="w-4 h-4" />
+                )}
+                Search
+              </button>
+            </div>
+
+            {/* Suggestions */}
+            <div className="mt-4 pt-4 border-t border-[#E2E8F0]">
+              <p className="text-[11px] text-[#94A3B8] mb-2">Try these examples:</p>
+              <div className="flex flex-wrap gap-2">
+                {SUGGESTED_SEARCHES.map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSuggestionClick(s)}
+                    className="px-2.5 py-1 text-[11px] text-[#64748B] bg-[#F8FAFC] border border-[#E2E8F0] rounded hover:border-[#0F172A] hover:text-[#0F172A] transition-colors"
+                  >
+                    {s.brand} {s.product}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Only show these sections after a search */}
+          {hasSearched && mentions.length > 0 && (
+            <>
           {/* Purchase Intent Signals - Moved from Dashboard */}
           <PurchaseIntentSignals days={days} />
 
@@ -619,6 +677,9 @@ export default function MentionsPage() {
             </div>
           </div>
 
+            </>
+          )}
+
           {/* Error Display */}
           {fetchError && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
@@ -631,7 +692,17 @@ export default function MentionsPage() {
           )}
 
           {/* Content */}
-          {(loading || !isLoaded) ? (
+          {!hasSearched ? (
+            <div className="bg-white rounded-xl border border-[#E2E8F0] p-12 text-center">
+              <Search className="w-12 h-12 text-[#E2E8F0] mx-auto mb-4" />
+              <h3 className="text-[15px] font-medium text-[#0F172A] mb-2">
+                Search for Brand Mentions
+              </h3>
+              <p className="text-[13px] text-[#64748B] max-w-md mx-auto">
+                Enter a brand name and optionally a product to discover what people are saying across social media.
+              </p>
+            </div>
+          ) : loading ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="w-6 h-6 animate-spin text-[#0EA5E9]" />
             </div>
