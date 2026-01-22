@@ -119,7 +119,7 @@ function SourceLabel({ sourceName }: { sourceName: string }) {
 
 export default function MentionsPage() {
   const router = useRouter();
-  const { settings, isLoaded, getBrandName } = useSettings();
+  const { settings, isLoaded, getDisplayName } = useSettings();
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(7);
   const [sentiment, setSentiment] = useState<string>('');
@@ -145,11 +145,12 @@ export default function MentionsPage() {
     return brandMap[settings.selectedBrand] || 'Revlon';
   }, [isLoaded, settings.selectedBrand]);
 
-  // Get category directly from settings
+  // Get category and product directly from settings
   const selectedCategory = settings.selectedCategory || 'all';
+  const selectedProduct = settings.selectedProduct || '';
 
   // Fetch mentions from API
-  const fetchMentions = useCallback(async (brand: string, category: string) => {
+  const fetchMentions = useCallback(async (brand: string, category: string, product: string) => {
     if (!isLoaded) return;
 
     setLoading(true);
@@ -163,6 +164,10 @@ export default function MentionsPage() {
         limit: '50',
         _t: Date.now().toString(), // Cache buster
       });
+
+      if (product) {
+        params.set('product', product);
+      }
 
       const response = await fetch(`/api/mentions?${params}`, {
         cache: 'no-store',
@@ -204,12 +209,12 @@ export default function MentionsPage() {
     }
   }, [isLoaded, settings.defaultDays, settingsApplied]);
 
-  // Fetch when brand or category changes
+  // Fetch when brand, category, or product changes
   useEffect(() => {
     if (isLoaded && settingsApplied) {
-      fetchMentions(selectedBrand, selectedCategory);
+      fetchMentions(selectedBrand, selectedCategory, selectedProduct);
     }
-  }, [isLoaded, settingsApplied, selectedBrand, selectedCategory, days, fetchMentions]);
+  }, [isLoaded, settingsApplied, selectedBrand, selectedCategory, selectedProduct, days, fetchMentions]);
 
   // Fetch AI-powered brand sentiment analysis
   const fetchBrandSentiment = useCallback(async (brand: string, mentionsData: UnifiedMention[]) => {
@@ -335,7 +340,7 @@ export default function MentionsPage() {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-xl font-medium text-[#1E293B]" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                  {getBrandName()} Mentions
+                  {getDisplayName()} Mentions
                 </h1>
                 {/* Live/Mock Data Indicator */}
                 {!loading && (
@@ -387,7 +392,7 @@ export default function MentionsPage() {
 
               {/* Refresh Button */}
               <button
-                onClick={() => fetchMentions(selectedBrand, selectedCategory)}
+                onClick={() => fetchMentions(selectedBrand, selectedCategory, selectedProduct)}
                 disabled={loading}
                 className="p-2 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition-colors disabled:opacity-50"
                 title="Refresh data"

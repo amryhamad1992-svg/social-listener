@@ -5,6 +5,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 export interface AppSettings {
   selectedBrand: string;
   selectedCategory: string;
+  selectedProduct: string;
   defaultDays: number;
   dataSources: {
     youtube: boolean;
@@ -16,6 +17,7 @@ export interface AppSettings {
 const DEFAULT_SETTINGS: AppSettings = {
   selectedBrand: 'revlon',
   selectedCategory: 'all',
+  selectedProduct: '',
   defaultDays: 7,
   dataSources: {
     youtube: true,
@@ -31,6 +33,7 @@ interface SettingsContextType {
   isLoaded: boolean;
   saveSettings: (newSettings: Partial<AppSettings>) => void;
   getBrandName: () => string;
+  getDisplayName: () => string;
   getBrandKeywords: () => string[];
 }
 
@@ -77,6 +80,20 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return brandMap[settings.selectedBrand] || 'Revlon';
   }, [settings.selectedBrand]);
 
+  // Get full display name (brand + product if selected)
+  const getDisplayName = useCallback(() => {
+    const brandMap: Record<string, string> = {
+      'babyliss': 'Babyliss',
+      'revlon': 'Revlon',
+      'weleda': 'Weleda',
+    };
+    const brandName = brandMap[settings.selectedBrand] || 'Revlon';
+    if (settings.selectedProduct) {
+      return `${brandName} ${settings.selectedProduct}`;
+    }
+    return brandName;
+  }, [settings.selectedBrand, settings.selectedProduct]);
+
   // Get brand search keywords (includes category-specific keywords)
   const getBrandKeywords = useCallback(() => {
     const category = settings.selectedCategory || 'all';
@@ -111,7 +128,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [settings.selectedBrand, settings.selectedCategory]);
 
   return (
-    <SettingsContext.Provider value={{ settings, isLoaded, saveSettings, getBrandName, getBrandKeywords }}>
+    <SettingsContext.Provider value={{ settings, isLoaded, saveSettings, getBrandName, getDisplayName, getBrandKeywords }}>
       {children}
     </SettingsContext.Provider>
   );

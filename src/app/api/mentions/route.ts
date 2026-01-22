@@ -48,8 +48,12 @@ const BRAND_CATEGORY_KEYWORDS: Record<string, Record<string, string[]>> = {
   },
 };
 
-// Helper to get keywords for brand + category
-function getBrandKeywords(brand: string, category: string = 'all'): string[] {
+// Helper to get keywords for brand + category + product
+function getBrandKeywords(brand: string, category: string = 'all', product: string = ''): string[] {
+  // If specific product is selected, use that as the primary search term
+  if (product) {
+    return [`${brand} ${product}`, product, `${brand} ${product} review`];
+  }
   const brandKeywords = BRAND_CATEGORY_KEYWORDS[brand] || BRAND_CATEGORY_KEYWORDS['Revlon'];
   return brandKeywords[category] || brandKeywords['all'];
 }
@@ -75,6 +79,7 @@ export async function GET(request: NextRequest) {
     const source = searchParams.get('source'); // youtube, news, reddit, tiktok, twitter, all
     const brand = searchParams.get('brand') || 'Revlon';
     const category = searchParams.get('category') || 'all';
+    const product = searchParams.get('product') || '';
     const limit = parseInt(searchParams.get('limit') || '50', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
     const useMock = searchParams.get('mock') === 'true';
@@ -82,7 +87,7 @@ export async function GET(request: NextRequest) {
     const mentions: Mention[] = [];
     const sources: string[] = [];
     const cachedSources: string[] = [];
-    const keywords = getBrandKeywords(brand, category);
+    const keywords = getBrandKeywords(brand, category, product);
 
     // If explicitly requesting mock data, return mock
     if (useMock) {
@@ -94,7 +99,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch from Brave Search API (covers Reddit, TikTok, YouTube, Twitter)
     if (isBraveConfigured() && (!source || source === 'all' || ['reddit', 'tiktok', 'youtube', 'twitter'].includes(source))) {
-      const cacheKey = getCacheKey('brave-social', `${brand}-${category}-${days}`);
+      const cacheKey = getCacheKey('brave-social', `${brand}-${category}-${product}-${days}`);
       let braveMentions = getCache<Mention[]>(cacheKey);
 
       if (!braveMentions) {
@@ -150,7 +155,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch from YouTube if API key is configured
     if (process.env.YOUTUBE_API_KEY && (!source || source === 'all' || source === 'youtube')) {
-      const cacheKey = getCacheKey('youtube', `${brand}-${category}`);
+      const cacheKey = getCacheKey('youtube', `${brand}-${category}-${product}`);
       let ytMentions = getCache<Mention[]>(cacheKey);
 
       if (!ytMentions) {
@@ -199,7 +204,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch from News API if API key is configured
     if (process.env.NEWS_API_KEY && (!source || source === 'all' || source === 'news')) {
-      const cacheKey = getCacheKey('news', `${brand}-${category}`);
+      const cacheKey = getCacheKey('news', `${brand}-${category}-${product}`);
       let newsMentions = getCache<Mention[]>(cacheKey);
 
       if (!newsMentions) {
