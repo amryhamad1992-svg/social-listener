@@ -120,9 +120,21 @@ export function detectBrandCategory(brand: string): BrandCategory | null {
   return null;
 }
 
-// Detect product category from product name
-export function detectProductCategory(product: string): string {
+// Detect product category from product name AND brand
+export function detectProductCategory(product: string, brand?: string): string {
   const productLower = product.toLowerCase();
+  const brandLower = brand?.toLowerCase() || '';
+  const combined = `${brandLower} ${productLower}`;
+
+  // Tech products - MUST CHECK FIRST
+  if (/(pixel|iphone|galaxy|android|phone|smartphone)/i.test(combined)) return 'Smartphone';
+  if (/(macbook|laptop|notebook|chromebook|surface)/i.test(combined)) return 'Laptop';
+  if (/(ipad|tablet|kindle)/i.test(combined)) return 'Tablet';
+  if (/(airpods|earbuds|headphones|headset)/i.test(combined)) return 'Audio Device';
+  if (/(watch|smartwatch|fitbit|fitness tracker)/i.test(combined)) return 'Wearable';
+  if (/(computer|desktop|pc|gaming rig)/i.test(combined)) return 'Computer';
+  if (/(camera|dslr|mirrorless)/i.test(combined)) return 'Camera';
+  if (/(console|playstation|xbox|nintendo|switch)/i.test(combined)) return 'Gaming Console';
 
   // Hair tools
   if (/(dryer|blow|blowout|hair dryer)/i.test(productLower)) return 'Hair Dryer';
@@ -145,6 +157,12 @@ export function detectProductCategory(product: string): string {
   if (/(blush|bronzer|contour)/i.test(productLower)) return 'Face Color';
 
   return 'Beauty Product';
+}
+
+// Detect if product is tech/electronics
+export function isTechProduct(product: string, brand?: string): boolean {
+  const category = detectProductCategory(product, brand);
+  return ['Smartphone', 'Laptop', 'Tablet', 'Audio Device', 'Wearable', 'Computer', 'Camera', 'Gaming Console'].includes(category);
 }
 
 // ===========================
@@ -243,7 +261,10 @@ export function generateCreativeQueries(brand: string, product: string): string[
 // 5. CROSS-PLATFORM DEMOGRAPHIC SYNTHESIS
 // ===========================
 
-export function synthesizeDemographics(platformCounts: Record<string, number>): {
+export function synthesizeDemographics(
+  platformCounts: Record<string, number>,
+  isTech: boolean = false
+): {
   ageRange: string;
   genderSkew: string;
   incomeLevel: string;
@@ -251,6 +272,15 @@ export function synthesizeDemographics(platformCounts: Record<string, number>): 
 } {
   const total = Object.values(platformCounts).reduce((sum, count) => sum + count, 0);
   if (total === 0) {
+    // Different defaults for tech vs beauty products
+    if (isTech) {
+      return {
+        ageRange: '25-45',
+        genderSkew: '60% Male, 40% Female',
+        incomeLevel: 'Middle to Upper-Middle ($60K-$120K)',
+        traits: ['Tech-savvy', 'Research-oriented', 'Early adopters', 'Quality-focused'],
+      };
+    }
     return {
       ageRange: '25-45',
       genderSkew: '60% Female, 40% Male',

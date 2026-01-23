@@ -5,6 +5,7 @@ import {
   synthesizeDemographics,
   detectBrandCategory,
   detectProductCategory,
+  isTechProduct,
   ExtractedSignals,
 } from '@/lib/personaEnrichment';
 import {
@@ -137,10 +138,14 @@ ${brandCategory ? `CATEGORY LOOKALIKE BRANDS: ${brandCategory.lookalikeBrands.sl
 
 ${enrichedContext}
 
+CRITICAL: Use ACTUAL DEMOGRAPHIC RESEARCH for this specific product category. For tech products (smartphones, laptops, etc.), use real market data showing tech buyers are predominantly male (55-65%). For beauty products, use beauty industry demographics. DO NOT apply beauty demographics to tech products or vice versa.
+
 Create a comprehensive persona using both the real data signals above AND your knowledge of this brand/product category in the ${country.name} market. The platform demographics, regional preferences, and extracted signals should heavily influence your persona. Remember to tailor the persona to ${country.name} cultural and consumer behaviors.`
     : `You are a market research analyst with deep knowledge of consumer brands in the ${country.name} market. Create a detailed audience persona profile for "${brand} ${product}" targeting ${country.flag} ${country.name.toUpperCase()} consumers.
 
 ${enrichedContext}
+
+CRITICAL: Use ACTUAL DEMOGRAPHIC RESEARCH for this specific product category. For tech products (smartphones, laptops, etc.), use real market data showing tech buyers are predominantly male (55-65%). For beauty products, use beauty industry demographics. DO NOT apply beauty demographics to tech products or vice versa.
 
 Use your extensive knowledge about this brand, product category, ${country.name} market preferences, and the category insights provided to create an accurate persona tailored to ${country.name} consumers.`;
 
@@ -234,8 +239,9 @@ export async function POST(request: NextRequest) {
 
     // ENHANCEMENT 1: Detect brand/product categories (zero cost)
     const brandCategory = detectBrandCategory(brand);
-    const productCategory = detectProductCategory(product);
-    console.log(`[Persona] Category detected: ${brandCategory?.category || 'Unknown'}, Product: ${productCategory}`);
+    const productCategory = detectProductCategory(product, brand);
+    const isTech = isTechProduct(product, brand);
+    console.log(`[Persona] Category detected: ${brandCategory?.category || 'Unknown'}, Product: ${productCategory}, IsTech: ${isTech}`);
 
     // ENHANCEMENT 2: Use creative, targeted queries (same cost, better results)
     const searchQueries = generateCreativeQueries(brand, product);
@@ -272,7 +278,7 @@ export async function POST(request: NextRequest) {
 
     // ENHANCEMENT 4: Adjust platform demographics for target country
     const adjustedPlatforms = adjustPlatformDemographicsForCountry(signals.platforms, countryData);
-    const platformDemo = synthesizeDemographics(adjustedPlatforms);
+    const platformDemo = synthesizeDemographics(adjustedPlatforms, isTech);
     console.log(`[Persona] Platform demographics (${countryData.name}):`, platformDemo);
 
     // ENHANCEMENT 5: Send enriched, structured data to GPT (not raw text) with regional context
