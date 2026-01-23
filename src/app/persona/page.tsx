@@ -189,7 +189,7 @@ export default function PersonaPage() {
             <div className="flex items-center gap-6">
               {/* Logo Section */}
               <div className="flex items-center gap-3 flex-shrink-0">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#0F172A] to-[#1E293B] flex items-center justify-center flex-shrink-0">
                   <User className="w-5 h-5 text-white" />
                 </div>
                 <div>
