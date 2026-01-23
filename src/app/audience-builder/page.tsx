@@ -1,26 +1,26 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/Sidebar';
+import { COUNTRY_OPTIONS } from '@/constants/countries';
 import {
   Loader2,
   Copy,
   Download,
   Check,
   Sparkles,
-  RefreshCw,
   ChevronDown,
-  Tag,
-  Globe,
   Zap,
   Target,
   Hash,
-  MessageSquare,
-  TrendingUp,
+  Globe,
   Plus,
-  Ban,
   Minus,
+  TrendingUp,
+  MessageSquare,
+  Ban,
+  RefreshCw,
 } from 'lucide-react';
 
 interface Brand {
@@ -46,17 +46,19 @@ interface AISuggestions {
   negative: string[];
 }
 
+const SUGGESTED_PRODUCTS = [
+  { brand: 'Weleda', product: 'Skin Food' },
+  { brand: 'Babyliss', product: 'Pro Ceramic Hair Dryer' },
+  { brand: 'Olaplex', product: 'No. 3 Hair Perfector' },
+];
+
 export default function AudienceBuilder2Page() {
   const router = useRouter();
 
-  // Brand data
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [loadingBrands, setLoadingBrands] = useState(true);
-
-  // Selection state
-  const [selectedBrand, setSelectedBrand] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
+  // Form inputs
+  const [brand, setBrand] = useState('');
+  const [product, setProduct] = useState('');
+  const [country, setCountry] = useState('US');
   const [outputType, setOutputType] = useState<'keywords' | 'domains'>('keywords');
   const [targetingTypes, setTargetingTypes] = useState<string[]>(['branded', 'generic', 'competitor']);
 
@@ -64,56 +66,12 @@ export default function AudienceBuilder2Page() {
   const [results, setResults] = useState<Results | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState('');
 
   // AI suggestions state
   const [aiSuggestions, setAiSuggestions] = useState<AISuggestions | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [showAiSuggestions, setShowAiSuggestions] = useState(false);
-
-  // Fetch brand data on mount
-  useEffect(() => {
-    async function fetchBrands() {
-      try {
-        const res = await fetch('/api/audience-builder');
-        const data = await res.json();
-        if (data.success) {
-          setBrands(data.brands);
-          if (data.brands.length > 0) {
-            setSelectedBrand(data.brands[0].id);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch brands:', error);
-      } finally {
-        setLoadingBrands(false);
-      }
-    }
-    fetchBrands();
-  }, []);
-
-  // Update category when brand changes
-  useEffect(() => {
-    const brand = brands.find(b => b.id === selectedBrand);
-    if (brand && brand.categories.length > 0) {
-      setSelectedCategory(brand.categories[0].id);
-    } else {
-      setSelectedCategory('');
-    }
-  }, [selectedBrand, brands]);
-
-  // Update subcategory when category changes
-  useEffect(() => {
-    const brand = brands.find(b => b.id === selectedBrand);
-    const category = brand?.categories.find(c => c.id === selectedCategory);
-    if (category && category.subCategories.length > 0) {
-      setSelectedSubCategory(category.subCategories[0]);
-    } else {
-      setSelectedSubCategory('');
-    }
-  }, [selectedCategory, selectedBrand, brands]);
-
-  const currentBrand = brands.find(b => b.id === selectedBrand);
-  const currentCategory = currentBrand?.categories.find(c => c.id === selectedCategory);
 
   const toggleTargetingType = (type: string) => {
     setTargetingTypes(prev =>
@@ -124,9 +82,13 @@ export default function AudienceBuilder2Page() {
   };
 
   const handleGenerate = async () => {
-    if (!selectedBrand || !selectedCategory || !selectedSubCategory) return;
+    if (!brand.trim() || !product.trim()) {
+      setError('Please enter both brand and product');
+      return;
+    }
 
     setLoading(true);
+    setError('');
     setResults(null);
     setAiSuggestions(null);
     setShowAiSuggestions(false);
@@ -136,9 +98,9 @@ export default function AudienceBuilder2Page() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          brand: selectedBrand,
-          category: selectedCategory,
-          subCategory: selectedSubCategory,
+          brand: brand.trim(),
+          product: product.trim(),
+          country: country,
           outputType,
           targetingTypes,
         }),
@@ -147,12 +109,19 @@ export default function AudienceBuilder2Page() {
       const data = await res.json();
       if (data.success) {
         setResults(data.data.results);
+      } else {
+        setError(data.error || 'Failed to generate keywords');
       }
-    } catch (error) {
-      console.error('Failed to generate:', error);
+    } catch {
+      setError('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSuggestion = (suggestion: { brand: string; product: string }) => {
+    setBrand(suggestion.brand);
+    setProduct(suggestion.product);
   };
 
   const handleAISuggestions = useCallback(async () => {
@@ -172,8 +141,8 @@ export default function AudienceBuilder2Page() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           keywords: allKeywords,
-          category: currentCategory?.name || 'Beauty',
-          subCategory: selectedSubCategory,
+          brand: brand,
+          product: product,
         }),
       });
 
@@ -186,7 +155,7 @@ export default function AudienceBuilder2Page() {
     } finally {
       setAiLoading(false);
     }
-  }, [results, currentCategory?.name, selectedSubCategory]);
+  }, [results, brand, product]);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -196,7 +165,7 @@ export default function AudienceBuilder2Page() {
   // Export as text
   const exportAsText = () => {
     let text = `Audience Builder Export\n`;
-    text += `Brand: ${currentBrand?.name} > ${currentCategory?.name} > ${selectedSubCategory}\n`;
+    text += `Brand: ${brand} ${product}\n`;
     text += `Output: ${outputType === 'keywords' ? 'Keywords' : 'Domains'}\n`;
     text += `Generated: ${new Date().toLocaleDateString()}\n`;
     text += `${'='.repeat(50)}\n\n`;
@@ -281,7 +250,7 @@ export default function AudienceBuilder2Page() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `audience-${selectedBrand}-${selectedCategory}-${selectedSubCategory}.csv`;
+    a.download = `audience-${brand.replace(/\s/g, '-')}-${product.replace(/\s/g, '-')}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -308,14 +277,8 @@ export default function AudienceBuilder2Page() {
       <Sidebar onLogout={handleLogout} />
       <main className="flex-1 overflow-auto">
         <div className="px-8 pt-5 pb-8 space-y-6">
-          {loadingBrands ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="w-6 h-6 animate-spin text-[#16949b]" />
-            </div>
-          ) : (
-            <>
-              {/* Header with Logo and Inline Filters - Trend Radar Style */}
-              <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
+          {/* Header with Logo and Inline Filters - Trend Radar Style */}
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
                 <div className="flex items-center gap-6">
                   {/* Logo Section */}
                   <div className="flex items-center gap-3 flex-shrink-0">
@@ -336,43 +299,35 @@ export default function AudienceBuilder2Page() {
 
                   {/* Inline Filters */}
                   <div className="flex items-center gap-4 flex-wrap flex-1">
-                    {/* Brand */}
-                    <div className="relative">
-                      <select
-                        value={selectedBrand}
-                        onChange={(e) => setSelectedBrand(e.target.value)}
-                        className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#F97316] cursor-pointer font-medium"
-                      >
-                        {brands.map(brand => (
-                          <option key={brand.id} value={brand.id}>{brand.name}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B] pointer-events-none" />
-                    </div>
+                    {/* Brand Input */}
+                    <input
+                      type="text"
+                      value={brand}
+                      onChange={(e) => setBrand(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
+                      placeholder="Brand (e.g., Weleda)"
+                      className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#F97316] font-medium w-44"
+                    />
 
-                    {/* Category */}
-                    <div className="relative">
-                      <select
-                        value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#F97316] cursor-pointer font-medium"
-                      >
-                        {currentBrand?.categories.map(cat => (
-                          <option key={cat.id} value={cat.id}>{cat.name}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B] pointer-events-none" />
-                    </div>
+                    {/* Product Input */}
+                    <input
+                      type="text"
+                      value={product}
+                      onChange={(e) => setProduct(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
+                      placeholder="Product (e.g., Skin Food)"
+                      className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#F97316] font-medium w-44"
+                    />
 
-                    {/* Sub-category */}
+                    {/* Country Dropdown */}
                     <div className="relative">
                       <select
-                        value={selectedSubCategory}
-                        onChange={(e) => setSelectedSubCategory(e.target.value)}
+                        value={country}
+                        onChange={(e) => setCountry(e.target.value)}
                         className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#F97316] cursor-pointer font-medium"
                       >
-                        {currentCategory?.subCategories.map(sub => (
-                          <option key={sub} value={sub}>{sub}</option>
+                        {COUNTRY_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
                         ))}
                       </select>
                       <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B] pointer-events-none" />
@@ -387,7 +342,7 @@ export default function AudienceBuilder2Page() {
                           : 'bg-white text-[#94A3B8] border-[#E2E8F0] hover:border-[#0F172A] hover:text-[#0F172A]'
                       }`}
                     >
-                      <Tag className="w-3 h-3" />
+                      <Hash className="w-3 h-3" />
                       Keywords
                     </button>
                     <button
@@ -420,7 +375,7 @@ export default function AudienceBuilder2Page() {
                     {/* Generate Button with Orange Color */}
                     <button
                       onClick={handleGenerate}
-                      disabled={loading || targetingTypes.length === 0}
+                      disabled={loading || !brand.trim() || !product.trim() || targetingTypes.length === 0}
                       className="flex items-center gap-2 px-4 py-1.5 text-[12px] text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-lg transition-colors disabled:opacity-50 font-medium"
                     >
                       {loading ? (
@@ -467,7 +422,35 @@ export default function AudienceBuilder2Page() {
                     )}
                   </div>
                 </div>
+
+                {/* Suggestions Row */}
+                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#E2E8F0]">
+                  <span className="text-[10px] text-[#94A3B8] font-medium mr-1">TRY:</span>
+                  {SUGGESTED_PRODUCTS.slice(0, 3).map((s, i) => {
+                    const colors = [
+                      'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100',
+                      'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100',
+                      'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100'
+                    ];
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => handleSuggestion(s)}
+                        className={`px-2.5 py-1 rounded-lg border text-[10px] font-medium transition-colors ${colors[i]}`}
+                      >
+                        {s.brand} {s.product}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg text-[12px]">
+                  {error}
+                </div>
+              )}
 
               {/* Stats Bar */}
               {results && (
@@ -670,12 +653,10 @@ export default function AudienceBuilder2Page() {
               {results && (
                 <div className="text-center">
                   <p className="text-[11px] text-[#94A3B8]">
-                    {getTotalItems()} {outputType} for {currentBrand?.name} &gt; {currentCategory?.name} &gt; {selectedSubCategory}
+                    {getTotalItems()} {outputType} for {brand} {product}
                   </p>
                 </div>
               )}
-            </>
-          )}
         </div>
       </main>
     </div>
