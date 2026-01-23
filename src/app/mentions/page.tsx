@@ -383,27 +383,35 @@ export default function MentionsPage() {
               <div className="flex items-center gap-4 flex-wrap flex-1">
                 {/* Brand Input */}
                 <input
+                  id="mentions-brand"
+                  name="brand"
                   type="text"
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   placeholder="Brand (e.g., Weleda)"
+                  autoComplete="off"
                   className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#10B981] font-medium w-44"
                 />
 
                 {/* Product Input */}
                 <input
+                  id="mentions-product"
+                  name="product"
                   type="text"
                   value={product}
                   onChange={(e) => setProduct(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   placeholder="Product (optional)"
+                  autoComplete="off"
                   className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#10B981] font-medium w-44"
                 />
 
                 {/* Period Dropdown */}
                 <div className="relative">
                   <select
+                    id="mentions-period"
+                    name="period"
                     value={days}
                     onChange={(e) => setDays(parseInt(e.target.value, 10))}
                     className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#10B981] cursor-pointer font-medium"
@@ -641,6 +649,8 @@ export default function MentionsPage() {
             <div className="flex items-center gap-3 flex-wrap">
               {/* Sentiment Filter */}
               <select
+                id="mentions-sentiment"
+                name="sentiment"
                 value={sentiment}
                 onChange={(e) => setSentiment(e.target.value)}
                 className="px-2.5 py-1 text-[10px] border border-[#E2E8F0] rounded bg-white focus:outline-none focus:border-[#0F172A]"
@@ -653,6 +663,8 @@ export default function MentionsPage() {
 
               {/* Sort */}
               <select
+                id="mentions-sort"
+                name="sortBy"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as 'recent' | 'engagement' | 'reach')}
                 className="px-2.5 py-1 text-[10px] border border-[#E2E8F0] rounded bg-white focus:outline-none focus:border-[#0F172A]"

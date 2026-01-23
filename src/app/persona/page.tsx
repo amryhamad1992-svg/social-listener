@@ -219,6 +219,8 @@ export default function PersonaPage() {
               <div className="flex items-center gap-4 flex-wrap flex-1">
                 {/* Brand Input */}
                 <input
+                  id="persona-brand"
+                  name="brand"
                   type="text"
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
@@ -230,6 +232,8 @@ export default function PersonaPage() {
 
                 {/* Product Input */}
                 <input
+                  id="persona-product"
+                  name="product"
                   type="text"
                   value={product}
                   onChange={(e) => setProduct(e.target.value)}
@@ -242,6 +246,8 @@ export default function PersonaPage() {
                 {/* Country Dropdown */}
                 <div className="relative">
                   <select
+                    id="persona-country"
+                    name="country"
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
                     className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3B82F6] cursor-pointer font-medium"

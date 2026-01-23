@@ -75,15 +75,18 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div>
-                <label className="block text-[12px] font-medium text-[#64748B] uppercase tracking-wider mb-1.5">
+                <label htmlFor="login-name" className="block text-[12px] font-medium text-[#64748B] uppercase tracking-wider mb-1.5">
                   Name
                 </label>
                 <input
+                  id="login-name"
+                  name="name"
                   type="text"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
+                  autoComplete="name"
                   className="w-full px-3 py-2 text-[13px] border border-[#E2E8F0] rounded focus:outline-none focus:border-[#0EA5E9]"
                   placeholder="Your name"
                 />
@@ -91,33 +94,39 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label className="block text-[12px] font-medium text-[#64748B] uppercase tracking-wider mb-1.5">
+              <label htmlFor="login-email" className="block text-[12px] font-medium text-[#64748B] uppercase tracking-wider mb-1.5">
                 Email
               </label>
               <input
+                id="login-email"
+                name="email"
                 type="email"
                 required
                 value={formData.email}
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
+                autoComplete="email"
                 className="w-full px-3 py-2 text-[13px] border border-[#E2E8F0] rounded focus:outline-none focus:border-[#0EA5E9]"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label className="block text-[12px] font-medium text-[#64748B] uppercase tracking-wider mb-1.5">
+              <label htmlFor="login-password" className="block text-[12px] font-medium text-[#64748B] uppercase tracking-wider mb-1.5">
                 Password
               </label>
               <div className="relative">
                 <input
+                  id="login-password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={formData.password}
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })
                   }
+                  autoComplete={isLogin ? 'current-password' : 'new-password'}
                   className="w-full px-3 py-2 text-[13px] border border-[#E2E8F0] rounded focus:outline-none focus:border-[#0EA5E9] pr-10"
                   placeholder="••••••••"
                 />

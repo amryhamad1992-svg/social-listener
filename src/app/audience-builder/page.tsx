@@ -301,27 +301,35 @@ export default function AudienceBuilder2Page() {
               <div className="flex items-center gap-4 flex-wrap flex-1">
                 {/* Brand Input */}
                 <input
+                  id="audience-brand"
+                  name="brand"
                   type="text"
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
                   placeholder="Brand (e.g., Weleda)"
+                  autoComplete="off"
                   className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#F97316] font-medium w-44"
                 />
 
                 {/* Product Input */}
                 <input
+                  id="audience-product"
+                  name="product"
                   type="text"
                   value={product}
                   onChange={(e) => setProduct(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
                   placeholder="Product (e.g., Skin Food)"
+                  autoComplete="off"
                   className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#F97316] font-medium w-44"
                 />
 
                 {/* Country Dropdown */}
                 <div className="relative">
                   <select
+                    id="audience-country"
+                    name="country"
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
                     className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#F97316] cursor-pointer font-medium"
