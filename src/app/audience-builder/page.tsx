@@ -307,7 +307,7 @@ export default function AudienceBuilder2Page() {
     <div className="flex h-screen bg-[#F8FAFC]">
       <Sidebar onLogout={handleLogout} />
       <main className="flex-1 overflow-auto">
-        <div className="px-8 pt-6 pb-8 space-y-6">
+        <div className="px-8 pt-5 pb-8 space-y-6">
           {loadingBrands ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="w-6 h-6 animate-spin text-[#16949b]" />

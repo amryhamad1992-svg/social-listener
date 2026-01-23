@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/Sidebar';
+import { COUNTRY_OPTIONS } from '@/constants/countries';
 import {
   Loader2,
   Users,
@@ -75,6 +76,7 @@ export default function PersonaPage() {
 
   const [brand, setBrand] = useState('');
   const [product, setProduct] = useState('');
+  const [country, setCountry] = useState('US');
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<PersonaData | null>(null);
   const [error, setError] = useState('');
@@ -94,7 +96,11 @@ export default function PersonaPage() {
       const res = await fetch('/api/persona', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ brand: brand.trim(), product: product.trim() }),
+        body: JSON.stringify({
+          brand: brand.trim(),
+          product: product.trim(),
+          country: country,
+        }),
       });
 
       const result = await res.json();
@@ -225,6 +231,20 @@ export default function PersonaPage() {
                   placeholder="Product (e.g., Skin Food)"
                   className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3B82F6] font-medium w-44"
                 />
+
+                {/* Country Dropdown */}
+                <div className="relative">
+                  <select
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3B82F6] cursor-pointer font-medium"
+                  >
+                    {COUNTRY_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B] pointer-events-none" />
+                </div>
 
                 {/* Generate Button with Blue Color */}
                 <button

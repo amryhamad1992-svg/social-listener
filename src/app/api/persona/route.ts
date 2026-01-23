@@ -7,6 +7,12 @@ import {
   detectProductCategory,
   ExtractedSignals,
 } from '@/lib/personaEnrichment';
+import {
+  COUNTRIES,
+  convertIncomeRange,
+  adjustPlatformDemographicsForCountry,
+  getRegionalContext,
+} from '@/constants/countries';
 
 const BRAVE_API_KEY = process.env.BRAVE_API_KEY;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -79,7 +85,8 @@ async function analyzeWithGPT(
   searchData: BraveSearchResult[],
   signals: ExtractedSignals,
   platformDemo: ReturnType<typeof synthesizeDemographics>,
-  brandCategory: ReturnType<typeof detectBrandCategory> | null
+  brandCategory: ReturnType<typeof detectBrandCategory> | null,
+  country: typeof COUNTRIES[keyof typeof COUNTRIES]
 ): Promise<PersonaProfile> {
   if (!OPENAI_API_KEY) {
     throw new Error('OpenAI API key not configured');
@@ -87,9 +94,14 @@ async function analyzeWithGPT(
 
   const hasSearchData = searchData.length > 0;
 
-  // ENHANCEMENT: Send structured signals instead of raw text (reduces tokens by 40%)
+  // Convert income level to local currency
+  const localizedIncome = convertIncomeRange(platformDemo.incomeLevel, country);
+
+  // ENHANCEMENT: Send structured signals with regional context instead of raw text (reduces tokens by 40%)
   const enrichedContext = hasSearchData
-    ? `PLATFORM DISTRIBUTION (Real data from ${searchData.length} sources):
+    ? `${getRegionalContext(country)}
+
+PLATFORM DISTRIBUTION (Real data from ${searchData.length} sources):
 ${Object.entries(signals.platforms)
   .map(([platform, count]) => `- ${platform}: ${count} mentions`)
   .join('\n')}
@@ -102,7 +114,7 @@ DEMOGRAPHIC SIGNALS EXTRACTED:
 SYNTHESIZED PLATFORM DEMOGRAPHICS:
 - Age Range: ${platformDemo.ageRange}
 - Gender Skew: ${platformDemo.genderSkew}
-- Income Level: ${platformDemo.incomeLevel}
+- Income Level: ${localizedIncome}
 - Key Traits: ${platformDemo.traits.join(', ')}
 
 SENTIMENT SIGNALS:
@@ -114,21 +126,23 @@ PRICE POINT: ${brandCategory?.pricePoint || 'Mid-range'}
 
 TOP SEARCH INSIGHTS (First 8 sources):
 ${searchData.slice(0, 8).map((r, i) => `${i + 1}. ${r.title.slice(0, 100)}`).join('\n')}`
-    : `BRAND CATEGORY: ${brandCategory?.category || 'General Beauty'}
+    : `${getRegionalContext(country)}
+
+BRAND CATEGORY: ${brandCategory?.category || 'General Beauty'}
 PRICE POINT: ${brandCategory?.pricePoint || 'Mid-range'}
 ${brandCategory ? `CATEGORY LOOKALIKE BRANDS: ${brandCategory.lookalikeBrands.slice(0, 6).join(', ')}` : ''}`;
 
   const prompt = hasSearchData
-    ? `You are a market research analyst. Using the ENRICHED DATA SIGNALS below about "${brand} ${product}", create a detailed audience persona profile.
+    ? `You are a market research analyst specializing in the ${country.name} market. Using the ENRICHED DATA SIGNALS below about "${brand} ${product}", create a detailed audience persona profile FOR ${country.flag} ${country.name.toUpperCase()} CONSUMERS.
 
 ${enrichedContext}
 
-Create a comprehensive persona using both the real data signals above AND your knowledge of this brand/product category. The platform demographics and extracted signals should heavily influence your persona.`
-    : `You are a market research analyst with deep knowledge of consumer brands. Create a detailed audience persona profile for "${brand} ${product}".
+Create a comprehensive persona using both the real data signals above AND your knowledge of this brand/product category in the ${country.name} market. The platform demographics, regional preferences, and extracted signals should heavily influence your persona. Remember to tailor the persona to ${country.name} cultural and consumer behaviors.`
+    : `You are a market research analyst with deep knowledge of consumer brands in the ${country.name} market. Create a detailed audience persona profile for "${brand} ${product}" targeting ${country.flag} ${country.name.toUpperCase()} consumers.
 
 ${enrichedContext}
 
-Use your extensive knowledge about this brand, product category, and the category insights provided to create an accurate persona.`;
+Use your extensive knowledge about this brand, product category, ${country.name} market preferences, and the category insights provided to create an accurate persona tailored to ${country.name} consumers.`;
 
   const jsonSchema = `
 Provide the persona in this JSON format:
@@ -137,9 +151,9 @@ Provide the persona in this JSON format:
   "demographics": {
     "ageRange": "e.g., 25-45",
     "genderSkew": "e.g., 70% Female, 30% Male",
-    "incomeLevel": "e.g., Middle to Upper-Middle ($60K-$120K)",
+    "incomeLevel": "e.g., Middle to Upper-Middle (${country.currencySymbol}60K-${country.currencySymbol}120K) - USE ${country.currency} CURRENCY",
     "education": "e.g., College educated",
-    "location": "e.g., Urban/Suburban areas, eco-conscious regions"
+    "location": "e.g., ${country.name} - Urban/Suburban areas, key regional insights"
   },
   "psychographics": {
     "values": ["array of 4-6 core values"],
@@ -206,7 +220,7 @@ Return ONLY valid JSON, no additional text.`;
 
 export async function POST(request: NextRequest) {
   try {
-    const { brand, product } = await request.json();
+    const { brand, product, country = 'US' } = await request.json();
 
     if (!brand || !product) {
       return NextResponse.json(
@@ -215,7 +229,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[Persona] Generating for: ${brand} ${product}`);
+    const countryData = COUNTRIES[country] || COUNTRIES.US;
+    console.log(`[Persona] Generating for: ${brand} ${product} (${countryData.flag} ${countryData.name})`);
 
     // ENHANCEMENT 1: Detect brand/product categories (zero cost)
     const brandCategory = detectBrandCategory(brand);
@@ -255,12 +270,13 @@ export async function POST(request: NextRequest) {
       benefits: signals.benefits.length,
     });
 
-    // ENHANCEMENT 4: Synthesize demographics from platform distribution
-    const platformDemo = synthesizeDemographics(signals.platforms);
-    console.log(`[Persona] Platform demographics:`, platformDemo);
+    // ENHANCEMENT 4: Adjust platform demographics for target country
+    const adjustedPlatforms = adjustPlatformDemographicsForCountry(signals.platforms, countryData);
+    const platformDemo = synthesizeDemographics(adjustedPlatforms);
+    console.log(`[Persona] Platform demographics (${countryData.name}):`, platformDemo);
 
-    // ENHANCEMENT 5: Send enriched, structured data to GPT (not raw text)
-    const persona = await analyzeWithGPT(brand, product, topResults, signals, platformDemo, brandCategory);
+    // ENHANCEMENT 5: Send enriched, structured data to GPT (not raw text) with regional context
+    const persona = await analyzeWithGPT(brand, product, topResults, signals, platformDemo, brandCategory, countryData);
 
     return NextResponse.json({
       success: true,
