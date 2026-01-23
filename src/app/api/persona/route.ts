@@ -100,80 +100,46 @@ async function analyzeWithGPT(
   // Convert income level to local currency
   const localizedIncome = convertIncomeRange(platformDemo.incomeLevel, country);
 
-  // ENHANCEMENT: Send structured signals with regional context instead of raw text (reduces tokens by 40%)
-  const enrichedContext = hasSearchData
-    ? `${getRegionalContext(country)}
+  // SIMPLE, DIRECT PROMPT - No ambiguity
+  const prompt = isTech
+    ? `Create an audience persona for "${brand} ${product}" buyers in ${country.name}.
 
-PLATFORM DISTRIBUTION (Real data from ${searchData.length} sources):
-${Object.entries(signals.platforms)
-  .map(([platform, count]) => `- ${platform}: ${count} mentions`)
-  .join('\n')}
+MANDATORY REQUIREMENTS (DO NOT IGNORE):
 
-DEMOGRAPHIC SIGNALS EXTRACTED:
-- Age mentions: ${signals.ages.slice(0, 10).join(', ') || 'Not specified'}
-- Gender mentions: ${signals.genders.slice(0, 5).join(', ') || 'Not specified'}
-- Price signals: ${signals.prices.slice(0, 10).join(', ') || 'Not specified'}
+1. GENDER: 62% Male, 38% Female
+   - This is a TECHNOLOGY product (smartphone/electronics)
+   - Tech buyers are predominantly MALE worldwide
+   - DO NOT use 60% Female - that is WRONG for tech
 
-SYNTHESIZED PLATFORM DEMOGRAPHICS:
-- Age Range: ${platformDemo.ageRange}
-- Gender Skew: ${platformDemo.genderSkew}
-- Income Level: ${localizedIncome}
-- Key Traits: ${platformDemo.traits.join(', ')}
+2. LOOKALIKE BRANDS (ONLY THESE - NO OTHERS):
+   Apple, Samsung, OnePlus, Xiaomi, Huawei, Sony, LG, Motorola, Nokia, ASUS, Google, Microsoft, Nothing, Oppo, Vivo, Realme, Honor, Lenovo, Dell, HP
 
-SENTIMENT SIGNALS:
-- Positive mentions: ${signals.benefits.length} (${signals.benefits.slice(0, 5).join(', ')})
-- Negative mentions: ${signals.complaints.length} (${signals.complaints.slice(0, 3).join(', ')})
+   FORBIDDEN BRANDS (NEVER INCLUDE):
+   Fenty, L'Oréal, Glossier, Clinique, Neutrogena, Dyson, GHD, Olaplex, CeraVe, Maybelline, Revlon, NYX, MAC, Estee Lauder, Lancome, Dior, Chanel
 
-BRAND CATEGORY: ${brandCategory?.category || 'General Beauty'}
-PRICE POINT: ${brandCategory?.pricePoint || 'Mid-range'}
+3. INTERESTS: Technology, gadgets, gaming, productivity, mobile apps, streaming, social media, sports
 
-TOP SEARCH INSIGHTS (First 8 sources):
-${searchData.slice(0, 8).map((r, i) => `${i + 1}. ${r.title.slice(0, 100)}`).join('\n')}`
-    : `${getRegionalContext(country)}
+4. SHOPPING: Best Buy, Amazon, carrier stores, tech retailers - NOT beauty stores
 
-BRAND CATEGORY: ${brandCategory?.category || 'General Beauty'}
-PRICE POINT: ${brandCategory?.pricePoint || 'Mid-range'}
-${brandCategory ? `CATEGORY LOOKALIKE BRANDS: ${brandCategory.lookalikeBrands.slice(0, 6).join(', ')}` : ''}`;
+${hasSearchData ? `SEARCH DATA (${searchData.length} sources found):
+${searchData.slice(0, 5).map(r => `- ${r.title}`).join('\n')}` : ''}
 
-  const prompt = hasSearchData
-    ? `You are a market research analyst specializing in the ${country.name} market. Using the ENRICHED DATA SIGNALS below about "${brand} ${product}", create a detailed audience persona profile FOR ${country.flag} ${country.name.toUpperCase()} CONSUMERS.
+CURRENCY: Use ${country.currency} (${country.currencySymbol})`
+    : `Create an audience persona for "${brand} ${product}" buyers in ${country.name}.
 
-${enrichedContext}
+PRODUCT TYPE: Beauty/Cosmetics
 
-⚠️ CRITICAL INSTRUCTIONS - READ CAREFULLY:
+1. GENDER: 68% Female, 32% Male (beauty product buyers)
 
-1. PRODUCT CATEGORY: "${brand} ${product}" is a ${productCategory}. ${isTech ? '🔧 THIS IS A TECH PRODUCT - NOT A BEAUTY PRODUCT!' : '💄 THIS IS A BEAUTY PRODUCT - NOT A TECH PRODUCT!'}
+2. LOOKALIKE BRANDS: Only beauty/cosmetics brands matching this product category
+   ${brandCategory ? `Suggested: ${brandCategory.lookalikeBrands.join(', ')}` : ''}
 
-2. DEMOGRAPHICS - USE REAL MARKET DATA:
-   ${isTech ? '- Gender: Tech products = 60-65% MALE, 35-40% Female (based on actual smartphone/tech buyer demographics)' : '- Gender: Beauty products = 60-75% Female, 25-40% Male'}
-   - DO NOT use platform demographics alone - they are biased toward beauty audiences
-   - Override platform data with ACTUAL category research
+3. INTERESTS: Beauty, skincare, self-care, wellness, fashion, lifestyle
 
-3. LOOKALIKE BRANDS - STAY IN THE SAME CATEGORY:
-   ${isTech ? '- ONLY tech/electronics brands: Apple, Samsung, OnePlus, Huawei, Xiaomi, Sony, LG, Motorola, ASUS, etc.' : '- ONLY beauty/cosmetics brands: matching the product category'}
-   - ❌ NEVER mix tech and beauty brands in lookalike list
-   - ❌ DO NOT include Fenty, L'Oréal, Glossier, etc. for tech products
-   - ✅ ONLY include brands in the SAME product category
+${hasSearchData ? `SEARCH DATA (${searchData.length} sources found):
+${searchData.slice(0, 5).map(r => `- ${r.title}`).join('\n')}` : ''}
 
-4. USE THE SEARCH DATA:
-   - Base your persona on the ${searchData.length} real search results provided
-   - Extract demographics, interests, and behaviors from actual user discussions
-   - The platform breakdown and signals are REAL DATA - use them
-
-Create a comprehensive persona using the real data above AND accurate market research for ${isTech ? 'TECH PRODUCTS' : 'BEAUTY PRODUCTS'} in ${country.name}.`
-    : `You are a market research analyst with deep knowledge of consumer brands in the ${country.name} market. Create a detailed audience persona profile for "${brand} ${product}" targeting ${country.flag} ${country.name.toUpperCase()} consumers.
-
-${enrichedContext}
-
-⚠️ CRITICAL INSTRUCTIONS:
-
-1. PRODUCT CATEGORY: "${brand} ${product}" is a ${productCategory}. ${isTech ? 'THIS IS A TECH PRODUCT!' : 'THIS IS A BEAUTY PRODUCT!'}
-
-2. DEMOGRAPHICS: ${isTech ? 'Tech buyers = 60-65% MALE, 35-40% Female' : 'Beauty buyers = 60-75% Female'}
-
-3. LOOKALIKE BRANDS: ${isTech ? 'ONLY tech brands (Apple, Samsung, OnePlus, etc.) - NO beauty brands!' : 'ONLY beauty brands - NO tech brands!'}
-
-Use accurate market research for ${isTech ? 'TECH PRODUCTS' : 'BEAUTY PRODUCTS'} in ${country.name}.`;
+CURRENCY: Use ${country.currency} (${country.currencySymbol})`;
 
   const jsonSchema = `
 Provide the persona in this JSON format:
@@ -248,28 +214,44 @@ Return ONLY valid JSON, no additional text.`;
 
   const persona = JSON.parse(jsonMatch[0]);
 
-  // POST-PROCESSING: Force remove beauty brands from tech products
-  if (isTech && persona.lookalikeBrands) {
-    const beautyBrands = [
-      'fenty', 'loreal', 'l\'oreal', 'maybelline', 'revlon', 'covergirl', 'nyx', 'elf',
-      'glossier', 'clinique', 'neutrogena', 'cerave', 'olaplex', 'dyson', 'ghd',
-      'babyliss', 'remington', 'conair', 'tresemme', 'pantene', 'dove', 'garnier',
-      'estee', 'lancome', 'dior', 'chanel', 'ysl', 'mac', 'bobbi', 'nars', 'urban decay'
-    ];
+  // DEBUG: Log what GPT returned before post-processing
+  console.log(`[Persona] RAW GPT RESPONSE - isTech: ${isTech}, Gender before fix: ${persona.demographics?.genderSkew}`);
 
-    persona.lookalikeBrands = persona.lookalikeBrands.filter((brand: string) => {
-      const brandLower = brand.toLowerCase();
-      return !beautyBrands.some(beautyBrand => brandLower.includes(beautyBrand));
-    });
+  // POST-PROCESSING: Force correct data for tech products
+  if (isTech) {
+    console.log('[Persona] ✅ APPLYING TECH POST-PROCESSING...');
+    // FORCE correct gender - GPT often ignores this instruction
+    if (persona.demographics) {
+      console.log(`[Persona] Changing gender from "${persona.demographics.genderSkew}" to "62% Male, 38% Female"`);
+      persona.demographics.genderSkew = '62% Male, 38% Female';
+    }
 
-    // Add tech brands if list is too short
-    const techBrands = ['Apple', 'Samsung', 'OnePlus', 'Xiaomi', 'Huawei', 'Sony', 'LG', 'Motorola', 'ASUS', 'Nokia'];
-    while (persona.lookalikeBrands.length < 8) {
-      const randomTech = techBrands[Math.floor(Math.random() * techBrands.length)];
-      if (!persona.lookalikeBrands.includes(randomTech)) {
-        persona.lookalikeBrands.push(randomTech);
+    // FORCE remove beauty brands from lookalikes
+    if (persona.lookalikeBrands) {
+      const beautyBrands = [
+        'fenty', 'loreal', 'l\'oreal', 'maybelline', 'revlon', 'covergirl', 'nyx', 'elf',
+        'glossier', 'clinique', 'neutrogena', 'cerave', 'olaplex', 'dyson', 'ghd',
+        'babyliss', 'remington', 'conair', 'tresemme', 'pantene', 'dove', 'garnier',
+        'estee', 'lancome', 'dior', 'chanel', 'ysl', 'mac', 'bobbi', 'nars', 'urban decay',
+        'sephora', 'ulta', 'beauty', 'cosmetic', 'skincare', 'makeup', 'hair'
+      ];
+
+      persona.lookalikeBrands = persona.lookalikeBrands.filter((b: string) => {
+        const brandLower = b.toLowerCase();
+        return !beautyBrands.some(bb => brandLower.includes(bb));
+      });
+
+      // Fill with tech brands if needed
+      const techBrands = ['Apple', 'Samsung', 'OnePlus', 'Xiaomi', 'Huawei', 'Sony', 'LG', 'Motorola', 'ASUS', 'Nokia', 'Google', 'Microsoft', 'Nothing', 'Oppo', 'Vivo'];
+      while (persona.lookalikeBrands.length < 8) {
+        const randomTech = techBrands[Math.floor(Math.random() * techBrands.length)];
+        if (!persona.lookalikeBrands.includes(randomTech)) {
+          persona.lookalikeBrands.push(randomTech);
+        }
       }
     }
+
+    console.log('[Persona] POST-PROCESSED for tech product - forced 62% Male gender');
   }
 
   return persona;
@@ -293,6 +275,8 @@ export async function POST(request: NextRequest) {
     const brandCategory = detectBrandCategory(brand);
     const productCategory = detectProductCategory(product, brand);
     const isTech = isTechProduct(product, brand);
+    console.log(`[Persona] ⚡ TECH DETECTION: brand="${brand}", product="${product}"`);
+    console.log(`[Persona] ⚡ RESULT: productCategory="${productCategory}", isTech=${isTech}`);
     console.log(`[Persona] Category detected: ${brandCategory?.category || 'Unknown'}, Product: ${productCategory}, IsTech: ${isTech}`);
 
     // ENHANCEMENT 2: Use creative, targeted queries (same cost, better results)
