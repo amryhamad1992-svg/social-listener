@@ -18,6 +18,83 @@ import {
 const BRAVE_API_KEY = process.env.BRAVE_API_KEY;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
+// Category detection using AI
+interface CategoryInfo {
+  category: string;
+  subcategory: string;
+  genderSplit: string;
+  lookalikeBrands: string[];
+}
+
+async function detectCategoryWithAI(brand: string, product: string): Promise<CategoryInfo> {
+  if (!OPENAI_API_KEY) {
+    return {
+      category: 'General',
+      subcategory: 'Consumer Product',
+      genderSplit: '50% Male, 50% Female',
+      lookalikeBrands: []
+    };
+  }
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a product categorization expert. Respond ONLY with valid JSON.'
+          },
+          {
+            role: 'user',
+            content: `Categorize this product: "${brand} ${product}"
+
+Return JSON:
+{
+  "category": "one of: Technology, Sports & Athletics, Fashion & Apparel, Beauty & Cosmetics, Home & Garden, Food & Beverage, Automotive, Health & Wellness, Entertainment, Finance, Travel, Other",
+  "subcategory": "specific type like Smartphone, Running Shoes, Skincare, etc.",
+  "genderSplit": "realistic buyer demographics like '65% Male, 35% Female' or '70% Female, 30% Male' based on actual market data for this product type",
+  "lookalikeBrands": ["8-10 competitor/similar brands in the SAME category - must be real brands that compete with ${brand}"]
+}`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 500,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Category detection failed');
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content || '';
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+
+    if (jsonMatch) {
+      const result = JSON.parse(jsonMatch[0]);
+      console.log(`[Persona] AI Category Detection: ${brand} ${product} → ${result.category} / ${result.subcategory}`);
+      console.log(`[Persona] AI Gender Split: ${result.genderSplit}`);
+      console.log(`[Persona] AI Lookalikes: ${result.lookalikeBrands?.join(', ')}`);
+      return result;
+    }
+  } catch (error) {
+    console.error('[Persona] Category detection error:', error);
+  }
+
+  return {
+    category: 'General',
+    subcategory: 'Consumer Product',
+    genderSplit: '50% Male, 50% Female',
+    lookalikeBrands: []
+  };
+}
+
 interface BraveSearchResult {
   title: string;
   description: string;
@@ -89,7 +166,8 @@ async function analyzeWithGPT(
   brandCategory: ReturnType<typeof detectBrandCategory> | null,
   country: typeof COUNTRIES[keyof typeof COUNTRIES],
   productCategory: string,
-  isTech: boolean
+  isTech: boolean,
+  aiCategory: CategoryInfo
 ): Promise<PersonaProfile> {
   if (!OPENAI_API_KEY) {
     throw new Error('OpenAI API key not configured');
@@ -118,46 +196,29 @@ Extracted Signals:
 - Negative sentiment: ${signals.complaints.slice(0, 3).join(', ') || 'None found'}
 ` : '';
 
-  // Build the prompt with real data
-  const prompt = isTech
-    ? `Create an audience persona for "${brand} ${product}" buyers in ${country.name}.
+  // Build DYNAMIC prompt using AI-detected category
+  const prompt = `Create an audience persona for "${brand} ${product}" buyers in ${country.name}.
 
-THIS IS A TECHNOLOGY PRODUCT (${productCategory}).
+PRODUCT CATEGORY: ${aiCategory.category} / ${aiCategory.subcategory}
 
 ${searchContext}
 
-MANDATORY REQUIREMENTS:
+MANDATORY REQUIREMENTS (from AI category analysis):
 
-1. GENDER: 62% Male, 38% Female
-   - Tech/smartphone buyers are predominantly MALE based on market research
-   - DO NOT default to female - that would be incorrect for tech
+1. GENDER SPLIT: ${aiCategory.genderSplit}
+   - This is based on real market research for ${aiCategory.subcategory} buyers
+   - Use this exact split, do not change it
 
-2. LOOKALIKE BRANDS - ONLY TECH BRANDS:
-   Apple, Samsung, OnePlus, Xiaomi, Huawei, Sony, LG, Motorola, Nokia, ASUS, Google, Microsoft, Nothing, Oppo, Vivo, Realme, Honor, Lenovo, Dell, HP
+2. LOOKALIKE BRANDS - Use ONLY these brands (they are competitors in the same category):
+   ${aiCategory.lookalikeBrands.join(', ')}
 
-   DO NOT INCLUDE: Fenty, L'Oréal, Glossier, Clinique, Dyson, GHD, or ANY beauty/cosmetics brands
+   DO NOT add brands from other categories. These are the verified competitors for ${brand}.
 
 3. Use the REAL SEARCH DATA above to inform:
-   - What platforms this audience uses
-   - Their interests and hobbies
+   - What platforms this audience uses (based on where discussions happen)
+   - Their interests and hobbies (relevant to ${aiCategory.category})
    - Shopping behavior and price sensitivity
    - Values and attitudes
-
-CURRENCY: ${country.currency} (${country.currencySymbol})`
-    : `Create an audience persona for "${brand} ${product}" buyers in ${country.name}.
-
-THIS IS A BEAUTY/COSMETICS PRODUCT (${productCategory}).
-
-${searchContext}
-
-REQUIREMENTS:
-
-1. GENDER: 68% Female, 32% Male (typical for beauty products)
-
-2. LOOKALIKE BRANDS - ONLY BEAUTY BRANDS:
-   ${brandCategory ? brandCategory.lookalikeBrands.join(', ') : 'Similar brands in this beauty category'}
-
-3. Use the REAL SEARCH DATA above to inform the persona details.
 
 CURRENCY: ${country.currency} (${country.currencySymbol})`;
 
@@ -235,44 +296,24 @@ Return ONLY valid JSON, no additional text.`;
   const persona = JSON.parse(jsonMatch[0]);
 
   // DEBUG: Log what GPT returned before post-processing
-  console.log(`[Persona] RAW GPT RESPONSE - isTech: ${isTech}, Gender before fix: ${persona.demographics?.genderSkew}`);
+  console.log(`[Persona] RAW GPT RESPONSE - Category: ${aiCategory.category}, Gender before fix: ${persona.demographics?.genderSkew}`);
 
-  // POST-PROCESSING: Force correct data for tech products
-  if (isTech) {
-    console.log('[Persona] ✅ APPLYING TECH POST-PROCESSING...');
-    // FORCE correct gender - GPT often ignores this instruction
-    if (persona.demographics) {
-      console.log(`[Persona] Changing gender from "${persona.demographics.genderSkew}" to "62% Male, 38% Female"`);
-      persona.demographics.genderSkew = '62% Male, 38% Female';
-    }
+  // POST-PROCESSING: Always force AI-detected values (GPT often ignores instructions)
+  console.log('[Persona] ✅ APPLYING POST-PROCESSING with AI-detected values...');
 
-    // FORCE remove beauty brands from lookalikes
-    if (persona.lookalikeBrands) {
-      const beautyBrands = [
-        'fenty', 'loreal', 'l\'oreal', 'maybelline', 'revlon', 'covergirl', 'nyx', 'elf',
-        'glossier', 'clinique', 'neutrogena', 'cerave', 'olaplex', 'dyson', 'ghd',
-        'babyliss', 'remington', 'conair', 'tresemme', 'pantene', 'dove', 'garnier',
-        'estee', 'lancome', 'dior', 'chanel', 'ysl', 'mac', 'bobbi', 'nars', 'urban decay',
-        'sephora', 'ulta', 'beauty', 'cosmetic', 'skincare', 'makeup', 'hair'
-      ];
-
-      persona.lookalikeBrands = persona.lookalikeBrands.filter((b: string) => {
-        const brandLower = b.toLowerCase();
-        return !beautyBrands.some(bb => brandLower.includes(bb));
-      });
-
-      // Fill with tech brands if needed
-      const techBrands = ['Apple', 'Samsung', 'OnePlus', 'Xiaomi', 'Huawei', 'Sony', 'LG', 'Motorola', 'ASUS', 'Nokia', 'Google', 'Microsoft', 'Nothing', 'Oppo', 'Vivo'];
-      while (persona.lookalikeBrands.length < 8) {
-        const randomTech = techBrands[Math.floor(Math.random() * techBrands.length)];
-        if (!persona.lookalikeBrands.includes(randomTech)) {
-          persona.lookalikeBrands.push(randomTech);
-        }
-      }
-    }
-
-    console.log('[Persona] POST-PROCESSED for tech product - forced 62% Male gender');
+  // FORCE correct gender from AI category detection
+  if (persona.demographics && aiCategory.genderSplit) {
+    console.log(`[Persona] Forcing gender from "${persona.demographics.genderSkew}" to "${aiCategory.genderSplit}"`);
+    persona.demographics.genderSkew = aiCategory.genderSplit;
   }
+
+  // FORCE correct lookalike brands from AI category detection
+  if (aiCategory.lookalikeBrands && aiCategory.lookalikeBrands.length > 0) {
+    console.log(`[Persona] Forcing lookalikes to: ${aiCategory.lookalikeBrands.join(', ')}`);
+    persona.lookalikeBrands = aiCategory.lookalikeBrands;
+  }
+
+  console.log(`[Persona] POST-PROCESSED for ${aiCategory.category} product`);
 
   return persona;
 }
@@ -291,13 +332,17 @@ export async function POST(request: NextRequest) {
     const countryData = COUNTRIES[country] || COUNTRIES.US;
     console.log(`[Persona] Generating for: ${brand} ${product} (${countryData.flag} ${countryData.name})`);
 
-    // ENHANCEMENT 1: Detect brand/product categories (zero cost)
+    // STEP 1: Use AI to detect category, gender split, and lookalike brands
+    console.log(`[Persona] 🤖 Calling AI for category detection...`);
+    const aiCategory = await detectCategoryWithAI(brand, product);
+    console.log(`[Persona] ✅ AI DETECTED: ${aiCategory.category} / ${aiCategory.subcategory}`);
+    console.log(`[Persona] ✅ AI GENDER: ${aiCategory.genderSplit}`);
+    console.log(`[Persona] ✅ AI LOOKALIKES: ${aiCategory.lookalikeBrands.join(', ')}`);
+
+    // Keep legacy detection for backwards compatibility
     const brandCategory = detectBrandCategory(brand);
-    const productCategory = detectProductCategory(product, brand);
-    const isTech = isTechProduct(product, brand);
-    console.log(`[Persona] ⚡ TECH DETECTION: brand="${brand}", product="${product}"`);
-    console.log(`[Persona] ⚡ RESULT: productCategory="${productCategory}", isTech=${isTech}`);
-    console.log(`[Persona] Category detected: ${brandCategory?.category || 'Unknown'}, Product: ${productCategory}, IsTech: ${isTech}`);
+    const productCategory = aiCategory.subcategory || detectProductCategory(product, brand);
+    const isTech = aiCategory.category === 'Technology';
 
     // ENHANCEMENT 2: Use creative, targeted queries (same cost, better results)
     const searchQueries = generateCreativeQueries(brand, product);
@@ -345,7 +390,7 @@ export async function POST(request: NextRequest) {
     console.log(`[Persona] Platform demographics (${countryData.name}):`, platformDemo);
 
     // ENHANCEMENT 5: Send enriched, structured data to GPT (not raw text) with regional context
-    const persona = await analyzeWithGPT(brand, product, topResults, signals, platformDemo, brandCategory, countryData, productCategory, isTech);
+    const persona = await analyzeWithGPT(brand, product, topResults, signals, platformDemo, brandCategory, countryData, productCategory, isTech, aiCategory);
 
     return NextResponse.json({
       success: true,
