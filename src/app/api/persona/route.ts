@@ -246,7 +246,33 @@ Return ONLY valid JSON, no additional text.`;
     throw new Error('Failed to parse persona from AI response');
   }
 
-  return JSON.parse(jsonMatch[0]);
+  const persona = JSON.parse(jsonMatch[0]);
+
+  // POST-PROCESSING: Force remove beauty brands from tech products
+  if (isTech && persona.lookalikeBrands) {
+    const beautyBrands = [
+      'fenty', 'loreal', 'l\'oreal', 'maybelline', 'revlon', 'covergirl', 'nyx', 'elf',
+      'glossier', 'clinique', 'neutrogena', 'cerave', 'olaplex', 'dyson', 'ghd',
+      'babyliss', 'remington', 'conair', 'tresemme', 'pantene', 'dove', 'garnier',
+      'estee', 'lancome', 'dior', 'chanel', 'ysl', 'mac', 'bobbi', 'nars', 'urban decay'
+    ];
+
+    persona.lookalikeBrands = persona.lookalikeBrands.filter((brand: string) => {
+      const brandLower = brand.toLowerCase();
+      return !beautyBrands.some(beautyBrand => brandLower.includes(beautyBrand));
+    });
+
+    // Add tech brands if list is too short
+    const techBrands = ['Apple', 'Samsung', 'OnePlus', 'Xiaomi', 'Huawei', 'Sony', 'LG', 'Motorola', 'ASUS', 'Nokia'];
+    while (persona.lookalikeBrands.length < 8) {
+      const randomTech = techBrands[Math.floor(Math.random() * techBrands.length)];
+      if (!persona.lookalikeBrands.includes(randomTech)) {
+        persona.lookalikeBrands.push(randomTech);
+      }
+    }
+  }
+
+  return persona;
 }
 
 export async function POST(request: NextRequest) {

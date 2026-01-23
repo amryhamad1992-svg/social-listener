@@ -154,7 +154,10 @@ function generateDomains(
   country: typeof COUNTRIES[keyof typeof COUNTRIES]
 ): string[] {
   const brandSlug = brand.toLowerCase().replace(/\s+/g, '-');
-  const productSlug = product.toLowerCase().replace(/\s+/g, '');
+  const combined = `${brand} ${product}`.toLowerCase();
+
+  // Detect if tech product
+  const isTech = /(pixel|iphone|galaxy|android|phone|smartphone|macbook|laptop|ipad|tablet|airpods|watch|smartwatch|computer|gaming)/i.test(combined);
 
   const domains: string[] = [];
 
@@ -167,38 +170,87 @@ function generateDomains(
       domains.push(`${brandSlug}.com`);
       domains.push(`www.${brandSlug}.com`);
       domains.push(`shop.${brandSlug}.com`);
+      domains.push(`store.${brandSlug}.com`);
+      domains.push(`buy.${brandSlug}.com`);
       // Country-specific brand sites
       if (country.code !== 'US') {
         const tld = country.code === 'UK' ? 'co.uk' : country.code.toLowerCase();
         domains.push(`${brandSlug}.${tld}`);
+        domains.push(`www.${brandSlug}.${tld}`);
       }
+      // Social commerce
+      domains.push(`${brandSlug}.shop`);
+      domains.push(`${brandSlug}.store`);
       break;
 
     case 'generic':
-      // Beauty/health retailers by country
-      if (country.code === 'US') {
-        domains.push('ulta.com', 'sephora.com', 'target.com', 'walmart.com', 'walgreens.com', 'cvs.com');
-      } else if (country.code === 'UK') {
-        domains.push('boots.com', 'superdrug.com', 'lookfantastic.com', 'feelunique.com', 'beautybay.com');
-      } else if (country.code === 'FR') {
-        domains.push('sephora.fr', 'nocibe.fr', 'marionnaud.fr', 'beautysuccess.fr', 'yves-rocher.fr');
-      } else if (country.code === 'DE') {
-        domains.push('douglas.de', 'dm.de', 'rossmann.de', 'mueller.de', 'flaconi.de');
-      } else if (country.code === 'IT') {
-        domains.push('sephora.it', 'douglas.it', 'tigota.it', 'kiko.com');
-      } else if (country.code === 'ES') {
-        domains.push('primor.eu', 'douglas.es', 'sephora.es', 'druni.es');
+      if (isTech) {
+        // Tech retailers by country
+        if (country.code === 'US') {
+          domains.push('bestbuy.com', 'apple.com', 'samsung.com', 'newegg.com', 'bhphotovideo.com',
+            'microcenter.com', 'adorama.com', 'walmart.com', 'target.com', 'costco.com',
+            'ebay.com', 'backmarket.com', 'gazelle.com', 'swappa.com', 'decluttr.com',
+            'verizon.com', 'att.com', 't-mobile.com', 'google.com/store', 'microsoft.com/store');
+        } else if (country.code === 'UK') {
+          domains.push('currys.co.uk', 'argos.co.uk', 'johnlewis.com', 'very.co.uk', 'ao.com',
+            'pcworld.co.uk', 'carphonewarehouse.com', 'apple.com/uk', 'samsung.com/uk',
+            'ee.co.uk', 'vodafone.co.uk', 'o2.co.uk', 'three.co.uk', 'scan.co.uk',
+            'overclockers.co.uk', 'cex.co.uk', 'musicmagpie.co.uk', 'amazon.co.uk');
+        } else if (country.code === 'FR') {
+          domains.push('fnac.com', 'darty.com', 'boulanger.com', 'cdiscount.com', 'ldlc.com',
+            'materiel.net', 'rueducommerce.fr', 'apple.com/fr', 'samsung.com/fr',
+            'orange.fr', 'sfr.fr', 'bouyguestelecom.fr', 'backmarket.fr');
+        } else if (country.code === 'DE') {
+          domains.push('mediamarkt.de', 'saturn.de', 'conrad.de', 'cyberport.de', 'notebooksbilliger.de',
+            'alternate.de', 'mindfactory.de', 'apple.com/de', 'samsung.com/de',
+            'telekom.de', 'vodafone.de', 'o2online.de', 'rebuy.de', 'clevertronic.de');
+        } else if (country.code === 'IT') {
+          domains.push('mediaworld.it', 'unieuro.it', 'euronics.it', 'trony.it', 'expert.it',
+            'apple.com/it', 'samsung.com/it', 'tim.it', 'vodafone.it', 'windtre.it');
+        } else if (country.code === 'ES') {
+          domains.push('mediamarkt.es', 'pccomponentes.com', 'elcorteingles.es', 'fnac.es', 'worten.es',
+            'apple.com/es', 'samsung.com/es', 'movistar.es', 'orange.es', 'vodafone.es');
+        }
+      } else {
+        // Beauty/health retailers by country
+        if (country.code === 'US') {
+          domains.push('ulta.com', 'sephora.com', 'target.com', 'walmart.com', 'walgreens.com',
+            'cvs.com', 'dermstore.com', 'bluemercury.com', 'spacenk.com', 'beautylish.com',
+            'nordstrom.com', 'macys.com', 'kohls.com', 'tjmaxx.com', 'marshalls.com');
+        } else if (country.code === 'UK') {
+          domains.push('boots.com', 'superdrug.com', 'lookfantastic.com', 'feelunique.com', 'beautybay.com',
+            'cultbeauty.co.uk', 'spacenk.com', 'johnlewis.com', 'marksandspencer.com', 'debenhams.com');
+        } else if (country.code === 'FR') {
+          domains.push('sephora.fr', 'nocibe.fr', 'marionnaud.fr', 'beautysuccess.fr', 'yves-rocher.fr',
+            'monoprix.fr', 'galerieslafayette.com', 'printemps.com');
+        } else if (country.code === 'DE') {
+          domains.push('douglas.de', 'dm.de', 'rossmann.de', 'mueller.de', 'flaconi.de',
+            'parfumdreams.de', 'notino.de', 'beautywelt.de');
+        } else if (country.code === 'IT') {
+          domains.push('sephora.it', 'douglas.it', 'tigota.it', 'kiko.com', 'limoni.it');
+        } else if (country.code === 'ES') {
+          domains.push('primor.eu', 'douglas.es', 'sephora.es', 'druni.es', 'perfumeriasjulia.es');
+        }
       }
       break;
 
     case 'competitor':
-      // Major competitor brand sites (generic beauty brands)
-      domains.push('loreal.com', 'maybelline.com', 'revlon.com', 'covergirl.com');
-      domains.push('dyson.com', 'ghd.com', 'babyliss.com', 'conair.com');
+      if (isTech) {
+        // Tech competitor brands
+        domains.push('apple.com', 'samsung.com', 'oneplus.com', 'xiaomi.com', 'huawei.com',
+          'sony.com', 'lg.com', 'motorola.com', 'asus.com', 'nokia.com',
+          'lenovo.com', 'dell.com', 'hp.com', 'microsoft.com', 'google.com',
+          'oppo.com', 'vivo.com', 'realme.com', 'honor.com', 'tcl.com');
+      } else {
+        // Beauty competitor brands
+        domains.push('loreal.com', 'maybelline.com', 'revlon.com', 'covergirl.com',
+          'dyson.com', 'ghd.com', 'babyliss.com', 'conair.com', 'olaplex.com',
+          'theordinary.com', 'cerave.com', 'neutrogena.com', 'clinique.com', 'esteelauder.com');
+      }
       break;
   }
 
-  return domains.slice(0, 10);
+  return domains.slice(0, 25); // Increased from 10 to 25
 }
 
 export async function POST(request: NextRequest) {
