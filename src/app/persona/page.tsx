@@ -92,6 +92,8 @@ export default function PersonaPage() {
     setError('');
     setData(null);
 
+    console.log('[Persona Frontend] Generating for:', { brand: brand.trim(), product: product.trim(), country });
+
     try {
       const res = await fetch('/api/persona', {
         method: 'POST',
@@ -105,7 +107,10 @@ export default function PersonaPage() {
 
       const result = await res.json();
 
+      console.log('[Persona Frontend] API Response:', result);
+
       if (result.success) {
+        console.log('[Persona Frontend] Setting data - Brand:', result.data.brand, 'Product:', result.data.product);
         setData(result.data);
       } else {
         setError(result.error || 'Failed to generate persona');
@@ -218,7 +223,8 @@ export default function PersonaPage() {
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-                  placeholder="Brand (e.g., Weleda)"
+                  placeholder="Brand (e.g., Google)"
+                  autoComplete="off"
                   className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3B82F6] font-medium w-44"
                 />
 
@@ -228,7 +234,8 @@ export default function PersonaPage() {
                   value={product}
                   onChange={(e) => setProduct(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-                  placeholder="Product (e.g., Skin Food)"
+                  placeholder="Product (e.g., Pixel 10)"
+                  autoComplete="off"
                   className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3B82F6] font-medium w-44"
                 />
 
