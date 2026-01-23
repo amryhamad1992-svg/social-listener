@@ -415,29 +415,30 @@ export default function MentionsPage() {
                   <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B] pointer-events-none" />
                 </div>
 
-                {/* Search Button with Emerald Color */}
-                <button
-                  onClick={handleSearch}
-                  disabled={loading || !brand.trim()}
-                  className="flex items-center gap-2 px-4 py-1.5 text-[12px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors disabled:opacity-50 font-medium"
-                >
-                  {loading ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Search className="w-3.5 h-3.5" />
-                  )}
-                  Search
-                </button>
+                {/* Search & Refresh Buttons */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSearch}
+                    disabled={loading || !brand.trim()}
+                    className="flex items-center gap-2 px-3 py-1.5 text-[12px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors disabled:opacity-50 font-medium"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Search className="w-3.5 h-3.5" />
+                    )}
+                    Search
+                  </button>
 
-                {/* Refresh Button */}
-                <button
-                  onClick={() => fetchMentions(brand, product)}
-                  disabled={loading || !brand.trim()}
-                  className="p-1.5 text-[#64748B] hover:text-[#10B981] hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
-                  title="Refresh"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                </button>
+                  <button
+                    onClick={() => fetchMentions(brand, product)}
+                    disabled={loading || !brand.trim()}
+                    className="p-1.5 text-[#64748B] hover:text-[#10B981] hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
+                    title="Refresh"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
               </div>
             </div>
 

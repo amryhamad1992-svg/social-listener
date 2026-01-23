@@ -182,129 +182,148 @@ export default function TrendRadarPage() {
       <Sidebar onLogout={handleLogout} />
 
       <div className="flex-1 overflow-auto">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-[#E2E8F0] px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-[#0F172A] to-[#334155] rounded-xl flex items-center justify-center">
-                <Radar className="w-5 h-5 text-white" />
+        <div className="p-8 space-y-6">
+          {/* Header with Logo and Inline Filters - Matching Other Pages */}
+          <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
+            <div className="flex items-center gap-6">
+              {/* Logo Section */}
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#0F172A] to-[#1E293B] flex items-center justify-center flex-shrink-0">
+                  <Radar className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-[15px] font-semibold text-[#0F172A]" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                    Beauty Trend Radar
+                  </h1>
+                  <p className="text-[11px] text-[#64748B]" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                    What's trending across social media
+                  </p>
+                </div>
+                {source && (
+                  <span className={`px-2.5 py-1 text-[10px] font-medium rounded-full ${
+                    source === 'brave' || source === 'cache' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  }`}>
+                    {source === 'brave' ? 'Live' : source === 'cache' ? 'Cached' : 'Demo'}
+                  </span>
+                )}
               </div>
-              <div>
-                <h1 className="text-lg font-semibold text-[#0F172A]">Beauty Trend Radar</h1>
-                <p className="text-xs text-[#64748B]">
-                  What's trending in beauty across social media
-                </p>
+
+              <div className="w-px h-10 bg-[#E2E8F0]" />
+
+              {/* Inline Filters */}
+              <div className="flex items-center gap-4 flex-wrap flex-1">
+                {/* Main Category Selector */}
+                <div className="relative">
+                  <select
+                    value={selectedMainCategory}
+                    onChange={(e) => {
+                      const newMainCat = e.target.value;
+                      setSelectedMainCategory(newMainCat);
+                      const mainCat = data?.mainCategories.find(c => c.id === newMainCat);
+                      if (mainCat && mainCat.subCategories.length > 0) {
+                        setSelectedSubCategory(mainCat.subCategories[0]);
+                      }
+                      setSelectedTrend(null);
+                    }}
+                    className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium"
+                  >
+                    {data?.mainCategories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                  <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B] pointer-events-none rotate-90" />
+                </div>
+
+                {/* Sub-Category Selector */}
+                <div className="relative">
+                  <select
+                    value={selectedSubCategory}
+                    onChange={(e) => {
+                      setSelectedSubCategory(e.target.value);
+                      setSelectedTrend(null);
+                    }}
+                    className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium"
+                  >
+                    {getAvailableSubCategories().map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                  <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B] pointer-events-none rotate-90" />
+                </div>
+
+                {/* Platform Filter */}
+                <div className="relative">
+                  <select
+                    value={platformFilter}
+                    onChange={(e) => {
+                      setPlatformFilter(e.target.value);
+                      setSelectedTrend(null);
+                    }}
+                    className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium"
+                  >
+                    {PLATFORM_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B] pointer-events-none rotate-90" />
+                </div>
+
+                {/* Time Range */}
+                <div className="relative">
+                  <select
+                    value={timeRange}
+                    onChange={(e) => setTimeRange(e.target.value)}
+                    className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium"
+                  >
+                    {TIME_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B] pointer-events-none rotate-90" />
+                </div>
+
+                {/* Refresh */}
+                <button
+                  onClick={fetchTrendData}
+                  disabled={loading}
+                  className="p-1.5 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition-colors disabled:opacity-50"
+                  title="Refresh"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                </button>
               </div>
-              {source && (
-                <span className={`px-2 py-0.5 text-[9px] font-medium rounded ml-2 ${
-                  source === 'brave' || source === 'cache' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
-                }`}>
-                  {source === 'brave' ? 'Live Data' : source === 'cache' ? 'Cached' : 'Demo Data'}
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-3">
-              {/* Main Category Selector */}
-              <select
-                value={selectedMainCategory}
-                onChange={(e) => {
-                  const newMainCat = e.target.value;
-                  setSelectedMainCategory(newMainCat);
-                  // Auto-select the "All" option for the new main category
-                  const mainCat = data?.mainCategories.find(c => c.id === newMainCat);
-                  if (mainCat && mainCat.subCategories.length > 0) {
-                    setSelectedSubCategory(mainCat.subCategories[0]);
-                  }
-                  setSelectedTrend(null);
-                }}
-                className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:border-[#0F172A]"
-              >
-                {data?.mainCategories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
-
-              {/* Sub-Category Selector */}
-              <select
-                value={selectedSubCategory}
-                onChange={(e) => {
-                  setSelectedSubCategory(e.target.value);
-                  setSelectedTrend(null);
-                }}
-                className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:border-[#0F172A]"
-              >
-                {getAvailableSubCategories().map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
-
-              {/* Platform Filter */}
-              <select
-                value={platformFilter}
-                onChange={(e) => {
-                  setPlatformFilter(e.target.value);
-                  setSelectedTrend(null);
-                }}
-                className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:border-[#0F172A]"
-              >
-                {PLATFORM_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-
-              {/* Time Range */}
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg bg-white focus:outline-none focus:border-[#0F172A]"
-              >
-                {TIME_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-
-              {/* Refresh */}
-              <button
-                onClick={fetchTrendData}
-                disabled={loading}
-                className="p-2 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition-colors disabled:opacity-50"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              </button>
             </div>
           </div>
-        </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="flex items-center justify-center h-[calc(100vh-80px)]">
-            <div className="text-center">
-              <Loader2 className="w-8 h-8 animate-spin text-[#0F172A] mx-auto mb-3" />
-              <p className="text-sm text-[#64748B]">Scanning social trends...</p>
+          {/* Loading State */}
+          {loading && (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <Loader2 className="w-8 h-8 animate-spin text-[#0F172A] mx-auto mb-3" />
+                <p className="text-sm text-[#64748B]">Scanning social trends...</p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Error State */}
-        {error && !loading && (
-          <div className="flex items-center justify-center h-[calc(100vh-80px)]">
-            <div className="text-center">
-              <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-3" />
-              <p className="text-sm text-[#64748B]">{error}</p>
-              <button
-                onClick={fetchTrendData}
-                className="mt-4 px-4 py-2 text-sm bg-[#0F172A] text-white rounded-lg hover:bg-[#1E293B]"
-              >
-                Try Again
-              </button>
+          {/* Error State */}
+          {error && !loading && (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-3" />
+                <p className="text-sm text-[#64748B]">{error}</p>
+                <button
+                  onClick={fetchTrendData}
+                  className="mt-4 px-4 py-2 text-sm bg-[#0F172A] text-white rounded-lg hover:bg-[#1E293B]"
+                >
+                  Try Again
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Main Content */}
-        {!loading && !error && data && (
-          <div className="p-6">
+          {/* Main Content */}
+          {!loading && !error && data && (
+            <>
             {/* Summary Cards */}
             <div className="grid grid-cols-4 gap-4 mb-6">
               <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
@@ -597,7 +616,8 @@ export default function TrendRadarPage() {
               </p>
             </div>
           </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
