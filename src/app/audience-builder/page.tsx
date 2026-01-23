@@ -277,11 +277,11 @@ export default function AudienceBuilder2Page() {
       <Sidebar onLogout={handleLogout} />
       <main className="flex-1 overflow-auto">
         <div className="px-8 pt-6 pb-8 space-y-6">
-          {/* Header with Logo and Inline Filters - Trend Radar Style */}
+          {/* Header with Logo and Inline Filters */}
           <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
             <div className="flex items-center gap-6">
               {/* Logo Section */}
-              <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="flex items-center gap-3 flex-shrink-0 h-10">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#0F172A] to-[#1E293B] flex items-center justify-center flex-shrink-0">
                   <Target className="w-5 h-5 text-white" />
                 </div>
