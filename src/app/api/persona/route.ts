@@ -100,46 +100,66 @@ async function analyzeWithGPT(
   // Convert income level to local currency
   const localizedIncome = convertIncomeRange(platformDemo.incomeLevel, country);
 
-  // SIMPLE, DIRECT PROMPT - No ambiguity
+  // Build search context from Brave results
+  const searchContext = hasSearchData ? `
+REAL SEARCH DATA FROM ${searchData.length} SOURCES:
+
+Platform Breakdown:
+${Object.entries(signals.platforms).map(([p, c]) => `- ${p}: ${c} mentions`).join('\n') || '- No platform data'}
+
+What People Are Saying:
+${searchData.slice(0, 10).map(r => `- "${r.title}" - ${r.description?.slice(0, 100) || ''}`).join('\n')}
+
+Extracted Signals:
+- Age mentions: ${signals.ages.slice(0, 8).join(', ') || 'None found'}
+- Gender mentions: ${signals.genders.slice(0, 5).join(', ') || 'None found'}
+- Price perception: ${signals.prices.slice(0, 5).join(', ') || 'None found'}
+- Positive sentiment: ${signals.benefits.slice(0, 5).join(', ') || 'None found'}
+- Negative sentiment: ${signals.complaints.slice(0, 3).join(', ') || 'None found'}
+` : '';
+
+  // Build the prompt with real data
   const prompt = isTech
     ? `Create an audience persona for "${brand} ${product}" buyers in ${country.name}.
 
-MANDATORY REQUIREMENTS (DO NOT IGNORE):
+THIS IS A TECHNOLOGY PRODUCT (${productCategory}).
+
+${searchContext}
+
+MANDATORY REQUIREMENTS:
 
 1. GENDER: 62% Male, 38% Female
-   - This is a TECHNOLOGY product (smartphone/electronics)
-   - Tech buyers are predominantly MALE worldwide
-   - DO NOT use 60% Female - that is WRONG for tech
+   - Tech/smartphone buyers are predominantly MALE based on market research
+   - DO NOT default to female - that would be incorrect for tech
 
-2. LOOKALIKE BRANDS (ONLY THESE - NO OTHERS):
+2. LOOKALIKE BRANDS - ONLY TECH BRANDS:
    Apple, Samsung, OnePlus, Xiaomi, Huawei, Sony, LG, Motorola, Nokia, ASUS, Google, Microsoft, Nothing, Oppo, Vivo, Realme, Honor, Lenovo, Dell, HP
 
-   FORBIDDEN BRANDS (NEVER INCLUDE):
-   Fenty, L'Oréal, Glossier, Clinique, Neutrogena, Dyson, GHD, Olaplex, CeraVe, Maybelline, Revlon, NYX, MAC, Estee Lauder, Lancome, Dior, Chanel
+   DO NOT INCLUDE: Fenty, L'Oréal, Glossier, Clinique, Dyson, GHD, or ANY beauty/cosmetics brands
 
-3. INTERESTS: Technology, gadgets, gaming, productivity, mobile apps, streaming, social media, sports
+3. Use the REAL SEARCH DATA above to inform:
+   - What platforms this audience uses
+   - Their interests and hobbies
+   - Shopping behavior and price sensitivity
+   - Values and attitudes
 
-4. SHOPPING: Best Buy, Amazon, carrier stores, tech retailers - NOT beauty stores
-
-${hasSearchData ? `SEARCH DATA (${searchData.length} sources found):
-${searchData.slice(0, 5).map(r => `- ${r.title}`).join('\n')}` : ''}
-
-CURRENCY: Use ${country.currency} (${country.currencySymbol})`
+CURRENCY: ${country.currency} (${country.currencySymbol})`
     : `Create an audience persona for "${brand} ${product}" buyers in ${country.name}.
 
-PRODUCT TYPE: Beauty/Cosmetics
+THIS IS A BEAUTY/COSMETICS PRODUCT (${productCategory}).
 
-1. GENDER: 68% Female, 32% Male (beauty product buyers)
+${searchContext}
 
-2. LOOKALIKE BRANDS: Only beauty/cosmetics brands matching this product category
-   ${brandCategory ? `Suggested: ${brandCategory.lookalikeBrands.join(', ')}` : ''}
+REQUIREMENTS:
 
-3. INTERESTS: Beauty, skincare, self-care, wellness, fashion, lifestyle
+1. GENDER: 68% Female, 32% Male (typical for beauty products)
 
-${hasSearchData ? `SEARCH DATA (${searchData.length} sources found):
-${searchData.slice(0, 5).map(r => `- ${r.title}`).join('\n')}` : ''}
+2. LOOKALIKE BRANDS - ONLY BEAUTY BRANDS:
+   ${brandCategory ? brandCategory.lookalikeBrands.join(', ') : 'Similar brands in this beauty category'}
 
-CURRENCY: Use ${country.currency} (${country.currencySymbol})`;
+3. Use the REAL SEARCH DATA above to inform the persona details.
+
+CURRENCY: ${country.currency} (${country.currencySymbol})`;
 
   const jsonSchema = `
 Provide the persona in this JSON format:
