@@ -615,7 +615,7 @@ export default function TrendRadarPage() {
                 {source === 'demo' && ' • Demo data shown'}
               </p>
             </div>
-          </div>
+          </>
           )}
         </div>
       </div>
