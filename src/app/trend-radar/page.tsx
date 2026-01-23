@@ -182,7 +182,7 @@ export default function TrendRadarPage() {
       <Sidebar onLogout={handleLogout} />
 
       <div className="flex-1 overflow-auto">
-        <div className="p-8 space-y-6">
+        <div className="px-8 pt-6 pb-8 space-y-6">
           {/* Header with Logo and Inline Filters - Matching Other Pages */}
           <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
             <div className="flex items-center gap-6">
@@ -268,29 +268,30 @@ export default function TrendRadarPage() {
                   <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B] pointer-events-none rotate-90" />
                 </div>
 
-                {/* Time Range */}
-                <div className="relative">
-                  <select
-                    value={timeRange}
-                    onChange={(e) => setTimeRange(e.target.value)}
-                    className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium"
-                  >
-                    {TIME_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B] pointer-events-none rotate-90" />
-                </div>
+                {/* Time Range & Refresh */}
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <select
+                      value={timeRange}
+                      onChange={(e) => setTimeRange(e.target.value)}
+                      className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium"
+                    >
+                      {TIME_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                    <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B] pointer-events-none rotate-90" />
+                  </div>
 
-                {/* Refresh */}
-                <button
-                  onClick={fetchTrendData}
-                  disabled={loading}
-                  className="p-1.5 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition-colors disabled:opacity-50"
-                  title="Refresh"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                </button>
+                  <button
+                    onClick={fetchTrendData}
+                    disabled={loading}
+                    className="p-1.5 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition-colors disabled:opacity-50"
+                    title="Refresh"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

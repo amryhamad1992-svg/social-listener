@@ -336,7 +336,7 @@ export default function MentionsPage() {
     <div className="flex h-screen bg-[#F8FAFC]">
       <Sidebar onLogout={handleLogout} />
       <main className="flex-1 overflow-auto">
-        <div className="p-8 space-y-6">
+        <div className="px-8 pt-6 pb-8 space-y-6">
           {/* Header with Logo and Inline Filters - Trend Radar Style */}
           <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
             <div className="flex items-center gap-6">
