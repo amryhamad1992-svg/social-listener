@@ -153,7 +153,7 @@ export async function bravePlatformSearch(
   return braveWebSearch(fullQuery, options);
 }
 
-// Search for brand mentions across social platforms
+// Search for brand mentions across social platforms with AGGRESSIVE multi-query strategy
 export async function braveSocialMentions(
   brand: string,
   keywords: string[] = [],
@@ -168,7 +168,7 @@ export async function braveSocialMentions(
   }>;
   byPlatform: Record<string, number>;
 }> {
-  const platforms = ['reddit', 'tiktok', 'youtube', 'twitter'] as const;
+  const platforms = ['reddit', 'tiktok', 'youtube', 'instagram', 'twitter'] as const;
   const allMentions: Array<{
     platform: string;
     title: string;
@@ -177,36 +177,105 @@ export async function braveSocialMentions(
     date: string;
   }> = [];
   const byPlatform: Record<string, number> = {};
+  const seenUrls = new Set<string>(); // Deduplication
 
-  // Build search query
-  const searchTerms = [brand, ...keywords.slice(0, 2)].join(' ');
+  // Build multiple query variations for better coverage
+  const productTerm = keywords[0] || '';
+  const baseQueries = [
+    `${brand} ${productTerm}`, // Basic search
+    `${brand} ${productTerm} review`, // Reviews
+    `${brand} ${productTerm} worth it`, // Purchase intent
+    `${brand} ${productTerm} vs`, // Comparisons
+  ].filter(q => q.trim());
 
-  for (const platform of platforms) {
+  // Platform-specific query strategies
+  const platformStrategies = {
+    tiktok: [
+      `${brand} ${productTerm} site:tiktok.com`,
+      `#${brand.replace(/\s/g, '')} site:tiktok.com`, // Hashtag
+      `${brand} ${productTerm} viral site:tiktok.com`,
+      `${brand} ${productTerm} tutorial site:tiktok.com`,
+    ],
+    youtube: [
+      `${brand} ${productTerm} site:youtube.com`,
+      `${brand} ${productTerm} review site:youtube.com`,
+      `${brand} ${productTerm} tutorial site:youtube.com`,
+      `${brand} ${productTerm} unboxing site:youtube.com`,
+    ],
+    reddit: [
+      `${brand} ${productTerm} site:reddit.com`,
+      `${brand} ${productTerm} worth site:reddit.com/r/`,
+      `${brand} ${productTerm} recommendation site:reddit.com`,
+      `${brand} vs site:reddit.com`, // Comparisons
+    ],
+    instagram: [
+      `${brand} ${productTerm} site:instagram.com`,
+      `#${brand.replace(/\s/g, '')} site:instagram.com`,
+      `${brand} ${productTerm} review site:instagram.com`,
+      `@${brand.toLowerCase().replace(/\s/g, '')} site:instagram.com`, // Brand handle
+    ],
+    twitter: [
+      `${brand} ${productTerm} site:twitter.com OR site:x.com`,
+      `${brand} ${productTerm} review (site:twitter.com OR site:x.com)`,
+      `#${brand.replace(/\s/g, '')} (site:twitter.com OR site:x.com)`,
+      `@${brand.toLowerCase().replace(/\s/g, '')} (site:twitter.com OR site:x.com)`,
+    ],
+  };
+
+  // Run ALL platform searches in PARALLEL for maximum speed
+  const searchPromises = platforms.map(async (platform) => {
+    const queries = platformStrategies[platform];
+    const platformMentions: typeof allMentions = [];
+
     try {
-      const results = await bravePlatformSearch(searchTerms, platform, {
-        count: 5,
-        freshness: options.freshness || 'pw',
-      });
+      // Run multiple queries per platform (take first 2 for performance)
+      for (const query of queries.slice(0, 2)) {
+        try {
+          const results = await braveWebSearch(query, {
+            count: 10, // Increased from 5 to 10
+            freshness: options.freshness || 'pw',
+          });
 
-      byPlatform[platform] = results.length;
+          results.forEach(r => {
+            // Deduplicate by URL
+            if (!seenUrls.has(r.url)) {
+              seenUrls.add(r.url);
+              platformMentions.push({
+                platform: platform.charAt(0).toUpperCase() + platform.slice(1),
+                title: r.title,
+                url: r.url,
+                snippet: r.description,
+                date: r.age || 'Recently',
+              });
+            }
+          });
 
-      results.forEach(r => {
-        allMentions.push({
-          platform: platform.charAt(0).toUpperCase() + platform.slice(1),
-          title: r.title,
-          url: r.url,
-          snippet: r.description,
-          date: r.age || 'Recently',
-        });
-      });
+          // Small delay between queries
+          await new Promise(r => setTimeout(r, 100));
+        } catch (queryErr) {
+          console.error(`[Brave] ${platform} query error:`, queryErr);
+        }
+      }
 
-      // Small delay between platform searches
-      await new Promise(r => setTimeout(r, 100));
+      byPlatform[platform] = platformMentions.length;
+      console.log(`[Brave] ${platform}: found ${platformMentions.length} unique mentions`);
     } catch (err) {
       console.error(`[Brave] ${platform} search error:`, err);
       byPlatform[platform] = 0;
     }
-  }
+
+    return platformMentions;
+  });
+
+  // Wait for all platform searches to complete
+  const results = await Promise.all(searchPromises);
+
+  // Combine all results
+  results.forEach(platformResults => {
+    allMentions.push(...platformResults);
+  });
+
+  console.log(`[Brave] Total unique mentions found: ${allMentions.length} across ${platforms.length} platforms`);
 
   return { mentions: allMentions, byPlatform };
 }
