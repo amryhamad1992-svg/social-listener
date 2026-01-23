@@ -183,7 +183,7 @@ export const COUNTRIES: Record<string, Country> = {
 
 export const COUNTRY_OPTIONS = Object.values(COUNTRIES).map(c => ({
   value: c.code,
-  label: `${c.flag} ${c.code}`,
+  label: c.code,
   country: c,
 }));
 
