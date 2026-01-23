@@ -184,98 +184,103 @@ export default function PersonaPage() {
       <Sidebar onLogout={handleLogout} />
       <main className="flex-1 overflow-auto">
         <div className="p-8 space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-medium text-[#1E293B]" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                Persona
-              </h1>
-              <p className="text-[13px] text-[#64748B] mt-0.5" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                AI-powered audience profiling for any brand or product
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              {data && (
-                <>
-                  <button
-                    onClick={handleCopy}
-                    className="flex items-center gap-2 px-3 py-2 text-[13px] text-[#64748B] hover:text-[#0F172A] bg-white border border-[#E2E8F0] hover:border-[#0F172A] rounded-lg transition-colors"
-                  >
-                    {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                    {copied ? 'Copied' : 'Copy'}
-                  </button>
-                  <button
-                    onClick={handleDownload}
-                    className="flex items-center gap-2 px-3 py-2 text-[13px] text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-lg transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                    Export
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Filters - Matching Audience Builder Style */}
+          {/* Header with Logo and Inline Filters - Trend Radar Style */}
           <div className="bg-white rounded-xl border border-[#E2E8F0] p-4">
-            <div className="flex items-center gap-6 flex-wrap">
-              {/* Brand Input */}
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-[#64748B] font-medium">Brand:</span>
+            <div className="flex items-center gap-6">
+              {/* Logo Section */}
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                  <User className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-[15px] font-semibold text-[#0F172A]" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                    Persona
+                  </h1>
+                  <p className="text-[11px] text-[#64748B]" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                    AI-powered audience profiling
+                  </p>
+                </div>
+              </div>
+
+              <div className="w-px h-10 bg-[#E2E8F0]" />
+
+              {/* Inline Filters */}
+              <div className="flex items-center gap-4 flex-wrap flex-1">
+                {/* Brand Input */}
                 <input
                   type="text"
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-                  placeholder="e.g., Weleda"
-                  className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] font-medium w-40"
+                  placeholder="Brand (e.g., Weleda)"
+                  className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3B82F6] font-medium w-44"
                 />
-              </div>
 
-              {/* Product Input */}
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-[#64748B] font-medium">Product:</span>
+                {/* Product Input */}
                 <input
                   type="text"
                   value={product}
                   onChange={(e) => setProduct(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-                  placeholder="e.g., Skin Food"
-                  className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] font-medium w-48"
+                  placeholder="Product (e.g., Skin Food)"
+                  className="px-3 py-1.5 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#3B82F6] font-medium w-44"
                 />
-              </div>
 
-              <div className="w-px h-6 bg-[#E2E8F0]" />
+                {/* Generate Button with Blue Color */}
+                <button
+                  onClick={handleGenerate}
+                  disabled={loading || !brand.trim() || !product.trim()}
+                  className="flex items-center gap-2 px-4 py-1.5 text-[12px] text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors disabled:opacity-50 font-medium"
+                >
+                  {loading ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5" />
+                  )}
+                  Generate
+                </button>
 
-              {/* Generate Button */}
-              <button
-                onClick={handleGenerate}
-                disabled={loading || !brand.trim() || !product.trim()}
-                className="flex items-center gap-2 px-4 py-1.5 text-[12px] text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-lg transition-colors disabled:opacity-50 font-medium"
-              >
-                {loading ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Sparkles className="w-3.5 h-3.5" />
+                {/* Export Buttons */}
+                {data && (
+                  <>
+                    <button
+                      onClick={handleCopy}
+                      className="flex items-center gap-2 px-3 py-1.5 text-[12px] text-[#64748B] hover:text-[#0F172A] bg-white border border-[#E2E8F0] hover:border-[#0F172A] rounded-lg transition-colors"
+                    >
+                      {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copied ? 'Copied' : 'Copy'}
+                    </button>
+                    <button
+                      onClick={handleDownload}
+                      className="flex items-center gap-2 px-3 py-1.5 text-[12px] text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-lg transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Export
+                    </button>
+                  </>
                 )}
-                Generate Persona
-              </button>
+              </div>
+            </div>
 
-              <div className="w-px h-6 bg-[#E2E8F0]" />
-
-              {/* Suggestions */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] text-[#94A3B8]">Try:</span>
-                {SUGGESTED_PRODUCTS.slice(0, 4).map((s, i) => (
+            {/* Suggestions Row */}
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#E2E8F0]">
+              <span className="text-[10px] text-[#94A3B8] font-medium">Quick try:</span>
+              {SUGGESTED_PRODUCTS.slice(0, 3).map((s, i) => {
+                const colors = [
+                  'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100',
+                  'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100',
+                  'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100'
+                ];
+                return (
                   <button
                     key={i}
                     onClick={() => handleSuggestion(s)}
-                    className="px-2 py-1 text-[10px] text-[#64748B] bg-[#F8FAFC] border border-[#E2E8F0] rounded hover:border-[#0F172A] hover:text-[#0F172A] transition-colors"
+                    className={`px-2.5 py-1 text-[10px] border rounded-lg transition-colors font-medium ${colors[i]}`}
                   >
                     {s.brand} {s.product}
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
 
             {error && (
