@@ -87,7 +87,9 @@ async function analyzeWithGPT(
   signals: ExtractedSignals,
   platformDemo: ReturnType<typeof synthesizeDemographics>,
   brandCategory: ReturnType<typeof detectBrandCategory> | null,
-  country: typeof COUNTRIES[keyof typeof COUNTRIES]
+  country: typeof COUNTRIES[keyof typeof COUNTRIES],
+  productCategory: string,
+  isTech: boolean
 ): Promise<PersonaProfile> {
   if (!OPENAI_API_KEY) {
     throw new Error('OpenAI API key not configured');
@@ -138,16 +140,40 @@ ${brandCategory ? `CATEGORY LOOKALIKE BRANDS: ${brandCategory.lookalikeBrands.sl
 
 ${enrichedContext}
 
-CRITICAL: Use ACTUAL DEMOGRAPHIC RESEARCH for this specific product category. For tech products (smartphones, laptops, etc.), use real market data showing tech buyers are predominantly male (55-65%). For beauty products, use beauty industry demographics. DO NOT apply beauty demographics to tech products or vice versa.
+⚠️ CRITICAL INSTRUCTIONS - READ CAREFULLY:
 
-Create a comprehensive persona using both the real data signals above AND your knowledge of this brand/product category in the ${country.name} market. The platform demographics, regional preferences, and extracted signals should heavily influence your persona. Remember to tailor the persona to ${country.name} cultural and consumer behaviors.`
+1. PRODUCT CATEGORY: "${brand} ${product}" is a ${productCategory}. ${isTech ? '🔧 THIS IS A TECH PRODUCT - NOT A BEAUTY PRODUCT!' : '💄 THIS IS A BEAUTY PRODUCT - NOT A TECH PRODUCT!'}
+
+2. DEMOGRAPHICS - USE REAL MARKET DATA:
+   ${isTech ? '- Gender: Tech products = 60-65% MALE, 35-40% Female (based on actual smartphone/tech buyer demographics)' : '- Gender: Beauty products = 60-75% Female, 25-40% Male'}
+   - DO NOT use platform demographics alone - they are biased toward beauty audiences
+   - Override platform data with ACTUAL category research
+
+3. LOOKALIKE BRANDS - STAY IN THE SAME CATEGORY:
+   ${isTech ? '- ONLY tech/electronics brands: Apple, Samsung, OnePlus, Huawei, Xiaomi, Sony, LG, Motorola, ASUS, etc.' : '- ONLY beauty/cosmetics brands: matching the product category'}
+   - ❌ NEVER mix tech and beauty brands in lookalike list
+   - ❌ DO NOT include Fenty, L'Oréal, Glossier, etc. for tech products
+   - ✅ ONLY include brands in the SAME product category
+
+4. USE THE SEARCH DATA:
+   - Base your persona on the ${searchData.length} real search results provided
+   - Extract demographics, interests, and behaviors from actual user discussions
+   - The platform breakdown and signals are REAL DATA - use them
+
+Create a comprehensive persona using the real data above AND accurate market research for ${isTech ? 'TECH PRODUCTS' : 'BEAUTY PRODUCTS'} in ${country.name}.`
     : `You are a market research analyst with deep knowledge of consumer brands in the ${country.name} market. Create a detailed audience persona profile for "${brand} ${product}" targeting ${country.flag} ${country.name.toUpperCase()} consumers.
 
 ${enrichedContext}
 
-CRITICAL: Use ACTUAL DEMOGRAPHIC RESEARCH for this specific product category. For tech products (smartphones, laptops, etc.), use real market data showing tech buyers are predominantly male (55-65%). For beauty products, use beauty industry demographics. DO NOT apply beauty demographics to tech products or vice versa.
+⚠️ CRITICAL INSTRUCTIONS:
 
-Use your extensive knowledge about this brand, product category, ${country.name} market preferences, and the category insights provided to create an accurate persona tailored to ${country.name} consumers.`;
+1. PRODUCT CATEGORY: "${brand} ${product}" is a ${productCategory}. ${isTech ? 'THIS IS A TECH PRODUCT!' : 'THIS IS A BEAUTY PRODUCT!'}
+
+2. DEMOGRAPHICS: ${isTech ? 'Tech buyers = 60-65% MALE, 35-40% Female' : 'Beauty buyers = 60-75% Female'}
+
+3. LOOKALIKE BRANDS: ${isTech ? 'ONLY tech brands (Apple, Samsung, OnePlus, etc.) - NO beauty brands!' : 'ONLY beauty brands - NO tech brands!'}
+
+Use accurate market research for ${isTech ? 'TECH PRODUCTS' : 'BEAUTY PRODUCTS'} in ${country.name}.`;
 
   const jsonSchema = `
 Provide the persona in this JSON format:
@@ -245,11 +271,18 @@ export async function POST(request: NextRequest) {
 
     // ENHANCEMENT 2: Use creative, targeted queries (same cost, better results)
     const searchQueries = generateCreativeQueries(brand, product);
-    console.log(`[Persona] Running ${searchQueries.length} targeted searches...`);
+    console.log(`[Persona] 🔍 BRAVE SEARCH QUERIES:`);
+    searchQueries.slice(0, 6).forEach((q, i) => console.log(`  ${i + 1}. "${q}"`));
 
     // Execute searches in parallel (take first 6 to stay within same API budget)
     const searchPromises = searchQueries.slice(0, 6).map(q => searchBrave(q, 5));
     const searchResults = await Promise.all(searchPromises);
+
+    console.log(`[Persona] 📊 BRAVE SEARCH RESULTS:`, searchResults.map((r, i) => ({
+      query: i + 1,
+      resultsFound: r.length,
+      sources: r.map(result => result.url.split('/')[2]).slice(0, 3)
+    })));
 
     // Flatten and deduplicate results
     const allResults: BraveSearchResult[] = [];
@@ -282,7 +315,7 @@ export async function POST(request: NextRequest) {
     console.log(`[Persona] Platform demographics (${countryData.name}):`, platformDemo);
 
     // ENHANCEMENT 5: Send enriched, structured data to GPT (not raw text) with regional context
-    const persona = await analyzeWithGPT(brand, product, topResults, signals, platformDemo, brandCategory, countryData);
+    const persona = await analyzeWithGPT(brand, product, topResults, signals, platformDemo, brandCategory, countryData, productCategory, isTech);
 
     return NextResponse.json({
       success: true,

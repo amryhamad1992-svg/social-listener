@@ -321,6 +321,12 @@ export function synthesizeDemographics(
       if (match) femalePercent += parseInt(match[1]) * weight;
     }
   }
+
+  // CRITICAL: Override for tech products (platform data is beauty-biased)
+  if (isTech) {
+    femalePercent = 35; // Tech products: 35% Female, 65% Male based on actual market research
+  }
+
   const malePercent = 100 - Math.round(femalePercent);
   const genderSkew = `${Math.round(femalePercent)}% Female, ${malePercent}% Male`;
 

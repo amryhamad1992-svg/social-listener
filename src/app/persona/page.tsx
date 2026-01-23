@@ -403,9 +403,9 @@ export default function PersonaPage() {
                     <span className="text-[11px] text-[#64748B]">Education</span>
                     <span className="text-[12px] font-medium text-[#1E293B]">{persona.demographics.education}</span>
                   </div>
-                  <div>
-                    <span className="text-[11px] text-[#64748B] block mb-1">Location</span>
-                    <span className="text-[12px] font-medium text-[#1E293B]">{persona.demographics.location}</span>
+                  <div className="pt-2 border-t border-[#F1F5F9]">
+                    <span className="text-[11px] text-[#64748B] block mb-1.5">Location</span>
+                    <span className="text-[12px] font-medium text-[#1E293B] leading-relaxed">{persona.demographics.location}</span>
                   </div>
                 </div>
               </div>
