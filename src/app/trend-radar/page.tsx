@@ -109,6 +109,33 @@ const PLATFORM_OPTIONS = [
   { value: 'web', label: 'Web' },
 ];
 
+// Static category data - ensures categories work even before API loads
+const MAIN_CATEGORIES = [
+  { id: 'beauty', name: 'Beauty' },
+  { id: 'fashion', name: 'Fashion' },
+  { id: 'technology', name: 'Technology' },
+  { id: 'health', name: 'Health' },
+  { id: 'food', name: 'Food' },
+  { id: 'home', name: 'Home' },
+  { id: 'sports', name: 'Sports' },
+  { id: 'baby', name: 'Baby' },
+  { id: 'pets', name: 'Pets' },
+  { id: 'office', name: 'Office' },
+];
+
+const CATEGORY_MAPPING: Record<string, string[]> = {
+  beauty: ['skincare', 'makeup', 'haircare', 'fragrance', 'nails', 'beautytools'],
+  fashion: ['womenswear', 'menswear', 'footwear', 'accessories', 'luxury', 'streetwear'],
+  technology: ['smartphones', 'laptops', 'audio', 'wearables', 'gaming', 'smarthome'],
+  health: ['supplements', 'fitness', 'mentalhealth', 'sleep', 'nutrition', 'personalcare'],
+  food: ['snacks', 'beverages', 'kitchen', 'healthfoods', 'alcohol', 'coffee'],
+  home: ['furniture', 'decor', 'organization', 'cleaning', 'bedding', 'garden'],
+  sports: ['running', 'gymtraining', 'outdoors', 'teamsports', 'cycling', 'watersports'],
+  baby: ['babygear', 'toys', 'kidsclothing', 'education', 'parenting'],
+  pets: ['dogs', 'cats', 'petfood', 'petaccessories'],
+  office: ['notebooks', 'pens', 'desksetup', 'officeorg', 'artsupplies'],
+};
+
 export default function TrendRadarPage() {
   const router = useRouter();
   const [data, setData] = useState<TrendData | null>(null);
@@ -123,10 +150,16 @@ export default function TrendRadarPage() {
 
   // Get available sub-categories for the selected main category
   const getAvailableSubCategories = useCallback(() => {
-    if (!data?.mainCategories || !data?.subCategories) return [];
-    const mainCat = data.mainCategories.find(c => c.id === selectedMainCategory);
-    if (!mainCat) return [];
-    return data.subCategories.filter(sub => mainCat.subCategories.includes(sub.id));
+    // Use API data if available
+    if (data?.mainCategories && data?.subCategories) {
+      const mainCat = data.mainCategories.find(c => c.id === selectedMainCategory);
+      if (mainCat) {
+        return data.subCategories.filter(sub => mainCat.subCategories.includes(sub.id));
+      }
+    }
+    // Fallback to static mapping
+    const subCatIds = CATEGORY_MAPPING[selectedMainCategory] || [];
+    return subCatIds.map(id => ({ id, name: id.charAt(0).toUpperCase() + id.slice(1) }));
   }, [data, selectedMainCategory]);
 
   const fetchTrendData = useCallback(async () => {
@@ -218,15 +251,16 @@ export default function TrendRadarPage() {
                   onChange={(e) => {
                     const newMainCat = e.target.value;
                     setSelectedMainCategory(newMainCat);
-                    const mainCat = data?.mainCategories.find(c => c.id === newMainCat);
-                    if (mainCat && mainCat.subCategories.length > 0) {
-                      setSelectedSubCategory(mainCat.subCategories[0]);
+                    // Use static mapping to ensure correct subcategory is always set
+                    const subCategories = CATEGORY_MAPPING[newMainCat];
+                    if (subCategories && subCategories.length > 0) {
+                      setSelectedSubCategory(subCategories[0]);
                     }
                     setSelectedTrend(null);
                   }}
                   className="appearance-none px-2 py-1 text-[11px] text-[#1E293B] bg-[#F8FAFC] border border-[#E2E8F0] rounded-md focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium w-[95px]"
                 >
-                  {data?.mainCategories.map((cat) => (
+                  {(data?.mainCategories || MAIN_CATEGORIES).map((cat) => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
