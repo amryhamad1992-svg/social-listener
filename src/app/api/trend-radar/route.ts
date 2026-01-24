@@ -739,8 +739,8 @@ export async function GET(request: NextRequest) {
       })),
     };
 
-    // Cache the response
-    cache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+    // Cache the response (temporarily disabled for debugging)
+    // cache.set(cacheKey, { data: responseData, timestamp: Date.now() });
 
     return NextResponse.json({
       success: true,
