@@ -114,8 +114,8 @@ export default function TrendRadarPage() {
   const [data, setData] = useState<TrendData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedMainCategory, setSelectedMainCategory] = useState('skin');
-  const [selectedSubCategory, setSelectedSubCategory] = useState('all_skin');
+  const [selectedMainCategory, setSelectedMainCategory] = useState('beauty');
+  const [selectedSubCategory, setSelectedSubCategory] = useState('skincare');
   const [timeRange, setTimeRange] = useState('7d');
   const [platformFilter, setPlatformFilter] = useState('all');
   const [selectedTrend, setSelectedTrend] = useState<TrendItem | null>(null);
@@ -193,7 +193,7 @@ export default function TrendRadarPage() {
                 </div>
                 <div>
                   <h1 className="text-[15px] font-semibold text-[#0F172A]" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                    Beauty Trend Radar
+                    Trend Radar
                   </h1>
                   <p className="text-[11px] text-[#64748B]" style={{ fontFamily: 'Roboto, sans-serif' }}>
                     What's trending across social media
@@ -382,7 +382,7 @@ export default function TrendRadarPage() {
               {/* Trend List */}
               <div className="col-span-2 bg-white rounded-xl border border-[#E2E8F0]">
                 <div className="p-4 border-b border-[#E2E8F0]">
-                  <h2 className="text-sm font-medium text-[#0F172A]">Trending Beauty Terms</h2>
+                  <h2 className="text-sm font-medium text-[#0F172A]">Trending Terms</h2>
                   <p className="text-xs text-[#64748B] mt-0.5">
                     Sorted by social media presence - TikTok trends first
                   </p>

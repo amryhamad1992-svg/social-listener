@@ -6,25 +6,55 @@ export const MAIN_CATEGORIES: Record<string, {
   name: string;
   subCategories: string[];
 }> = {
-  skin: {
-    name: 'Skin',
-    subCategories: ['all_skin', 'skincare', 'suncare', 'kbeauty', 'cleanbeauty'],
+  // 1. Beauty & Cosmetics
+  beauty: {
+    name: 'Beauty & Cosmetics',
+    subCategories: ['skincare', 'makeup', 'haircare', 'fragrance', 'nails', 'beautytools'],
   },
-  makeup: {
-    name: 'Makeup',
-    subCategories: ['all_makeup', 'colorcosmetics', 'nails'],
+  // 2. Fashion & Apparel
+  fashion: {
+    name: 'Fashion & Apparel',
+    subCategories: ['womenswear', 'menswear', 'footwear', 'accessories', 'luxury', 'streetwear'],
   },
-  hair: {
-    name: 'Hair',
-    subCategories: ['all_hair', 'haircare', 'hairdryers', 'straighteners', 'curlingirons', 'hotairbrushes'],
+  // 3. Technology
+  technology: {
+    name: 'Technology',
+    subCategories: ['smartphones', 'laptops', 'audio', 'wearables', 'gaming', 'smarthome'],
   },
-  body: {
-    name: 'Body',
-    subCategories: ['all_body', 'bodycare', 'fragrance'],
+  // 4. Health & Wellness
+  health: {
+    name: 'Health & Wellness',
+    subCategories: ['supplements', 'fitness', 'mentalhealth', 'sleep', 'nutrition', 'personalcare'],
   },
-  beautytech: {
-    name: 'Beauty Tech',
-    subCategories: ['beautytech'],
+  // 5. Food & Beverage
+  food: {
+    name: 'Food & Beverage',
+    subCategories: ['snacks', 'beverages', 'kitchen', 'healthfoods', 'alcohol', 'coffee'],
+  },
+  // 6. Home & Living
+  home: {
+    name: 'Home & Living',
+    subCategories: ['furniture', 'decor', 'organization', 'cleaning', 'bedding', 'garden'],
+  },
+  // 7. Sports & Outdoors
+  sports: {
+    name: 'Sports & Outdoors',
+    subCategories: ['running', 'gymtraining', 'outdoors', 'teamsports', 'cycling', 'watersports'],
+  },
+  // 8. Baby & Kids
+  baby: {
+    name: 'Baby & Kids',
+    subCategories: ['babygear', 'toys', 'kidsclothing', 'education', 'parenting'],
+  },
+  // 9. Pets
+  pets: {
+    name: 'Pets',
+    subCategories: ['dogs', 'cats', 'petfood', 'petaccessories'],
+  },
+  // 10. Office & Stationery
+  office: {
+    name: 'Office & Stationery',
+    subCategories: ['notebooks', 'pens', 'desksetup', 'officeorg', 'artsupplies'],
   },
 };
 
@@ -36,140 +66,416 @@ const SUB_CATEGORIES: Record<string, {
   trendingTerms: string[];
   parentCategory: string;
 }> = {
-  // Skin sub-categories
-  all_skin: {
-    name: 'All Skin',
-    keywords: ['skincare', 'sunscreen', 'korean skincare', 'clean beauty', 'serum', 'moisturizer', 'spf', 'glass skin'],
-    amazonCategory: 'Skin Care',
-    trendingTerms: ['skincare routine', 'glass skin', 'skin cycling', 'barrier repair'],
-    parentCategory: 'skin',
-  },
+  // ===== BEAUTY & COSMETICS =====
   skincare: {
     name: 'Skincare',
-    keywords: ['serum', 'moisturizer', 'cleanser', 'toner', 'essence', 'mask', 'retinol', 'hyaluronic acid', 'vitamin c', 'niacinamide', 'exfoliant'],
+    keywords: ['serum', 'moisturizer', 'cleanser', 'retinol', 'hyaluronic acid', 'vitamin c', 'niacinamide', 'sunscreen', 'spf', 'korean skincare', 'glass skin'],
     amazonCategory: 'Skin Care',
-    trendingTerms: ['skincare routine', 'glass skin', 'skin cycling', 'barrier repair'],
-    parentCategory: 'skin',
+    trendingTerms: ['glass skin', 'skin cycling', 'snail mucin', 'barrier repair'],
+    parentCategory: 'beauty',
   },
-  suncare: {
-    name: 'Sun Care & SPF',
-    keywords: ['sunscreen', 'spf', 'tinted sunscreen', 'mineral sunscreen', 'chemical sunscreen', 'sun protection', 'after sun', 'sunscreen stick', 'spf moisturizer'],
-    amazonCategory: 'Sun Care',
-    trendingTerms: ['spf every day', 'sunscreen reapply', 'no white cast', 'korean sunscreen'],
-    parentCategory: 'skin',
-  },
-  kbeauty: {
-    name: 'K-Beauty & J-Beauty',
-    keywords: ['korean skincare', 'japanese skincare', 'snail mucin', 'essence', 'sheet mask', 'cushion compact', 'bb cream', 'centella', 'rice toner', 'mugwort'],
-    amazonCategory: 'K-Beauty',
-    trendingTerms: ['glass skin', 'korean skincare routine', 'j-beauty', 'slugging'],
-    parentCategory: 'skin',
-  },
-  cleanbeauty: {
-    name: 'Clean & Natural',
-    keywords: ['clean beauty', 'organic skincare', 'natural makeup', 'vegan beauty', 'cruelty free', 'sustainable beauty', 'non-toxic', 'reef safe', 'plant based'],
-    amazonCategory: 'Natural & Organic Beauty',
-    trendingTerms: ['clean girl aesthetic', 'minimalist skincare', 'skin minimalism', 'less is more'],
-    parentCategory: 'skin',
-  },
-
-  // Makeup sub-categories
-  all_makeup: {
-    name: 'All Makeup',
-    keywords: ['makeup', 'lipstick', 'foundation', 'nail polish', 'eyeshadow', 'mascara', 'blush', 'nail art'],
+  makeup: {
+    name: 'Makeup',
+    keywords: ['foundation', 'concealer', 'lipstick', 'mascara', 'eyeshadow', 'blush', 'bronzer', 'highlighter', 'primer', 'setting spray'],
     amazonCategory: 'Makeup',
-    trendingTerms: ['makeup tutorial', 'viral makeup', 'clean girl makeup', 'nail trends'],
-    parentCategory: 'makeup',
-  },
-  colorcosmetics: {
-    name: 'Color Cosmetics',
-    keywords: ['foundation', 'concealer', 'lipstick', 'lip gloss', 'eyeshadow', 'mascara', 'blush', 'bronzer', 'highlighter', 'primer', 'setting spray', 'eyeliner'],
-    amazonCategory: 'Makeup',
-    trendingTerms: ['makeup tutorial', 'viral makeup', 'clean girl makeup', 'latte makeup'],
-    parentCategory: 'makeup',
-  },
-  nails: {
-    name: 'Nails & Nail Art',
-    keywords: ['nail polish', 'gel nails', 'press-on nails', 'nail art', 'cuticle oil', 'nail strengthener', 'dip powder', 'nail stickers', 'chrome nails', 'builder gel'],
-    amazonCategory: 'Nail Art & Polish',
-    trendingTerms: ['nail trends', 'chrome nails', 'jelly nails', 'glazed donut nails'],
-    parentCategory: 'makeup',
-  },
-
-  // Hair sub-categories
-  all_hair: {
-    name: 'All Hair',
-    keywords: ['hair', 'hair dryer', 'straightener', 'curling iron', 'shampoo', 'hair oil', 'blowout', 'hair styling'],
-    amazonCategory: 'Hair Care',
-    trendingTerms: ['hair growth', 'salon blowout', 'beach waves', 'hair routine'],
-    parentCategory: 'hair',
+    trendingTerms: ['clean girl makeup', 'latte makeup', 'mob wife aesthetic', 'strawberry girl'],
+    parentCategory: 'beauty',
   },
   haircare: {
-    name: 'Hair Products',
-    keywords: ['shampoo', 'conditioner', 'hair oil', 'hair mask', 'scalp treatment', 'hair serum', 'leave-in', 'heat protectant', 'styling cream', 'dry shampoo'],
+    name: 'Haircare',
+    keywords: ['shampoo', 'conditioner', 'hair oil', 'hair mask', 'hair dryer', 'straightener', 'curling iron', 'rosemary oil', 'scalp care'],
     amazonCategory: 'Hair Care',
-    trendingTerms: ['hair growth', 'rosemary oil hair', 'scalp care', 'hair oiling'],
-    parentCategory: 'hair',
-  },
-  hairdryers: {
-    name: 'Hair Dryers',
-    keywords: ['hair dryer', 'blow dryer', 'ionic dryer', 'professional dryer', 'travel dryer', 'diffuser', 'concentrator nozzle', 'ceramic dryer', 'tourmaline dryer', 'lightweight dryer'],
-    amazonCategory: 'Hair Dryers',
-    trendingTerms: ['best hair dryer', 'salon blowout', 'fast drying', 'frizz free blowout'],
-    parentCategory: 'hair',
-  },
-  straighteners: {
-    name: 'Straighteners',
-    keywords: ['flat iron', 'hair straightener', 'titanium plates', 'ceramic straightener', 'steam straightener', 'wide plate', 'mini straightener', 'digital straightener', 'floating plates'],
-    amazonCategory: 'Flat Irons',
-    trendingTerms: ['glass hair', 'silk press', 'straightening tips', 'heat damage free'],
-    parentCategory: 'hair',
-  },
-  curlingirons: {
-    name: 'Curling Irons',
-    keywords: ['curling iron', 'curling wand', 'marcel iron', 'clampless curler', 'interchangeable barrels', 'automatic curler', 'beach waves', 'spiral curls', 'loose waves'],
-    amazonCategory: 'Curling Irons',
-    trendingTerms: ['heatless curls', 'beach waves', 'bouncy blowout', 'curl tutorial'],
-    parentCategory: 'hair',
-  },
-  hotairbrushes: {
-    name: 'Hot Air Brushes',
-    keywords: ['hot air brush', 'blow dry brush', 'one step dryer', 'volumizer brush', 'rotating brush', 'air styler', 'round brush dryer', 'styling brush', 'blowout brush'],
-    amazonCategory: 'Hot Air Brushes',
-    trendingTerms: ['salon blowout at home', 'volume brush', 'bouncy hair', 'one step styling'],
-    parentCategory: 'hair',
-  },
-
-  // Body sub-categories
-  all_body: {
-    name: 'All Body',
-    keywords: ['body care', 'fragrance', 'perfume', 'body lotion', 'body oil', 'self tanner', 'deodorant'],
-    amazonCategory: 'Body Care',
-    trendingTerms: ['everything shower', 'body care routine', 'signature scent', 'soft skin'],
-    parentCategory: 'body',
-  },
-  bodycare: {
-    name: 'Body Care',
-    keywords: ['body lotion', 'body butter', 'body scrub', 'body wash', 'deodorant', 'body oil', 'self tanner', 'body mist', 'hand cream', 'foot care'],
-    amazonCategory: 'Body Care',
-    trendingTerms: ['everything shower', 'body care routine', 'soft skin', 'brazilian bum bum'],
-    parentCategory: 'body',
+    trendingTerms: ['rosemary oil hair', 'hair oiling', 'salon blowout', 'hair growth'],
+    parentCategory: 'beauty',
   },
   fragrance: {
-    name: 'Fragrance & Perfume',
-    keywords: ['perfume', 'eau de parfum', 'body mist', 'fragrance oil', 'cologne', 'scent', 'vanilla perfume', 'oud', 'musk', 'niche fragrance'],
+    name: 'Fragrance',
+    keywords: ['perfume', 'eau de parfum', 'cologne', 'body mist', 'vanilla perfume', 'oud', 'niche fragrance', 'perfume dupes'],
     amazonCategory: 'Fragrance',
     trendingTerms: ['perfume dupes', 'viral fragrance', 'signature scent', 'layering perfume'],
-    parentCategory: 'body',
+    parentCategory: 'beauty',
   },
-
-  // Beauty Tech (standalone category)
-  beautytech: {
-    name: 'Beauty Tech',
-    keywords: ['led mask', 'gua sha', 'jade roller', 'ice roller', 'dermaplaning', 'microcurrent', 'facial steamer', 'makeup brushes', 'beauty blender', 'eyelash curler', 'beauty tools', 'facial tools', 'skincare device'],
+  nails: {
+    name: 'Nails',
+    keywords: ['nail polish', 'gel nails', 'press-on nails', 'nail art', 'chrome nails', 'dip powder', 'builder gel'],
+    amazonCategory: 'Nail Art & Polish',
+    trendingTerms: ['chrome nails', 'glazed donut nails', 'aura nails', 'jelly nails'],
+    parentCategory: 'beauty',
+  },
+  beautytools: {
+    name: 'Beauty Tools',
+    keywords: ['led mask', 'gua sha', 'jade roller', 'ice roller', 'microcurrent', 'facial steamer', 'makeup brushes', 'beauty blender'],
     amazonCategory: 'Beauty Tools',
     trendingTerms: ['red light therapy', 'facial massage', 'lymphatic drainage', 'at home facial'],
-    parentCategory: 'beautytech',
+    parentCategory: 'beauty',
+  },
+
+  // ===== FASHION & APPAREL =====
+  womenswear: {
+    name: "Women's Clothing",
+    keywords: ['dress', 'blouse', 'jeans', 'skirt', 'blazer', 'cardigan', 'activewear', 'loungewear', 'workwear'],
+    amazonCategory: "Women's Fashion",
+    trendingTerms: ['quiet luxury', 'old money aesthetic', 'capsule wardrobe', 'coastal grandmother'],
+    parentCategory: 'fashion',
+  },
+  menswear: {
+    name: "Men's Clothing",
+    keywords: ['shirt', 'pants', 'jacket', 'suit', 'hoodie', 'shorts', 'polo', 'sweater', 'chinos'],
+    amazonCategory: "Men's Fashion",
+    trendingTerms: ['quiet luxury men', 'old money style', 'minimalist wardrobe', 'smart casual'],
+    parentCategory: 'fashion',
+  },
+  footwear: {
+    name: 'Footwear',
+    keywords: ['sneakers', 'boots', 'heels', 'sandals', 'loafers', 'running shoes', 'trainers', 'slides'],
+    amazonCategory: 'Shoes',
+    trendingTerms: ['sneaker trends', 'ballet flats', 'chunky sneakers', 'platform shoes'],
+    parentCategory: 'fashion',
+  },
+  accessories: {
+    name: 'Accessories',
+    keywords: ['handbag', 'watch', 'jewelry', 'sunglasses', 'belt', 'scarf', 'hat', 'wallet'],
+    amazonCategory: 'Fashion Accessories',
+    trendingTerms: ['quiet luxury bags', 'minimalist jewelry', 'vintage watches', 'hair accessories'],
+    parentCategory: 'fashion',
+  },
+  luxury: {
+    name: 'Luxury Fashion',
+    keywords: ['designer', 'luxury handbag', 'designer shoes', 'luxury watch', 'cashmere', 'silk', 'haute couture'],
+    amazonCategory: 'Luxury Fashion',
+    trendingTerms: ['quiet luxury', 'investment pieces', 'designer dupes', 'luxury resale'],
+    parentCategory: 'fashion',
+  },
+  streetwear: {
+    name: 'Streetwear',
+    keywords: ['hoodie', 'sneakers', 'graphic tee', 'joggers', 'cap', 'bomber jacket', 'cargo pants', 'oversized'],
+    amazonCategory: 'Streetwear',
+    trendingTerms: ['hypebeast', 'sneaker drops', 'limited edition', 'collab releases'],
+    parentCategory: 'fashion',
+  },
+
+  // ===== TECHNOLOGY =====
+  smartphones: {
+    name: 'Smartphones',
+    keywords: ['iphone', 'samsung galaxy', 'pixel', 'android', 'phone case', 'screen protector', 'wireless charger'],
+    amazonCategory: 'Cell Phones',
+    trendingTerms: ['iphone 16', 'pixel 9', 'foldable phones', 'phone photography'],
+    parentCategory: 'technology',
+  },
+  laptops: {
+    name: 'Laptops & Computers',
+    keywords: ['macbook', 'laptop', 'chromebook', 'gaming laptop', 'laptop stand', 'monitor', 'keyboard', 'mouse'],
+    amazonCategory: 'Computers',
+    trendingTerms: ['m3 macbook', 'gaming setup', 'work from home', 'desk setup'],
+    parentCategory: 'technology',
+  },
+  audio: {
+    name: 'Audio & Headphones',
+    keywords: ['airpods', 'headphones', 'earbuds', 'speaker', 'bluetooth speaker', 'noise cancelling', 'soundbar'],
+    amazonCategory: 'Headphones',
+    trendingTerms: ['airpods pro', 'sony wh1000', 'spatial audio', 'podcast setup'],
+    parentCategory: 'technology',
+  },
+  wearables: {
+    name: 'Wearables',
+    keywords: ['apple watch', 'smartwatch', 'fitness tracker', 'fitbit', 'garmin', 'smart ring', 'health tracker'],
+    amazonCategory: 'Wearable Technology',
+    trendingTerms: ['apple watch ultra', 'oura ring', 'whoop band', 'sleep tracking'],
+    parentCategory: 'technology',
+  },
+  gaming: {
+    name: 'Gaming',
+    keywords: ['playstation', 'xbox', 'nintendo switch', 'gaming headset', 'controller', 'gaming chair', 'gaming monitor'],
+    amazonCategory: 'Video Games',
+    trendingTerms: ['ps5 games', 'gaming setup', 'cozy gaming', 'steam deck'],
+    parentCategory: 'technology',
+  },
+  smarthome: {
+    name: 'Smart Home',
+    keywords: ['alexa', 'google home', 'smart lights', 'ring doorbell', 'smart thermostat', 'robot vacuum', 'smart plugs'],
+    amazonCategory: 'Smart Home',
+    trendingTerms: ['home automation', 'smart home setup', 'alexa routines', 'matter compatible'],
+    parentCategory: 'technology',
+  },
+
+  // ===== HEALTH & WELLNESS =====
+  supplements: {
+    name: 'Supplements',
+    keywords: ['vitamins', 'protein powder', 'collagen', 'probiotics', 'omega 3', 'magnesium', 'creatine', 'pre workout'],
+    amazonCategory: 'Vitamins & Supplements',
+    trendingTerms: ['gut health', 'collagen peptides', 'ashwagandha', 'sea moss'],
+    parentCategory: 'health',
+  },
+  fitness: {
+    name: 'Fitness Equipment',
+    keywords: ['dumbbells', 'resistance bands', 'yoga mat', 'treadmill', 'exercise bike', 'kettlebell', 'foam roller'],
+    amazonCategory: 'Exercise & Fitness',
+    trendingTerms: ['home gym', 'peloton alternative', 'pilates', 'hot girl walk'],
+    parentCategory: 'health',
+  },
+  mentalhealth: {
+    name: 'Mental Health',
+    keywords: ['meditation', 'journal', 'aromatherapy', 'essential oils', 'stress relief', 'anxiety', 'mindfulness'],
+    amazonCategory: 'Health & Wellness',
+    trendingTerms: ['morning routine', 'self care', 'journaling', 'meditation app'],
+    parentCategory: 'health',
+  },
+  sleep: {
+    name: 'Sleep',
+    keywords: ['pillow', 'mattress', 'weighted blanket', 'sleep mask', 'white noise', 'melatonin', 'sleep tracker'],
+    amazonCategory: 'Sleep & Recovery',
+    trendingTerms: ['sleep hygiene', 'mouth taping', 'sunrise alarm', 'cooling pillow'],
+    parentCategory: 'health',
+  },
+  nutrition: {
+    name: 'Nutrition',
+    keywords: ['protein bars', 'meal prep', 'blender', 'air fryer recipes', 'healthy snacks', 'smoothie', 'macro tracking'],
+    amazonCategory: 'Grocery & Gourmet',
+    trendingTerms: ['high protein', 'meal prep ideas', 'macro friendly', 'calorie deficit'],
+    parentCategory: 'health',
+  },
+  personalcare: {
+    name: 'Personal Care',
+    keywords: ['electric toothbrush', 'razor', 'deodorant', 'body wash', 'oral care', 'grooming', 'hygiene'],
+    amazonCategory: 'Personal Care',
+    trendingTerms: ['everything shower', 'body care routine', 'oral hygiene', 'natural deodorant'],
+    parentCategory: 'health',
+  },
+
+  // ===== FOOD & BEVERAGE =====
+  snacks: {
+    name: 'Snacks',
+    keywords: ['chips', 'chocolate', 'candy', 'nuts', 'popcorn', 'protein snacks', 'healthy snacks', 'korean snacks'],
+    amazonCategory: 'Snack Food',
+    trendingTerms: ['viral snacks', 'tiktok snacks', 'korean snacks', 'healthy snacks'],
+    parentCategory: 'food',
+  },
+  beverages: {
+    name: 'Beverages',
+    keywords: ['energy drinks', 'sparkling water', 'juice', 'tea', 'soda', 'sports drinks', 'electrolytes'],
+    amazonCategory: 'Beverages',
+    trendingTerms: ['prime hydration', 'celsius', 'liquid iv', 'matcha'],
+    parentCategory: 'food',
+  },
+  kitchen: {
+    name: 'Kitchen & Cooking',
+    keywords: ['air fryer', 'instant pot', 'blender', 'cookware', 'knife set', 'food storage', 'meal prep containers'],
+    amazonCategory: 'Kitchen & Dining',
+    trendingTerms: ['air fryer recipes', 'meal prep', 'kitchen gadgets', 'cooking hacks'],
+    parentCategory: 'food',
+  },
+  healthfoods: {
+    name: 'Health Foods',
+    keywords: ['organic', 'gluten free', 'vegan', 'keto', 'superfoods', 'plant based', 'protein', 'low carb'],
+    amazonCategory: 'Grocery & Gourmet',
+    trendingTerms: ['high protein', 'gut health foods', 'anti inflammatory', 'whole foods'],
+    parentCategory: 'food',
+  },
+  alcohol: {
+    name: 'Alcohol',
+    keywords: ['wine', 'whiskey', 'cocktails', 'beer', 'spirits', 'bar accessories', 'cocktail kit'],
+    amazonCategory: 'Wine & Spirits',
+    trendingTerms: ['cocktail recipes', 'wine tiktok', 'home bar', 'mocktails'],
+    parentCategory: 'food',
+  },
+  coffee: {
+    name: 'Coffee & Tea',
+    keywords: ['coffee maker', 'espresso machine', 'matcha', 'cold brew', 'coffee beans', 'tea', 'nespresso'],
+    amazonCategory: 'Coffee & Tea',
+    trendingTerms: ['coffee routine', 'matcha latte', 'iced coffee', 'espresso at home'],
+    parentCategory: 'food',
+  },
+
+  // ===== HOME & LIVING =====
+  furniture: {
+    name: 'Furniture',
+    keywords: ['sofa', 'desk', 'chair', 'bed frame', 'bookshelf', 'dining table', 'storage'],
+    amazonCategory: 'Furniture',
+    trendingTerms: ['amazon furniture finds', 'small space', 'apartment decor', 'home office'],
+    parentCategory: 'home',
+  },
+  decor: {
+    name: 'Home Decor',
+    keywords: ['wall art', 'candles', 'vase', 'mirror', 'throw pillows', 'rug', 'curtains', 'plants'],
+    amazonCategory: 'Home Decor',
+    trendingTerms: ['cozy home', 'aesthetic room', 'minimalist decor', 'boho style'],
+    parentCategory: 'home',
+  },
+  organization: {
+    name: 'Organization',
+    keywords: ['storage bins', 'closet organizer', 'drawer dividers', 'labels', 'pantry organization', 'declutter'],
+    amazonCategory: 'Storage & Organization',
+    trendingTerms: ['home organization', 'konmari', 'pantry goals', 'closet tour'],
+    parentCategory: 'home',
+  },
+  cleaning: {
+    name: 'Cleaning',
+    keywords: ['vacuum', 'mop', 'cleaning supplies', 'robot vacuum', 'laundry', 'dishwasher pods', 'air purifier'],
+    amazonCategory: 'Cleaning Supplies',
+    trendingTerms: ['cleaning motivation', 'clean with me', 'restocking', 'laundry routine'],
+    parentCategory: 'home',
+  },
+  bedding: {
+    name: 'Bedding',
+    keywords: ['sheets', 'comforter', 'duvet', 'pillows', 'mattress topper', 'blanket', 'bed set'],
+    amazonCategory: 'Bedding',
+    trendingTerms: ['hotel bedding', 'linen sheets', 'cloud bed', 'bedroom makeover'],
+    parentCategory: 'home',
+  },
+  garden: {
+    name: 'Garden & Outdoor',
+    keywords: ['plants', 'patio furniture', 'grill', 'outdoor lights', 'garden tools', 'planters', 'lawn care'],
+    amazonCategory: 'Patio, Lawn & Garden',
+    trendingTerms: ['plant mom', 'outdoor living', 'balcony garden', 'backyard makeover'],
+    parentCategory: 'home',
+  },
+
+  // ===== SPORTS & OUTDOORS =====
+  running: {
+    name: 'Running',
+    keywords: ['running shoes', 'running watch', 'running shorts', 'hydration vest', 'running belt', 'compression socks'],
+    amazonCategory: 'Running',
+    trendingTerms: ['marathon training', 'couch to 5k', 'running gear', 'trail running'],
+    parentCategory: 'sports',
+  },
+  gymtraining: {
+    name: 'Gym & Training',
+    keywords: ['weightlifting', 'gym bag', 'lifting belt', 'gym shoes', 'workout clothes', 'shaker bottle'],
+    amazonCategory: 'Exercise & Fitness',
+    trendingTerms: ['gym motivation', 'workout split', 'gym outfit', 'strength training'],
+    parentCategory: 'sports',
+  },
+  outdoors: {
+    name: 'Outdoor Recreation',
+    keywords: ['camping', 'hiking', 'backpack', 'tent', 'sleeping bag', 'hiking boots', 'outdoor gear'],
+    amazonCategory: 'Outdoor Recreation',
+    trendingTerms: ['camping essentials', 'hiking gear', 'national parks', 'van life'],
+    parentCategory: 'sports',
+  },
+  teamsports: {
+    name: 'Team Sports',
+    keywords: ['basketball', 'soccer', 'football', 'baseball', 'volleyball', 'sports equipment', 'jersey'],
+    amazonCategory: 'Team Sports',
+    trendingTerms: ['basketball shoes', 'soccer cleats', 'sports training', 'game day'],
+    parentCategory: 'sports',
+  },
+  cycling: {
+    name: 'Cycling',
+    keywords: ['bike', 'cycling shorts', 'helmet', 'bike accessories', 'indoor cycling', 'bike lights'],
+    amazonCategory: 'Cycling',
+    trendingTerms: ['cycling gear', 'bike commute', 'indoor cycling', 'ebike'],
+    parentCategory: 'sports',
+  },
+  watersports: {
+    name: 'Water Sports',
+    keywords: ['swimwear', 'goggles', 'surfboard', 'kayak', 'paddleboard', 'snorkel', 'wetsuit'],
+    amazonCategory: 'Water Sports',
+    trendingTerms: ['beach essentials', 'surfing', 'paddleboard', 'pool workout'],
+    parentCategory: 'sports',
+  },
+
+  // ===== BABY & KIDS =====
+  babygear: {
+    name: 'Baby Gear',
+    keywords: ['stroller', 'car seat', 'baby carrier', 'crib', 'high chair', 'baby monitor', 'diaper bag'],
+    amazonCategory: 'Baby',
+    trendingTerms: ['baby registry', 'baby essentials', 'newborn must haves', 'baby gear review'],
+    parentCategory: 'baby',
+  },
+  toys: {
+    name: 'Toys',
+    keywords: ['lego', 'educational toys', 'dolls', 'action figures', 'board games', 'outdoor toys', 'stem toys'],
+    amazonCategory: 'Toys & Games',
+    trendingTerms: ['toy unboxing', 'viral toys', 'educational toys', 'holiday toys'],
+    parentCategory: 'baby',
+  },
+  kidsclothing: {
+    name: 'Kids Clothing',
+    keywords: ['kids clothes', 'baby clothes', 'school uniform', 'kids shoes', 'kids pajamas', 'rain boots'],
+    amazonCategory: 'Kids Fashion',
+    trendingTerms: ['kids outfit', 'back to school', 'matching outfits', 'kids style'],
+    parentCategory: 'baby',
+  },
+  education: {
+    name: 'Education',
+    keywords: ['learning toys', 'books', 'workbooks', 'flashcards', 'educational games', 'school supplies'],
+    amazonCategory: 'Education',
+    trendingTerms: ['homeschool', 'learning activities', 'kids books', 'stem learning'],
+    parentCategory: 'baby',
+  },
+  parenting: {
+    name: 'Parenting',
+    keywords: ['parenting books', 'baby food', 'nursing', 'potty training', 'sleep training', 'childproofing'],
+    amazonCategory: 'Parenting',
+    trendingTerms: ['mom hacks', 'parenting tips', 'toddler activities', 'baby led weaning'],
+    parentCategory: 'baby',
+  },
+
+  // ===== PETS =====
+  dogs: {
+    name: 'Dogs',
+    keywords: ['dog food', 'dog toys', 'dog bed', 'dog leash', 'dog treats', 'dog grooming', 'dog crate'],
+    amazonCategory: 'Dogs',
+    trendingTerms: ['dog training', 'puppy essentials', 'dog enrichment', 'dog mom'],
+    parentCategory: 'pets',
+  },
+  cats: {
+    name: 'Cats',
+    keywords: ['cat food', 'cat litter', 'cat tree', 'cat toys', 'scratching post', 'cat bed', 'cat carrier'],
+    amazonCategory: 'Cats',
+    trendingTerms: ['cat behavior', 'kitten tips', 'cat enrichment', 'cat lady'],
+    parentCategory: 'pets',
+  },
+  petfood: {
+    name: 'Pet Food',
+    keywords: ['premium pet food', 'grain free', 'raw diet', 'wet food', 'dry food', 'pet treats', 'supplements'],
+    amazonCategory: 'Pet Food',
+    trendingTerms: ['best pet food', 'raw feeding', 'pet nutrition', 'homemade pet food'],
+    parentCategory: 'pets',
+  },
+  petaccessories: {
+    name: 'Pet Accessories',
+    keywords: ['pet carrier', 'pet camera', 'automatic feeder', 'water fountain', 'pet clothes', 'grooming'],
+    amazonCategory: 'Pet Supplies',
+    trendingTerms: ['pet gadgets', 'pet travel', 'pet grooming', 'matching pet owner'],
+    parentCategory: 'pets',
+  },
+
+  // ===== OFFICE & STATIONERY =====
+  notebooks: {
+    name: 'Notebooks & Planners',
+    keywords: ['planner', 'journal', 'notebook', 'bullet journal', 'diary', 'calendar', 'goal planner'],
+    amazonCategory: 'Notebooks & Writing Pads',
+    trendingTerms: ['planner setup', 'bullet journal', 'journaling', 'goal setting'],
+    parentCategory: 'office',
+  },
+  pens: {
+    name: 'Pens & Writing',
+    keywords: ['pens', 'markers', 'highlighters', 'fountain pen', 'gel pens', 'calligraphy', 'pencils'],
+    amazonCategory: 'Writing Instruments',
+    trendingTerms: ['pen collection', 'calligraphy', 'handwriting', 'stationery haul'],
+    parentCategory: 'office',
+  },
+  desksetup: {
+    name: 'Desk Setup',
+    keywords: ['desk organizer', 'monitor stand', 'desk mat', 'desk lamp', 'cable management', 'ergonomic'],
+    amazonCategory: 'Office Products',
+    trendingTerms: ['desk setup', 'work from home', 'aesthetic desk', 'productivity'],
+    parentCategory: 'office',
+  },
+  officeorg: {
+    name: 'Office Organization',
+    keywords: ['file organizer', 'storage boxes', 'label maker', 'bookends', 'desk drawer', 'paper trays'],
+    amazonCategory: 'Office Organization',
+    trendingTerms: ['office organization', 'declutter desk', 'home office', 'filing system'],
+    parentCategory: 'office',
+  },
+  artsupplies: {
+    name: 'Art Supplies',
+    keywords: ['colored pencils', 'sketchbook', 'paint', 'brushes', 'canvas', 'watercolors', 'drawing tablet'],
+    amazonCategory: 'Arts & Crafts',
+    trendingTerms: ['art supplies haul', 'drawing tutorial', 'sketchbook tour', 'art tips'],
+    parentCategory: 'office',
   },
 };
 
@@ -485,32 +791,84 @@ function generateDemoTrends(category: string, timeRange: string): TrendItem[] {
   const cat = SUB_CATEGORIES[category] || SUB_CATEGORIES.skincare;
 
   const demoTerms: Record<string, string[]> = {
-    // Skin
-    all_skin: ['glass skin', 'skin cycling', 'snail mucin', 'korean sunscreen', 'clean beauty', 'barrier repair'],
-    skincare: ['glazed donut skin', 'skin cycling', 'snail mucin', 'retinol sandwich', 'barrier repair', 'glass skin'],
-    suncare: ['korean sunscreen', 'tinted spf', 'sunscreen stick', 'no white cast', 'spf reapply', 'beauty of joseon'],
-    kbeauty: ['glass skin', 'snail mucin', 'rice toner', 'centella', 'mugwort', '7 skin method'],
-    cleanbeauty: ['clean girl aesthetic', 'skin minimalism', 'less is more', 'barrier repair', 'gentle actives', 'mushroom skincare'],
-    // Makeup
-    all_makeup: ['latte makeup', 'chrome nails', 'clean girl look', 'glazed donut nails', 'viral lipstick', 'mob wife aesthetic'],
-    colorcosmetics: ['latte makeup', 'cold girl makeup', 'lip combo', 'mob wife aesthetic', 'clean girl look', 'strawberry girl'],
-    nails: ['chrome nails', 'glazed donut nails', 'jelly nails', 'aura nails', 'lip gloss nails', 'milk bath nails'],
-    // Hair
-    all_hair: ['rosemary oil', 'salon blowout', 'beach waves', 'babyliss pro', 'hair oiling', 'volumizing brush'],
+    // ===== BEAUTY & COSMETICS =====
+    skincare: ['glass skin', 'skin cycling', 'snail mucin', 'retinol sandwich', 'barrier repair', 'korean sunscreen'],
+    makeup: ['latte makeup', 'clean girl look', 'mob wife aesthetic', 'strawberry girl makeup', 'lip combo', 'cold girl makeup'],
     haircare: ['rosemary oil', 'hair oiling', 'rice water rinse', 'scalp care', 'castor oil growth', 'protein treatment'],
-    hairdryers: ['ionic technology', 'salon blowout', 'babyliss pro', 'diffuser attachment', 'quick dry', 'frizz control'],
-    straighteners: ['glass hair', 'silk press', 'steam straightener', 'titanium plates', 'no damage styling', 'babyliss flat iron'],
-    curlingirons: ['beach waves', 'bouncy curls', 'curling wand', 'heatless vs heat', 'long lasting curls', 'barrel size guide'],
-    hotairbrushes: ['one step blowout', 'volumizing brush', 'babyliss big hair', 'blow dry brush', 'salon at home', 'round brush styling'],
-    // Body
-    all_body: ['everything shower', 'vanilla perfume', 'soft skin routine', 'perfume layering', 'body slugging', 'signature scent'],
-    bodycare: ['everything shower', 'soft skin routine', 'body slugging', 'dry brushing', 'glow oil', 'self tan routine'],
-    fragrance: ['vanilla perfume', 'perfume layering', 'clean girl scent', 'cozy fragrance', 'dupe finds', 'niche discovery'],
-    // Beauty Tech
-    beautytech: ['gua sha routine', 'led mask', 'ice roller', 'microcurrent', 'facial steamer', 'dermaplaning'],
+    fragrance: ['vanilla perfume', 'perfume layering', 'clean girl scent', 'cozy fragrance', 'perfume dupes', 'niche discovery'],
+    nails: ['chrome nails', 'glazed donut nails', 'jelly nails', 'aura nails', 'milk bath nails', 'lip gloss nails'],
+    beautytools: ['led mask', 'gua sha routine', 'ice roller', 'microcurrent device', 'facial steamer', 'dermaplaning'],
+
+    // ===== FASHION & APPAREL =====
+    womenswear: ['quiet luxury', 'old money aesthetic', 'capsule wardrobe', 'coastal grandmother', 'clean girl style', 'mob wife fashion'],
+    menswear: ['quiet luxury men', 'old money style', 'minimalist wardrobe', 'smart casual', 'capsule closet', 'timeless menswear'],
+    footwear: ['ballet flats', 'chunky sneakers', 'platform shoes', 'loafers trend', 'sneaker drops', 'comfortable heels'],
+    accessories: ['quiet luxury bags', 'minimalist jewelry', 'vintage watches', 'hair accessories', 'silk scarves', 'statement earrings'],
+    luxury: ['investment pieces', 'designer dupes', 'luxury resale', 'quiet luxury brands', 'timeless classics', 'heritage fashion'],
+    streetwear: ['hypebeast drops', 'sneaker releases', 'limited edition', 'collab releases', 'streetwear fits', 'vintage finds'],
+
+    // ===== TECHNOLOGY =====
+    smartphones: ['iphone 16 pro', 'pixel 9', 'foldable phones', 'phone photography', 'best phone camera', 'android vs iphone'],
+    laptops: ['m3 macbook', 'gaming setup', 'work from home desk', 'desk setup tour', 'best laptop 2024', 'ultrabook comparison'],
+    audio: ['airpods pro 2', 'sony wh1000xm5', 'spatial audio', 'podcast setup', 'audiophile headphones', 'earbuds comparison'],
+    wearables: ['apple watch ultra', 'oura ring', 'whoop band', 'sleep tracking', 'fitness tracker', 'smart ring'],
+    gaming: ['ps5 games', 'gaming setup tour', 'cozy gaming', 'steam deck', 'best gaming headset', 'rgb setup'],
+    smarthome: ['home automation', 'alexa routines', 'matter compatible', 'smart home setup', 'robot vacuum', 'smart lighting'],
+
+    // ===== HEALTH & WELLNESS =====
+    supplements: ['gut health supplements', 'collagen peptides', 'ashwagandha', 'sea moss gel', 'magnesium glycinate', 'creatine monohydrate'],
+    fitness: ['home gym setup', 'pilates workout', 'hot girl walk', 'strength training', 'peloton alternative', 'resistance bands'],
+    mentalhealth: ['morning routine', 'self care sunday', 'journaling prompts', 'meditation app', 'mental health tips', 'stress relief'],
+    sleep: ['sleep hygiene', 'mouth taping', 'sunrise alarm clock', 'cooling pillow', 'weighted blanket', 'sleep tracker'],
+    nutrition: ['high protein meals', 'meal prep ideas', 'macro friendly', 'calorie deficit tips', 'healthy recipes', 'protein snacks'],
+    personalcare: ['everything shower', 'body care routine', 'oral hygiene', 'natural deodorant', 'grooming routine', 'self care tips'],
+
+    // ===== FOOD & BEVERAGE =====
+    snacks: ['viral snacks', 'tiktok snacks', 'korean snacks', 'healthy snacks', 'protein snacks', 'japanese snacks'],
+    beverages: ['prime hydration', 'celsius energy', 'liquid iv', 'matcha latte', 'electrolyte drinks', 'sparkling water'],
+    kitchen: ['air fryer recipes', 'meal prep containers', 'kitchen gadgets', 'cooking hacks', 'instant pot recipes', 'best blender'],
+    healthfoods: ['high protein foods', 'gut health foods', 'anti inflammatory diet', 'whole foods finds', 'superfood smoothie', 'organic eating'],
+    alcohol: ['cocktail recipes', 'wine tiktok', 'home bar setup', 'mocktails', 'whiskey collection', 'cocktail kit'],
+    coffee: ['coffee routine', 'matcha latte recipe', 'iced coffee hacks', 'espresso at home', 'best coffee maker', 'cold brew tips'],
+
+    // ===== HOME & LIVING =====
+    furniture: ['amazon furniture finds', 'small space hacks', 'apartment decor', 'home office setup', 'cozy bedroom', 'living room makeover'],
+    decor: ['cozy home aesthetic', 'minimalist decor', 'boho style', 'wall art ideas', 'candle collection', 'plant corner'],
+    organization: ['pantry organization', 'closet tour', 'konmari method', 'home organization', 'declutter tips', 'label maker ideas'],
+    cleaning: ['cleaning motivation', 'clean with me', 'restocking videos', 'laundry routine', 'robot vacuum', 'deep cleaning tips'],
+    bedding: ['hotel bedding dupes', 'linen sheets', 'cloud bed setup', 'bedroom makeover', 'cozy bedding', 'silk pillowcase'],
+    garden: ['plant mom tips', 'balcony garden', 'backyard makeover', 'outdoor living', 'patio furniture', 'indoor plants'],
+
+    // ===== SPORTS & OUTDOORS =====
+    running: ['marathon training', 'couch to 5k', 'running gear', 'trail running shoes', 'running watch', 'run club'],
+    gymtraining: ['gym motivation', 'workout split', 'gym outfit', 'strength training', 'gym essentials', 'fitness journey'],
+    outdoors: ['camping essentials', 'hiking gear', 'national parks', 'van life', 'backpacking tips', 'outdoor adventures'],
+    teamsports: ['basketball shoes', 'soccer cleats', 'sports training', 'game day prep', 'team jerseys', 'sports equipment'],
+    cycling: ['cycling gear', 'bike commute', 'indoor cycling', 'ebike review', 'cycling shorts', 'bike accessories'],
+    watersports: ['beach essentials', 'surfing tips', 'paddleboard workout', 'pool workout', 'swimwear haul', 'snorkeling gear'],
+
+    // ===== BABY & KIDS =====
+    babygear: ['baby registry must haves', 'newborn essentials', 'stroller review', 'baby monitor', 'car seat safety', 'diaper bag'],
+    toys: ['toy unboxing', 'viral toys 2024', 'educational toys', 'holiday toy list', 'stem toys', 'sensory toys'],
+    kidsclothing: ['kids outfit ideas', 'back to school haul', 'matching outfits', 'kids style', 'baby clothes haul', 'toddler fashion'],
+    education: ['homeschool tips', 'learning activities', 'kids books', 'stem learning', 'educational games', 'reading corner'],
+    parenting: ['mom hacks', 'parenting tips', 'toddler activities', 'baby led weaning', 'potty training tips', 'sleep training'],
+
+    // ===== PETS =====
+    dogs: ['dog training tips', 'puppy essentials', 'dog enrichment', 'dog mom life', 'dog toy review', 'dog food comparison'],
+    cats: ['cat behavior tips', 'kitten essentials', 'cat enrichment', 'cat lady life', 'cat tree review', 'cat toy ideas'],
+    petfood: ['best pet food', 'raw feeding pets', 'pet nutrition', 'homemade pet food', 'grain free debate', 'pet treats'],
+    petaccessories: ['pet gadgets', 'pet travel essentials', 'pet grooming', 'matching pet owner', 'pet camera', 'automatic feeder'],
+
+    // ===== OFFICE & STATIONERY =====
+    notebooks: ['planner setup 2024', 'bullet journal ideas', 'journaling tips', 'goal planner', 'notebook collection', 'planning routine'],
+    pens: ['pen collection tour', 'calligraphy practice', 'handwriting tips', 'stationery haul', 'fountain pen review', 'best gel pens'],
+    desksetup: ['desk setup tour', 'work from home office', 'aesthetic desk', 'productivity setup', 'cable management', 'monitor setup'],
+    officeorg: ['office organization', 'desk declutter', 'home office tour', 'filing system', 'label maker projects', 'workspace makeover'],
+    artsupplies: ['art supplies haul', 'drawing tutorial', 'sketchbook tour', 'art tips for beginners', 'watercolor painting', 'digital art setup'],
   };
 
-  const terms = demoTerms[category] || demoTerms.skincare;
+  const terms = demoTerms[category] || cat.trendingTerms || demoTerms.skincare;
 
   return terms.map((term, index) => {
     const velocity = Math.round(300 - index * 40 + Math.random() * 50);
