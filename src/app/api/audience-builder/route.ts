@@ -15,37 +15,49 @@ async function generateDomainsWithAI(
   }
 
   const prompts = {
-    branded: `Generate 20 domains where "${brand} ${product}" is likely mentioned or reviewed.
+    branded: `Generate 20 domains where "${brand} ${product}" is likely mentioned, reviewed, or featured.
 
-IMPORTANT: Only include domains where you can actually BUY MEDIA (serve ads).
-✅ INCLUDE: News sites, magazines, blogs, review sites, YouTube, forums, lifestyle publications
-❌ EXCLUDE: Retailer sites (Amazon, Sephora, Ulta), brand websites (${brand}.com), e-commerce platforms
+IMPORTANT: Only include domains where you can actually BUY MEDIA (serve programmatic ads).
 
-Focus on:
-- Beauty/lifestyle publications that have reviewed "${brand} ${product}"
-- Blogs that mention this specific product
-- News sites with product features
+✅ INCLUDE:
+- News sites and online magazines
+- Industry-specific blogs and publications
+- Product review sites
 - YouTube (youtube.com)
 - Reddit (reddit.com)
-- Review aggregators
+- Forums and community sites
+- Lifestyle and special interest publications
+
+❌ EXCLUDE (cannot serve ads on these):
+- Retailer/e-commerce sites (Amazon, Walmart, Target, Best Buy, Sephora, etc.)
+- Brand websites (${brand}.com or any brand's official site)
+- Marketplace platforms (eBay, Etsy, etc.)
+
+First, identify what category "${brand} ${product}" belongs to (tech, sports, beauty, automotive, food, etc.), then list publications that cover that category and have likely featured this product.
 
 Country focus: ${country.name}
 
 Return JSON: { "domains": ["domain1.com", "domain2.com", ...] }`,
 
-    generic: `Generate 20 domains that cover the "${product}" product category (not the ${brand} brand specifically).
+    generic: `Generate 20 domains that cover the product category that "${product}" belongs to.
 
-IMPORTANT: Only include domains where you can actually BUY MEDIA (serve ads).
-✅ INCLUDE: Category publications, blogs, review sites, lifestyle magazines, YouTube, forums
-❌ EXCLUDE: Retailer sites (Amazon, Sephora, Target), brand websites, e-commerce platforms
+First identify the category: Is "${product}" a tech product? Sports equipment? Beauty item? Food product? Automotive? Home goods? Then find publications covering that category.
 
-Focus on:
-- Publications that write about this product category
-- Blogs covering skincare/beauty/wellness (whatever category "${product}" falls into)
-- Lifestyle sites with relevant content sections
+IMPORTANT: Only include domains where you can actually BUY MEDIA (serve programmatic ads).
+
+✅ INCLUDE:
+- Industry publications for this product category
+- Blogs and review sites covering this type of product
+- News sites with relevant sections
 - YouTube (youtube.com)
 - Reddit (reddit.com)
-- Niche forums and communities
+- Niche forums and enthusiast communities
+- Lifestyle publications relevant to buyers of "${product}"
+
+❌ EXCLUDE (cannot serve ads on these):
+- Retailer/e-commerce sites (Amazon, Walmart, Target, Best Buy, etc.)
+- Brand websites
+- Marketplace platforms
 
 Country focus: ${country.name}
 
@@ -53,16 +65,25 @@ Return JSON: { "domains": ["domain1.com", "domain2.com", ...] }`,
 
     competitor: `Generate 20 domains where competitor products to "${brand} ${product}" are reviewed or featured.
 
-IMPORTANT: Only include domains where you can actually BUY MEDIA (serve ads).
-✅ INCLUDE: Review sites comparing products, blogs featuring competitor products, publications with competitor reviews
-❌ EXCLUDE: Retailer sites (Amazon, Sephora), competitor brand websites, e-commerce platforms
+First identify:
+1. What category is "${brand} ${product}"? (tech, sports, beauty, automotive, etc.)
+2. Who are the main competitors to ${brand} in this category?
+3. Which publications review/feature those competitor products?
 
-Think about:
-- What are the main competitors to "${brand}" in the "${product}" category?
-- Which publications/blogs review those competitor products?
-- Where do comparison articles appear?
+IMPORTANT: Only include domains where you can actually BUY MEDIA (serve programmatic ads).
 
-Focus on sites that feature competitor brands like the main alternatives to ${brand}.
+✅ INCLUDE:
+- Review sites that compare products in this category
+- Industry publications featuring competitor reviews
+- Blogs that cover competitor products
+- YouTube (youtube.com)
+- Reddit (reddit.com)
+- Comparison and "best of" sites
+
+❌ EXCLUDE (cannot serve ads on these):
+- Retailer sites (Amazon, Best Buy, etc.)
+- Competitor brand websites (we can't serve ads on Nike.com, Apple.com, etc.)
+- E-commerce platforms
 
 Country focus: ${country.name}
 
