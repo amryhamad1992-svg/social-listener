@@ -650,10 +650,27 @@ export async function braveTrendingTopics(
   keywords: string[],
   platformFilter?: string // Optional: filter by specific platform
 ): Promise<TrendResult[]> {
-  const searches = CATEGORY_SEARCHES[category.toLowerCase()] || CATEGORY_SEARCHES.skincare;
+  // FIXED: Use category-specific searches if available, otherwise GENERATE from keywords
+  let searches = CATEGORY_SEARCHES[category.toLowerCase()];
+
+  if (!searches) {
+    // Dynamically generate search queries from keywords for non-beauty categories
+    console.log(`[Brave Trends] No preset searches for "${category}", generating from keywords: ${keywords.slice(0, 3).join(', ')}...`);
+    const categoryName = category.replace(/([A-Z])/g, ' $1').trim(); // camelCase to words
+    searches = [
+      `${keywords[0] || categoryName} viral TikTok 2026`,
+      `${keywords[0] || categoryName} trend viral`,
+      `${keywords[1] || categoryName} review trending`,
+      `best ${keywords[0] || categoryName} 2026`,
+      `${keywords[2] || categoryName} TikTok viral`,
+      `${categoryName} trending products`,
+    ].filter(s => s.trim());
+  }
+
   const trendMap = new Map<string, { count: number; sources: SourceInfo[]; platformCounts: Record<string, number> }>();
 
   console.log(`[Brave Trends] Searching for ${category} trends${platformFilter ? ` (filtered by ${platformFilter})` : ''}...`);
+  console.log(`[Brave Trends] Using searches: ${searches.slice(0, 3).join(' | ')}`);
 
   // Platform site filters for getting ACTUAL social media content
   const PLATFORM_SITES = {
