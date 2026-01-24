@@ -6,54 +6,44 @@ export const MAIN_CATEGORIES: Record<string, {
   name: string;
   subCategories: string[];
 }> = {
-  // 1. Beauty & Cosmetics
   beauty: {
-    name: 'Beauty & Cosmetics',
+    name: 'Beauty',
     subCategories: ['skincare', 'makeup', 'haircare', 'fragrance', 'nails', 'beautytools'],
   },
-  // 2. Fashion & Apparel
   fashion: {
-    name: 'Fashion & Apparel',
+    name: 'Fashion',
     subCategories: ['womenswear', 'menswear', 'footwear', 'accessories', 'luxury', 'streetwear'],
   },
-  // 3. Technology
   technology: {
     name: 'Technology',
     subCategories: ['smartphones', 'laptops', 'audio', 'wearables', 'gaming', 'smarthome'],
   },
-  // 4. Health & Wellness
   health: {
-    name: 'Health & Wellness',
+    name: 'Health',
     subCategories: ['supplements', 'fitness', 'mentalhealth', 'sleep', 'nutrition', 'personalcare'],
   },
-  // 5. Food & Beverage
   food: {
-    name: 'Food & Beverage',
+    name: 'Food',
     subCategories: ['snacks', 'beverages', 'kitchen', 'healthfoods', 'alcohol', 'coffee'],
   },
-  // 6. Home & Living
   home: {
-    name: 'Home & Living',
+    name: 'Home',
     subCategories: ['furniture', 'decor', 'organization', 'cleaning', 'bedding', 'garden'],
   },
-  // 7. Sports & Outdoors
   sports: {
-    name: 'Sports & Outdoors',
+    name: 'Sports',
     subCategories: ['running', 'gymtraining', 'outdoors', 'teamsports', 'cycling', 'watersports'],
   },
-  // 8. Baby & Kids
   baby: {
-    name: 'Baby & Kids',
+    name: 'Baby',
     subCategories: ['babygear', 'toys', 'kidsclothing', 'education', 'parenting'],
   },
-  // 9. Pets
   pets: {
     name: 'Pets',
     subCategories: ['dogs', 'cats', 'petfood', 'petaccessories'],
   },
-  // 10. Office & Stationery
   office: {
-    name: 'Office & Stationery',
+    name: 'Office',
     subCategories: ['notebooks', 'pens', 'desksetup', 'officeorg', 'artsupplies'],
   },
 };

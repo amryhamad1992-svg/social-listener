@@ -224,7 +224,7 @@ export default function TrendRadarPage() {
                     }
                     setSelectedTrend(null);
                   }}
-                  className="appearance-none px-2 py-1 text-[11px] text-[#1E293B] bg-[#F8FAFC] border border-[#E2E8F0] rounded-md focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium w-[130px]"
+                  className="appearance-none px-2 py-1 text-[11px] text-[#1E293B] bg-[#F8FAFC] border border-[#E2E8F0] rounded-md focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium w-[95px]"
                 >
                   {data?.mainCategories.map((cat) => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
