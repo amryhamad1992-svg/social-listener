@@ -166,12 +166,17 @@ export default function TrendRadarPage() {
     setLoading(true);
     setError(null);
 
+    // DEBUG: Log what we're sending
+    console.log(`[Trend Radar Frontend] Fetching: mainCat="${selectedMainCategory}", subCat="${selectedSubCategory}"`);
+
     try {
       const params = new URLSearchParams({
         category: selectedSubCategory,
         timeRange,
         platform: platformFilter,
       });
+
+      console.log(`[Trend Radar Frontend] API URL: /api/trend-radar?${params.toString()}`);
 
       const response = await fetch(`/api/trend-radar?${params}`);
       const result = await response.json();
@@ -193,7 +198,7 @@ export default function TrendRadarPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedSubCategory, timeRange, platformFilter]);
+  }, [selectedMainCategory, selectedSubCategory, timeRange, platformFilter]);
 
   useEffect(() => {
     fetchTrendData();

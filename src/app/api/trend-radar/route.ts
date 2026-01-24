@@ -557,19 +557,31 @@ export async function GET(request: NextRequest) {
   const timeRange = searchParams.get('timeRange') || '7d';
   const platformFilter = searchParams.get('platform') || 'all';
 
-  // Check cache first
-  const cacheKey = getCacheKey(category, `${timeRange}-${platformFilter}`);
-  const cached = cache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return NextResponse.json({
-      success: true,
-      data: cached.data,
-      source: 'cache',
-    });
-  }
+  // DEBUG: Log what category is being requested
+  console.log(`[Trend Radar] REQUEST: category="${category}", timeRange="${timeRange}", platform="${platformFilter}"`);
+
+  // TEMPORARILY DISABLED CACHE FOR DEBUGGING
+  // const cacheKey = getCacheKey(category, `${timeRange}-${platformFilter}`);
+  // const cached = cache.get(cacheKey);
+  // if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+  //   return NextResponse.json({
+  //     success: true,
+  //     data: cached.data,
+  //     source: 'cache',
+  //   });
+  // }
 
   try {
-    const categoryInfo = SUB_CATEGORIES[category] || SUB_CATEGORIES.skincare;
+    const categoryInfo = SUB_CATEGORIES[category];
+
+    // DEBUG: Log if category was found
+    if (!categoryInfo) {
+      console.log(`[Trend Radar] WARNING: Category "${category}" not found in SUB_CATEGORIES, falling back to skincare`);
+    } else {
+      console.log(`[Trend Radar] Found category: ${categoryInfo.name}, keywords: ${categoryInfo.keywords.slice(0, 3).join(', ')}...`);
+    }
+
+    const finalCategoryInfo = categoryInfo || SUB_CATEGORIES.skincare;
     const trends: TrendItem[] = [];
     let source = 'demo';
 
@@ -587,7 +599,7 @@ export async function GET(request: NextRequest) {
 
     if (isBraveConfigured()) {
       try {
-        const braveResults = await braveTrendingTopics(category, categoryInfo.keywords, platformFilter);
+        const braveResults = await braveTrendingTopics(category, finalCategoryInfo.keywords, platformFilter);
         // Map brave results to expected format
         uniqueQueries = braveResults.map(r => ({
           query: r.term,
@@ -610,7 +622,7 @@ export async function GET(request: NextRequest) {
     // Fallback to category keywords if no results
     if (uniqueQueries.length === 0) {
       source = 'demo';
-      uniqueQueries = categoryInfo.keywords.slice(0, 8).map((kw, i) => ({
+      uniqueQueries = finalCategoryInfo.keywords.slice(0, 8).map((kw, i) => ({
         query: kw,
         value: 90 - i * 10,
         type: (i < 3 ? 'rising' : 'top') as 'rising' | 'top',
@@ -707,9 +719,9 @@ export async function GET(request: NextRequest) {
     };
 
     const responseData = {
-      category: categoryInfo.name,
-      amazonCategory: categoryInfo.amazonCategory,
-      parentCategory: categoryInfo.parentCategory,
+      category: finalCategoryInfo.name,
+      amazonCategory: finalCategoryInfo.amazonCategory,
+      parentCategory: finalCategoryInfo.parentCategory,
       timeRange,
       summary,
       trends,
