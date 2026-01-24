@@ -211,9 +211,9 @@ export default function TrendRadarPage() {
               <div className="w-px h-10 bg-[#E2E8F0]" />
 
               {/* Inline Filters */}
-              <div className="flex items-center gap-4 flex-wrap flex-1">
+              <div className="flex items-center gap-3 flex-1 overflow-x-auto">
                 {/* Main Category Selector */}
-                <div className="relative">
+                <div className="relative flex-shrink-0">
                   <select
                     value={selectedMainCategory}
                     onChange={(e) => {
@@ -225,7 +225,7 @@ export default function TrendRadarPage() {
                       }
                       setSelectedTrend(null);
                     }}
-                    className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium"
+                    className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium min-w-[140px]"
                   >
                     {data?.mainCategories.map((cat) => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -235,14 +235,14 @@ export default function TrendRadarPage() {
                 </div>
 
                 {/* Sub-Category Selector */}
-                <div className="relative">
+                <div className="relative flex-shrink-0">
                   <select
                     value={selectedSubCategory}
                     onChange={(e) => {
                       setSelectedSubCategory(e.target.value);
                       setSelectedTrend(null);
                     }}
-                    className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium"
+                    className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium min-w-[120px]"
                   >
                     {getAvailableSubCategories().map((cat) => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -252,14 +252,14 @@ export default function TrendRadarPage() {
                 </div>
 
                 {/* Platform Filter */}
-                <div className="relative">
+                <div className="relative flex-shrink-0">
                   <select
                     value={platformFilter}
                     onChange={(e) => {
                       setPlatformFilter(e.target.value);
                       setSelectedTrend(null);
                     }}
-                    className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium"
+                    className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium min-w-[100px]"
                   >
                     {PLATFORM_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -269,12 +269,12 @@ export default function TrendRadarPage() {
                 </div>
 
                 {/* Time Range & Refresh */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <div className="relative">
                     <select
                       value={timeRange}
                       onChange={(e) => setTimeRange(e.target.value)}
-                      className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium"
+                      className="appearance-none px-3 py-1.5 pr-8 text-[12px] text-[#1E293B] bg-white border border-[#E2E8F0] rounded-lg focus:outline-none focus:border-[#0F172A] cursor-pointer font-medium min-w-[80px]"
                     >
                       {TIME_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
